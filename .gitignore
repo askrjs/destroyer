@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-types/
+.destroyer-packs/
+.DS_Store
+*.log
+coverage/
+

@@ -1,0 +1,24 @@
+{
+  "name": "@destroyer/ssg-site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev --host 127.0.0.1 --port 5175",
+    "build": "npm run build:runtime && node scripts/build-site.js",
+    "build:runtime": "vp build --ssr src/entry-static.tsx --outDir dist/static-runtime --configLoader native",
+    "preview": "vp preview --host 127.0.0.1 --port 4175",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@askrjs/askr": "file:../../askr",
+    "@askrjs/lucide": "file:../../askr-lucide",
+    "@askrjs/themes": "file:../../askr-themes",
+    "@askrjs/ui": "file:../../askr-ui",
+    "@destroyer/shared": "file:../shared"
+  },
+  "devDependencies": {
+    "@askrjs/vite": "file:../../askr-vite"
+  }
+}
+

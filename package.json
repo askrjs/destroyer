@@ -1,0 +1,37 @@
+{
+  "name": "destroyer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "spa-app",
+    "ssr-app",
+    "ssg-site"
+  ],
+  "scripts": {
+    "dev:spa": "npm --workspace @destroyer/spa-app run dev",
+    "dev:ssr": "npm --workspace @destroyer/ssr-app run dev",
+    "dev:ssg": "npm --workspace @destroyer/ssg-site run dev",
+    "build": "npm run build:spa && npm run build:ssr && npm run build:ssg",
+    "build:spa": "npm --workspace @destroyer/spa-app run build",
+    "build:ssr": "npm --workspace @destroyer/ssr-app run build",
+    "build:ssg": "npm --workspace @destroyer/ssg-site run build",
+    "typecheck": "npm --workspaces --if-present run typecheck",
+    "test": "npm run typecheck && npm run build",
+    "pack:local-askr": "node scripts/pack-local-askr.js",
+    "install:local-askr": "node scripts/install-local-askr.js",
+    "test:release": "node scripts/run-release-matrix.js"
+  },
+  "devDependencies": {
+    "@askrjs/askr": "file:../askr",
+    "@askrjs/lucide": "file:../askr-lucide",
+    "@askrjs/themes": "file:../askr-themes",
+    "@askrjs/ui": "file:../askr-ui",
+    "@askrjs/vite": "file:../askr-vite",
+    "@types/node": "^24.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14",
+    "vite-plus": "^0.1.22"
+  }
+}
