@@ -23,7 +23,6 @@ import {
   PanelLeftIcon,
   RocketIcon,
   RouteIcon,
-  ScrollTextIcon,
   SettingsIcon,
   Settings2Icon,
   SunIcon,
@@ -37,12 +36,6 @@ import {
   BrandLabel,
   BrandMark,
   Button,
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -129,6 +122,8 @@ const appNavItems = [
   { href: "/about", label: "About", icon: InfoIcon },
   { href: "/contact", label: "Contact", icon: MailIcon },
 ] as const;
+
+const DOCS_SIDEBAR_STORAGE_KEY = "destroyer-docs-sidebar-collapsed";
 
 type DocsPath = (typeof docsItems)[number]["href"];
 
@@ -313,6 +308,16 @@ function getActivePath(path: string): DocsPath {
   return docsItems.some((item) => item.href === path) ? (path as DocsPath) : "/docs";
 }
 
+function getStoredDocsSidebarCollapsed(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(DOCS_SIDEBAR_STORAGE_KEY) === "true";
+}
+
+function storeDocsSidebarCollapsed(collapsed: boolean): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(DOCS_SIDEBAR_STORAGE_KEY, collapsed ? "true" : "false");
+}
+
 function getNextThemeName(theme: string): string {
   if (theme === "light") return "dark";
   if (theme === "dark") return "system";
@@ -333,11 +338,9 @@ function getThemeIcon(theme: string) {
 
 function ProfileDropdown({
   currentTheme,
-  labeled,
   theme,
 }: {
   currentTheme: string;
-  labeled?: boolean;
   theme: ReturnType<typeof useTheme>;
 }) {
   const ThemeIcon = getThemeIcon(currentTheme);
@@ -349,7 +352,9 @@ function ProfileDropdown({
         data-slot="sidebar-menu-button"
       >
         <CircleUserRoundIcon size={16} aria-hidden="true" />
-        {labeled && <Text as="span" size="sm" weight="medium">Profile</Text>}
+        <Block hide={{ base: true, lg: false }}>
+          <Text as="span" size="sm" weight="medium">Profile</Text>
+        </Block>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="right" align="end" sideOffset={10}>
         <DropdownMenuLabel data-variant="account">
@@ -393,12 +398,15 @@ function DocsSidebar({
   onToggle: () => void;
 }) {
   const groups = ["Get started", "Core concepts", "UI", "Patterns", "Reference"] as const;
+  const mobileRail =
+    typeof window !== "undefined" && window.matchMedia("(max-width: 63.999rem)").matches;
   const signedIn = isSignedIn();
   const theme = useTheme();
   const currentTheme = theme.theme();
 
   return (
     <Sidebar
+      collapsible={collapsed || mobileRail ? "icon" : "none"}
       width="full"
       height="screen"
       minHeight="screen"
@@ -455,7 +463,7 @@ function DocsSidebar({
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton active={active} onClick={() => navigate(item.href)}>
                       <Icon size={16} aria-hidden="true" />
-                      <Block hide={{ base: true, lg: collapsed }}>
+                      <Block hide={{ base: true, lg: false }}>
                         <Text as="span" size="sm" weight="medium">{item.label}</Text>
                       </Block>
                     </SidebarMenuButton>
@@ -468,7 +476,7 @@ function DocsSidebar({
         <Separator decorative />
         {groups.map((group) => (
           <SidebarGroup key={group}>
-            <Block hide={{ base: true, lg: collapsed }}>
+            <Block hide={{ base: true, lg: false }}>
               <SidebarGroupLabel>{group}</SidebarGroupLabel>
             </Block>
             <SidebarGroupContent>
@@ -485,7 +493,7 @@ function DocsSidebar({
                           onClick={() => navigate(item.href)}
                         >
                           <Icon size={16} aria-hidden="true" />
-                          <Block hide={{ base: true, lg: collapsed }}>
+                          <Block hide={{ base: true, lg: false }}>
                             <Text as="span" size="sm" weight="medium">{item.label}</Text>
                           </Block>
                         </SidebarMenuButton>
@@ -501,18 +509,14 @@ function DocsSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             {signedIn ? (
-              <>
-                <Block width="full" hide={{ base: false, lg: !collapsed }}>
-                  <ProfileDropdown currentTheme={currentTheme} theme={theme} />
-                </Block>
-                <Block width="full" hide={{ base: true, lg: collapsed }}>
-                  <ProfileDropdown currentTheme={currentTheme} labeled theme={theme} />
-                </Block>
-              </>
+              <ProfileDropdown
+                currentTheme={currentTheme}
+                theme={theme}
+              />
             ) : (
               <SidebarMenuButton onClick={() => navigate("/login")}>
                 <LogInIcon size={16} aria-hidden="true" />
-                <Block hide={{ base: true, lg: collapsed }}>
+                <Block hide={{ base: true, lg: false }}>
                   <Text as="span" size="sm" weight="medium">Sign in</Text>
                 </Block>
               </SidebarMenuButton>
@@ -529,65 +533,54 @@ function DocsArticle({ activePath }: { activePath: DocsPath }) {
   const Icon = content.icon;
 
   return (
-    <Block gap="lg">
-      <Card variant="raised">
-        <CardHeader>
-          <CardTitle>{content.title}</CardTitle>
-          <CardDescription>{content.description}</CardDescription>
-          <CardAction>
-            <Badge variant="secondary">{content.badge}</Badge>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <Block gap="lg">
-            <Block direction="row" align="center" gap="md">
-              <Block center padding="sm" radius="md" background="selected">
-                <Icon size={20} aria-hidden="true" />
-              </Block>
-              <Block gap="0">
-                <Text tone="muted" size="sm">{content.eyebrow}</Text>
-                <Text weight="medium">Route-backed documentation page</Text>
-              </Block>
-            </Block>
-            <Separator decorative />
-            <Grid columns={{ base: 1, md: 2 }} gap="lg">
-              {content.sections.map((section) => (
-                <Block key={section.title} gap="sm">
-                  <Text as="strong" weight="semibold">{section.title}</Text>
-                  <Text tone="muted">{section.body}</Text>
-                </Block>
-              ))}
-            </Grid>
+    <Block as="article" gap="2xl" maxWidth="lg">
+      <Block gap="lg">
+        <Block direction="row" align="center" gap="sm">
+          <Block center padding="sm" radius="md" background="selected">
+            <Icon size={20} aria-hidden="true" />
           </Block>
-        </CardContent>
-      </Card>
+          <Badge variant="secondary">{content.badge}</Badge>
+        </Block>
+        <Block gap="sm">
+          <Text tone="muted" size="sm">{content.eyebrow}</Text>
+          <Text as="strong" weight="bold" size="lg">{content.title}</Text>
+          <Text tone="muted">{content.description}</Text>
+        </Block>
+      </Block>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Checklist</CardTitle>
-          <CardDescription>What this documentation section exercises.</CardDescription>
-          <CardAction>
-            <ScrollTextIcon size={18} aria-hidden="true" />
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <Block gap="sm">
-            {content.checks.map((check) => (
-              <Block key={check} direction="row" align="center" gap="sm">
-                <LayersIcon size={16} aria-hidden="true" />
-                <Text>{check}</Text>
-              </Block>
-            ))}
+      <Separator decorative />
+
+      <Block gap="2xl">
+        {content.sections.map((section) => (
+          <Block key={section.title} gap="sm">
+            <Text as="strong" weight="semibold">{section.title}</Text>
+            <Text tone="muted">{section.body}</Text>
           </Block>
-        </CardContent>
-      </Card>
+        ))}
+      </Block>
+
+      <Block gap="md" padding="lg" background="muted" radius="md">
+        <Block direction="row" align="center" gap="sm">
+          <LayersIcon size={16} aria-hidden="true" />
+          <Text as="strong" weight="semibold">Checks</Text>
+        </Block>
+        <Block gap="sm">
+          {content.checks.map((check) => (
+            <Text key={check} tone="muted" size="sm">{check}</Text>
+          ))}
+        </Block>
+      </Block>
     </Block>
   );
 }
 
 export function DocsPage() {
   const activePath = getActivePath(currentRoute().path);
-  const [collapsed, setCollapsed] = state(false);
+  const [collapsed, setCollapsed] = state(getStoredDocsSidebarCollapsed());
+  const setDocsSidebarCollapsed = (nextCollapsed: boolean) => {
+    setCollapsed(nextCollapsed);
+    storeDocsSidebarCollapsed(nextCollapsed);
+  };
 
   return (
     <Block as="main" grow width="full" background="canvas">
@@ -602,9 +595,10 @@ export function DocsPage() {
         <DocsSidebar
           activePath={activePath}
           collapsed={collapsed()}
-          onToggle={() => setCollapsed(!collapsed())}
+          onToggle={() => setDocsSidebarCollapsed(!collapsed())}
         />
-        <Block padding={{ base: "md", lg: "xl" }} gap="lg">
+        <Block padding={{ base: "md", lg: "2xl" }}>
+          <Block maxWidth="lg" gap="2xl">
           <Block direction={{ base: "column", md: "row" }} align={{ base: "start", md: "center" }} justify="between" gap="md">
             <Block gap="xs">
               <Text as="strong" weight="bold" size="lg">Docs</Text>
@@ -618,6 +612,7 @@ export function DocsPage() {
             </Button>
           </Block>
           <DocsArticle activePath={activePath} />
+          </Block>
         </Block>
       </Grid>
     </Block>

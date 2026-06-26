@@ -11,6 +11,9 @@ export default defineConfig({
       optimizeTemplates: true,
     }),
   ],
+  resolve: {
+    dedupe: ["@askrjs/askr"],
+  },
   build: {
     manifest: true,
   },
