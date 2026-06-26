@@ -5,6 +5,34 @@ import "./style.css";
 
 export const staticPaths = ["/", "/guide", "/reference"];
 
+export type ClientAsset = {
+  href: string;
+  kind: "script" | "style";
+};
+
+export type RenderStaticOptions = {
+  assets?: ClientAsset[];
+};
+
+const developmentAssets: ClientAsset[] = [
+  { href: "/src/client.tsx", kind: "script" }
+];
+
+function escapeAttribute(value: string) {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
+function renderAssetTags(assets: ClientAsset[]) {
+  return assets
+    .map((asset) => {
+      const href = escapeAttribute(asset.href);
+      return asset.kind === "style"
+        ? `<link rel="stylesheet" href="${href}" />`
+        : `<script type="module" src="${href}"></script>`;
+    })
+    .join("\n    ");
+}
+
 function SiteShell({ children }: { children?: unknown }) {
   return (
     <ThemeProvider>
@@ -106,11 +134,12 @@ export function getStaticRoutes() {
   ];
 }
 
-export function renderStaticPath(path = "/") {
+export function renderStaticPath(path = "/", options: RenderStaticOptions = {}) {
   const appHtml = renderToString({
     url: path,
     routes: getStaticRoutes()
   });
+  const assetTags = renderAssetTags(options.assets ?? developmentAssets);
 
   return `<!doctype html>
 <html lang="en">
@@ -121,7 +150,7 @@ export function renderStaticPath(path = "/") {
   </head>
   <body>
     <div id="app">${appHtml}</div>
-    <script type="module" src="/src/client.tsx"></script>
+    ${assetTags}
   </body>
 </html>`;
 }

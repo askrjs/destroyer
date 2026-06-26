@@ -8,12 +8,15 @@ const appDirectory = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [
     askr({
-      optimizeTemplates: true
-    })
+      optimizeTemplates: true,
+    }),
   ],
+  build: {
+    manifest: true,
+  },
   server: {
     fs: {
-      allow: [resolve(appDirectory, ".."), resolve(appDirectory, "../..")]
-    }
-  }
+      allow: [resolve(appDirectory, ".."), resolve(appDirectory, "../..")],
+    },
+  },
 });

@@ -4,20 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev --host 127.0.0.1 --port 5173",
-    "build": "vp build --configLoader native",
-    "preview": "vp preview --host 127.0.0.1 --port 4173",
+    "fmt": "vp fmt",
+    "lint": "vp lint",
+    "dev": "vp dev",
+    "build": "vp build",
+    "preview": "vp preview ",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@askrjs/askr": "file:../../askr",
     "@askrjs/lucide": "file:../../askr-lucide",
     "@askrjs/themes": "file:../../askr-themes",
-    "@askrjs/ui": "file:../../askr-ui",
-    "@destroyer/shared": "file:../shared"
+    "@askrjs/ui": "file:../../askr-ui"
   },
   "devDependencies": {
     "@askrjs/vite": "file:../../askr-vite"
   }
 }
-

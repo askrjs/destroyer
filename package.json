@@ -10,6 +10,8 @@
     "ssg-site"
   ],
   "scripts": {
+    "fmt": "vp fmt",
+    "lint": "vp lint",
     "dev:spa": "npm --workspace @destroyer/spa-app run dev",
     "dev:ssr": "npm --workspace @destroyer/ssr-app run dev",
     "dev:ssg": "npm --workspace @destroyer/ssg-site run dev",
@@ -18,7 +20,8 @@
     "build:ssr": "npm --workspace @destroyer/ssr-app run build",
     "build:ssg": "npm --workspace @destroyer/ssg-site run build",
     "typecheck": "npm --workspaces --if-present run typecheck",
-    "test": "npm run typecheck && npm run build",
+    "smoke": "node scripts/smoke-built-apps.js",
+    "test": "npm run typecheck && npm run build && npm run smoke",
     "pack:local-askr": "node scripts/pack-local-askr.js",
     "install:local-askr": "node scripts/install-local-askr.js",
     "test:release": "node scripts/run-release-matrix.js"

@@ -11,6 +11,9 @@ export default defineConfig({
       optimizeTemplates: true
     })
   ],
+  build: {
+    manifest: true
+  },
   server: {
     fs: {
       allow: [resolve(appDirectory, ".."), resolve(appDirectory, "../..")]
