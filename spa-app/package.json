@@ -14,6 +14,7 @@
   "dependencies": {
     "@askrjs/askr": "file:../../askr",
     "@askrjs/lucide": "file:../../askr-lucide",
+    "@askrjs/logos": "file:../../askr-logos",
     "@askrjs/themes": "file:../../askr-themes",
     "@askrjs/ui": "file:../../askr-ui"
   },

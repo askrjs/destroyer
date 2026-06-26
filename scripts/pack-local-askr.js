@@ -8,7 +8,7 @@ const run = promisify(execFile);
 async function npm(args, options) {
   const { stdout, stderr } = await run("npm", args, {
     maxBuffer: 1024 * 1024 * 10,
-    ...options
+    ...options,
   });
 
   if (stdout.trim()) {
@@ -27,9 +27,8 @@ for (const pkg of askrPackages) {
   console.log(`\nPacking ${pkg.name}`);
   await npm(["run", "build", "--if-present"], { cwd: pkg.directory });
   await npm(["pack", "--pack-destination", packDirectory], {
-    cwd: pkg.directory
+    cwd: pkg.directory,
   });
 }
 
 console.log(`\nPacked AskR tarballs into ${packDirectory}`);
-

@@ -1,9 +1,29 @@
 import { renderToString } from "@askrjs/askr/ssr";
 import { ThemeProvider } from "@askrjs/themes/theme";
-import { scenarios } from "@destroyer/shared";
 import "./style.css";
 
 export const staticPaths = ["/", "/guide", "/reference"];
+
+const scenarios = [
+  {
+    mode: "SSG",
+    label: "Route Generation",
+    intent: "Build static pages from the route manifest.",
+    pressure: ["paths", "assets", "links"],
+  },
+  {
+    mode: "SSG",
+    label: "Hydration",
+    intent: "Hydrate pre-rendered content without replacing it.",
+    pressure: ["markup", "state", "events"],
+  },
+  {
+    mode: "SSG",
+    label: "Nested Assets",
+    intent: "Keep scripts and styles resolving from nested pages.",
+    pressure: ["base paths", "css", "runtime"],
+  },
+];
 
 export type ClientAsset = {
   href: string;
@@ -14,9 +34,7 @@ export type RenderStaticOptions = {
   assets?: ClientAsset[];
 };
 
-const developmentAssets: ClientAsset[] = [
-  { href: "/src/client.tsx", kind: "script" }
-];
+const developmentAssets: ClientAsset[] = [{ href: "/src/client.tsx", kind: "script" }];
 
 function escapeAttribute(value: string) {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
@@ -130,14 +148,14 @@ export function getStaticRoutes() {
     { path: "/", handler: HomePage },
     { path: "/guide", handler: GuidePage },
     { path: "/reference", handler: ReferencePage },
-    { path: "*", handler: NotFoundPage }
+    { path: "*", handler: NotFoundPage },
   ];
 }
 
 export function renderStaticPath(path = "/", options: RenderStaticOptions = {}) {
   const appHtml = renderToString({
     url: path,
-    routes: getStaticRoutes()
+    routes: getStaticRoutes(),
   });
   const assetTags = renderAssetTags(options.assets ?? developmentAssets);
 

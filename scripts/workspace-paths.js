@@ -9,27 +9,26 @@ export const askrPackages = [
   {
     name: "@askrjs/askr",
     directory: resolve(askrWorkspaceRoot, "askr"),
-    tarballPrefix: "askrjs-askr"
+    tarballPrefix: "askrjs-askr",
   },
   {
     name: "@askrjs/ui",
     directory: resolve(askrWorkspaceRoot, "askr-ui"),
-    tarballPrefix: "askrjs-ui"
+    tarballPrefix: "askrjs-ui",
   },
   {
     name: "@askrjs/themes",
     directory: resolve(askrWorkspaceRoot, "askr-themes"),
-    tarballPrefix: "askrjs-themes"
+    tarballPrefix: "askrjs-themes",
   },
   {
     name: "@askrjs/lucide",
     directory: resolve(askrWorkspaceRoot, "askr-lucide"),
-    tarballPrefix: "askrjs-lucide"
+    tarballPrefix: "askrjs-lucide",
   },
   {
     name: "@askrjs/vite",
     directory: resolve(askrWorkspaceRoot, "askr-vite"),
-    tarballPrefix: "askrjs-vite"
-  }
+    tarballPrefix: "askrjs-vite",
+  },
 ];
-

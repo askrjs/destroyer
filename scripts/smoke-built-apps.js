@@ -32,8 +32,7 @@ function publicAssetPath(file) {
 async function readClientAssets(distDirectory) {
   const manifestPath = resolve(distDirectory, ".vite", "manifest.json");
   const manifest = JSON.parse(await readText(manifestPath));
-  const entry =
-    manifest["index.html"] ?? Object.values(manifest).find((item) => item.isEntry);
+  const entry = manifest["index.html"] ?? Object.values(manifest).find((item) => item.isEntry);
 
   assert(entry, `Missing client entry in ${manifestPath}.`);
   assert(entry.file, `Client entry in ${manifestPath} is missing a JS file.`);
@@ -41,24 +40,27 @@ async function readClientAssets(distDirectory) {
   return [
     ...(entry.css ?? []).map((file) => ({
       href: publicAssetPath(file),
-      kind: "style"
+      kind: "style",
     })),
-    { href: publicAssetPath(entry.file), kind: "script" }
+    { href: publicAssetPath(entry.file), kind: "script" },
   ];
 }
 
 async function assertProductionAssets(html, distDirectory, label) {
-  assert(
-    !html.includes("/src/client.tsx"),
-    `${label} still references the dev client entry.`
-  );
+  assert(!html.includes("/src/client.tsx"), `${label} still references the dev client entry.`);
 
   const assetRefs = [...html.matchAll(/(?:href|src)="([^"]+)"/g)]
     .map((match) => match[1])
     .filter((href) => href.startsWith("/assets/"));
 
-  assert(assetRefs.some((href) => href.endsWith(".js")), `${label} has no JS asset.`);
-  assert(assetRefs.some((href) => href.endsWith(".css")), `${label} has no CSS asset.`);
+  assert(
+    assetRefs.some((href) => href.endsWith(".js")),
+    `${label} has no JS asset.`,
+  );
+  assert(
+    assetRefs.some((href) => href.endsWith(".css")),
+    `${label} has no CSS asset.`,
+  );
 
   for (const href of assetRefs) {
     await assertExists(resolve(distDirectory, href.replace(/^\//, "")), `${label} asset`);
@@ -107,18 +109,18 @@ async function assertSsgBuild() {
     {
       label: "SSG /",
       path: resolve(distDirectory, "index.html"),
-      text: "Static site built from AskR route components"
+      text: "Static site built from AskR route components",
     },
     {
       label: "SSG /guide",
       path: resolve(distDirectory, "guide", "index.html"),
-      text: "What this static site should break"
+      text: "What this static site should break",
     },
     {
       label: "SSG /reference",
       path: resolve(distDirectory, "reference", "index.html"),
-      text: "Static rendering matrix"
-    }
+      text: "Static rendering matrix",
+    },
   ];
 
   for (const page of pages) {

@@ -1,0 +1,625 @@
+import { state } from "@askrjs/askr";
+import { currentRoute, navigate } from "@askrjs/askr/router";
+import {
+  BookOpenIcon,
+  BoxIcon,
+  BoxesIcon,
+  CircleUserRoundIcon,
+  Code2Icon,
+  ComponentIcon,
+  FileCode2Icon,
+  FileTextIcon,
+  HomeIcon,
+  InfoIcon,
+  LaptopIcon,
+  LayersIcon,
+  LayoutPanelTopIcon,
+  LogInIcon,
+  LogOutIcon,
+  MailIcon,
+  MoonIcon,
+  PaletteIcon,
+  PanelLeftCloseIcon,
+  PanelLeftIcon,
+  RocketIcon,
+  RouteIcon,
+  ScrollTextIcon,
+  SettingsIcon,
+  Settings2Icon,
+  SunIcon,
+} from "@askrjs/lucide";
+import {
+  Avatar,
+  AvatarFallback,
+  Badge,
+  Block,
+  Brand,
+  BrandLabel,
+  BrandMark,
+  Button,
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Grid,
+  Separator,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  Text,
+} from "@askrjs/themes/components";
+import { useTheme } from "@askrjs/themes/theme";
+import { demoUser, isSignedIn } from "../auth";
+
+const docsItems = [
+  {
+    href: "/docs",
+    label: "Introduction",
+    group: "Get started",
+    icon: BookOpenIcon,
+  },
+  {
+    href: "/docs/installation",
+    label: "Installation",
+    group: "Get started",
+    icon: RocketIcon,
+  },
+  {
+    href: "/docs/routing",
+    label: "Routing",
+    group: "Core concepts",
+    icon: RouteIcon,
+  },
+  {
+    href: "/docs/theming",
+    label: "Theming",
+    group: "Core concepts",
+    icon: PaletteIcon,
+  },
+  {
+    href: "/docs/components",
+    label: "Components",
+    group: "UI",
+    icon: ComponentIcon,
+  },
+  {
+    href: "/docs/forms",
+    label: "Forms",
+    group: "UI",
+    icon: FileTextIcon,
+  },
+  {
+    href: "/docs/layouts",
+    label: "Layouts",
+    group: "Patterns",
+    icon: LayoutPanelTopIcon,
+  },
+  {
+    href: "/docs/settings",
+    label: "Settings shell",
+    group: "Patterns",
+    icon: Settings2Icon,
+  },
+  {
+    href: "/docs/deployment",
+    label: "Deployment",
+    group: "Reference",
+    icon: FileCode2Icon,
+  },
+] as const;
+
+const appNavItems = [
+  { href: "/", label: "Overview", icon: HomeIcon },
+  { href: "/docs", label: "Docs", icon: BookOpenIcon },
+  { href: "/about", label: "About", icon: InfoIcon },
+  { href: "/contact", label: "Contact", icon: MailIcon },
+] as const;
+
+type DocsPath = (typeof docsItems)[number]["href"];
+
+const docsContent: Record<
+  DocsPath,
+  {
+    title: string;
+    eyebrow: string;
+    description: string;
+    badge: string;
+    icon: typeof BookOpenIcon;
+    sections: readonly { title: string; body: string }[];
+    checks: readonly string[];
+  }
+> = {
+  "/docs": {
+    title: "Askr documentation",
+    eyebrow: "Overview",
+    description:
+      "Use Destroyer as a compact reference for composing Askr routes, themes, and app shell primitives.",
+    badge: "Start here",
+    icon: BookOpenIcon,
+    sections: [
+      {
+        title: "What this covers",
+        body: "The docs surface shows a full left-nav documentation pattern using the same app header and footer as the rest of Destroyer.",
+      },
+      {
+        title: "How to read it",
+        body: "Each section is a route-backed page so the sidebar active state, browser history, and app shell all stay in sync.",
+      },
+    ],
+    checks: ["Full app shell remains mounted", "Sidebar uses page background", "Content stays readable on mobile"],
+  },
+  "/docs/installation": {
+    title: "Installation",
+    eyebrow: "Get started",
+    description: "Install the Askr packages used by this sample and wire the default theme.",
+    badge: "Setup",
+    icon: RocketIcon,
+    sections: [
+      {
+        title: "Packages",
+        body: "Destroyer composes @askrjs/askr, @askrjs/themes, @askrjs/ui, @askrjs/lucide, and @askrjs/logos.",
+      },
+      {
+        title: "Theme entry",
+        body: "Importing from @askrjs/themes/components brings the default theme CSS and the component surface together.",
+      },
+    ],
+    checks: ["Use one component import surface", "Keep charts in askr-charts", "Prefer package primitives over local CSS"],
+  },
+  "/docs/routing": {
+    title: "Routing",
+    eyebrow: "Core concepts",
+    description: "Define route-backed pages and keep shell navigation aware of the current path.",
+    badge: "SPA",
+    icon: RouteIcon,
+    sections: [
+      {
+        title: "Route registration",
+        body: "Destroyer registers page routes inside a shared layout group so the header, footer, and route content stay coordinated.",
+      },
+      {
+        title: "Active state",
+        body: "Navigation components read the current route and apply active styling without route-specific CSS.",
+      },
+    ],
+    checks: ["Nested docs routes resolve", "Sidebar active state updates", "Fallback still renders the home page"],
+  },
+  "/docs/theming": {
+    title: "Theming",
+    eyebrow: "Core concepts",
+    description: "Theme tokens provide the Askr visual baseline without app-local stylesheets.",
+    badge: "Tokens",
+    icon: PaletteIcon,
+    sections: [
+      {
+        title: "Default theme",
+        body: "The default theme owns component color, spacing, radius, shadow, focus, and density decisions.",
+      },
+      {
+        title: "Userland control",
+        body: "Apps can still choose layout props and composition, while component-level visual defaults stay reusable.",
+      },
+    ],
+    checks: ["No docs-specific CSS", "Sidebar inherits page background", "Cards use theme elevation"],
+  },
+  "/docs/components": {
+    title: "Components",
+    eyebrow: "UI",
+    description: "Compose interfaces with Askr theme components for polished application surfaces.",
+    badge: "Catalog",
+    icon: ComponentIcon,
+    sections: [
+      {
+        title: "Primitive shape",
+        body: "Buttons, cards, fields, grids, sidebars, and text all expose predictable props for layout and state.",
+      },
+      {
+        title: "Visual contract",
+        body: "The generated CSS should stay close to shadcn expectations for common controls and application surfaces.",
+      },
+    ],
+    checks: ["Buttons support full width", "Card headers align without actions", "Sidebar works in page content"],
+  },
+  "/docs/forms": {
+    title: "Forms",
+    eyebrow: "UI",
+    description: "Use themed fields, labels, inputs, groups, and actions for compact form surfaces.",
+    badge: "Inputs",
+    icon: FileTextIcon,
+    sections: [
+      {
+        title: "Field layout",
+        body: "Field, Label, Input, and InputGroup provide the spacing and focus behavior needed for everyday forms.",
+      },
+      {
+        title: "Auth forms",
+        body: "The login and logout pages show full-screen auth composition without custom CSS.",
+      },
+    ],
+    checks: ["Inputs align with icons", "Buttons stay readable", "Provider logos render correctly"],
+  },
+  "/docs/layouts": {
+    title: "Layouts",
+    eyebrow: "Patterns",
+    description: "Build common page structures with Grid, Block, Page, Header, Footer, and Sidebar.",
+    badge: "Patterns",
+    icon: LayoutPanelTopIcon,
+    sections: [
+      {
+        title: "Page shell",
+        body: "The main layout uses a viewport-height wrapper so short pages push the footer to the bottom.",
+      },
+      {
+        title: "Content grids",
+        body: "Docs and settings use responsive grids to switch between side-by-side and stacked mobile layouts.",
+      },
+    ],
+    checks: ["Footer stays below content", "Mobile stacks predictably", "Text avoids overlap"],
+  },
+  "/docs/settings": {
+    title: "Settings shell",
+    eyebrow: "Patterns",
+    description: "A left-nav settings layout with route-backed sections and app shell chrome.",
+    badge: "Nested",
+    icon: Settings2Icon,
+    sections: [
+      {
+        title: "Left navigation",
+        body: "Settings uses a compact sidebar with grouped icon-and-label nav items.",
+      },
+      {
+        title: "Section content",
+        body: "Each nested path renders realistic settings content while keeping one route component.",
+      },
+    ],
+    checks: ["No sidebar border by default", "No forced muted background", "Active state remains clear"],
+  },
+  "/docs/deployment": {
+    title: "Deployment",
+    eyebrow: "Reference",
+    description: "Build and verify the SPA before publishing or packaging examples.",
+    badge: "Build",
+    icon: FileCode2Icon,
+    sections: [
+      {
+        title: "Production build",
+        body: "Run typecheck and build to catch route, package, and generated CSS regressions.",
+      },
+      {
+        title: "Visual verification",
+        body: "Use screenshots at desktop and mobile sizes for routes with dense layout or shell composition.",
+      },
+    ],
+    checks: ["Typecheck passes", "Build passes", "Visual checks cover desktop and mobile"],
+  },
+};
+
+function getActivePath(path: string): DocsPath {
+  return docsItems.some((item) => item.href === path) ? (path as DocsPath) : "/docs";
+}
+
+function getNextThemeName(theme: string): string {
+  if (theme === "light") return "dark";
+  if (theme === "dark") return "system";
+  return "light";
+}
+
+function getThemeLabel(theme: string): string {
+  if (theme === "dark") return "Dark";
+  if (theme === "system") return "System";
+  return "Light";
+}
+
+function getThemeIcon(theme: string) {
+  if (theme === "dark") return MoonIcon;
+  if (theme === "system") return LaptopIcon;
+  return SunIcon;
+}
+
+function ProfileDropdown({
+  currentTheme,
+  labeled,
+  theme,
+}: {
+  currentTheme: string;
+  labeled?: boolean;
+  theme: ReturnType<typeof useTheme>;
+}) {
+  const ThemeIcon = getThemeIcon(currentTheme);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label="Open profile menu"
+        data-slot="sidebar-menu-button"
+      >
+        <CircleUserRoundIcon size={16} aria-hidden="true" />
+        {labeled && <Text as="span" size="sm" weight="medium">Profile</Text>}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="right" align="end" sideOffset={10}>
+        <DropdownMenuLabel data-variant="account">
+          <Avatar>
+            <AvatarFallback>{demoUser.initials}</AvatarFallback>
+          </Avatar>
+          <Block direction="column" gap="0">
+            <Text as="span" weight="semibold" size="sm">{demoUser.name}</Text>
+            <Text as="span" tone="muted" size="sm">{demoUser.email}</Text>
+          </Block>
+        </DropdownMenuLabel>
+        <DropdownMenuItem onSelect={() => navigate("/profile")}>
+          <CircleUserRoundIcon size={16} aria-hidden="true" />
+          Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate("/settings")}>
+          <SettingsIcon size={16} aria-hidden="true" />
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => theme.setTheme(getNextThemeName(currentTheme))}>
+          <ThemeIcon size={16} aria-hidden="true" />
+          Theme: {getThemeLabel(currentTheme)}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem data-variant="destructive" onSelect={() => navigate("/logout")}>
+          <LogOutIcon size={16} aria-hidden="true" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function DocsSidebar({
+  activePath,
+  collapsed,
+  onToggle,
+}: {
+  activePath: DocsPath;
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  const groups = ["Get started", "Core concepts", "UI", "Patterns", "Reference"] as const;
+  const signedIn = isSignedIn();
+  const theme = useTheme();
+  const currentTheme = theme.theme();
+
+  return (
+    <Sidebar
+      width="full"
+      height="screen"
+      minHeight="screen"
+      maxHeight="screen"
+      padding="md"
+      shrink={false}
+      sticky
+      top="0"
+    >
+      <SidebarHeader>
+        <Block hide={{ base: false, lg: !collapsed }} gap="xs" align="center">
+          <BrandMark aria-hidden="true">
+            <BoxIcon size={16} />
+          </BrandMark>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Expand docs navigation"
+            onPress={onToggle}
+          >
+            <PanelLeftIcon size={16} aria-hidden="true" />
+          </Button>
+        </Block>
+        <Block hide={{ base: true, lg: collapsed }} direction="row" align="center" justify="between" gap="sm">
+          <Brand>
+            <BrandMark aria-hidden="true">
+              <BoxIcon size={16} />
+            </BrandMark>
+            <Block>
+              <BrandLabel>Destroyer</BrandLabel>
+            </Block>
+          </Brand>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Collapse docs navigation"
+            onPress={onToggle}
+          >
+            <PanelLeftCloseIcon size={16} aria-hidden="true" />
+          </Button>
+        </Block>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {appNavItems.map((item) => {
+                const Icon = item.icon;
+                const active = item.href === "/docs";
+
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton active={active} onClick={() => navigate(item.href)}>
+                      <Icon size={16} aria-hidden="true" />
+                      <Block hide={{ base: true, lg: collapsed }}>
+                        <Text as="span" size="sm" weight="medium">{item.label}</Text>
+                      </Block>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <Separator decorative />
+        {groups.map((group) => (
+          <SidebarGroup key={group}>
+            <Block hide={{ base: true, lg: collapsed }}>
+              <SidebarGroupLabel>{group}</SidebarGroupLabel>
+            </Block>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {docsItems
+                  .filter((item) => item.group === group)
+                  .map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          active={activePath === item.href}
+                          onClick={() => navigate(item.href)}
+                        >
+                          <Icon size={16} aria-hidden="true" />
+                          <Block hide={{ base: true, lg: collapsed }}>
+                            <Text as="span" size="sm" weight="medium">{item.label}</Text>
+                          </Block>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            {signedIn ? (
+              <>
+                <Block width="full" hide={{ base: false, lg: !collapsed }}>
+                  <ProfileDropdown currentTheme={currentTheme} theme={theme} />
+                </Block>
+                <Block width="full" hide={{ base: true, lg: collapsed }}>
+                  <ProfileDropdown currentTheme={currentTheme} labeled theme={theme} />
+                </Block>
+              </>
+            ) : (
+              <SidebarMenuButton onClick={() => navigate("/login")}>
+                <LogInIcon size={16} aria-hidden="true" />
+                <Block hide={{ base: true, lg: collapsed }}>
+                  <Text as="span" size="sm" weight="medium">Sign in</Text>
+                </Block>
+              </SidebarMenuButton>
+            )}
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
+function DocsArticle({ activePath }: { activePath: DocsPath }) {
+  const content = docsContent[activePath];
+  const Icon = content.icon;
+
+  return (
+    <Block gap="lg">
+      <Card variant="raised">
+        <CardHeader>
+          <CardTitle>{content.title}</CardTitle>
+          <CardDescription>{content.description}</CardDescription>
+          <CardAction>
+            <Badge variant="secondary">{content.badge}</Badge>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <Block gap="lg">
+            <Block direction="row" align="center" gap="md">
+              <Block center padding="sm" radius="md" background="selected">
+                <Icon size={20} aria-hidden="true" />
+              </Block>
+              <Block gap="0">
+                <Text tone="muted" size="sm">{content.eyebrow}</Text>
+                <Text weight="medium">Route-backed documentation page</Text>
+              </Block>
+            </Block>
+            <Separator decorative />
+            <Grid columns={{ base: 1, md: 2 }} gap="lg">
+              {content.sections.map((section) => (
+                <Block key={section.title} gap="sm">
+                  <Text as="strong" weight="semibold">{section.title}</Text>
+                  <Text tone="muted">{section.body}</Text>
+                </Block>
+              ))}
+            </Grid>
+          </Block>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Checklist</CardTitle>
+          <CardDescription>What this documentation section exercises.</CardDescription>
+          <CardAction>
+            <ScrollTextIcon size={18} aria-hidden="true" />
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <Block gap="sm">
+            {content.checks.map((check) => (
+              <Block key={check} direction="row" align="center" gap="sm">
+                <LayersIcon size={16} aria-hidden="true" />
+                <Text>{check}</Text>
+              </Block>
+            ))}
+          </Block>
+        </CardContent>
+      </Card>
+    </Block>
+  );
+}
+
+export function DocsPage() {
+  const activePath = getActivePath(currentRoute().path);
+  const [collapsed, setCollapsed] = state(false);
+
+  return (
+    <Block as="main" grow width="full" background="canvas">
+      <Grid
+        columns={{
+          base: "3.75rem minmax(0, 1fr)",
+          lg: collapsed() ? "4.5rem minmax(0, 1fr)" : "16rem minmax(0, 1fr)",
+        }}
+        gap="0"
+        align="stretch"
+      >
+        <DocsSidebar
+          activePath={activePath}
+          collapsed={collapsed()}
+          onToggle={() => setCollapsed(!collapsed())}
+        />
+        <Block padding={{ base: "md", lg: "xl" }} gap="lg">
+          <Block direction={{ base: "column", md: "row" }} align={{ base: "start", md: "center" }} justify="between" gap="md">
+            <Block gap="xs">
+              <Text as="strong" weight="bold" size="lg">Docs</Text>
+              <Text tone="muted">
+                Full-width documentation shell with a collapsible left navigation.
+              </Text>
+            </Block>
+            <Button type="button" variant="outline" size="sm" onPress={() => navigate("/settings")}>
+              <BoxesIcon size={16} aria-hidden="true" />
+              Open settings
+            </Button>
+          </Block>
+          <DocsArticle activePath={activePath} />
+        </Block>
+      </Grid>
+    </Block>
+  );
+}

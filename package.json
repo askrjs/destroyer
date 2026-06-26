@@ -2,13 +2,12 @@
   "name": "destroyer",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "workspaces": [
-    "shared",
     "spa-app",
     "ssr-app",
     "ssg-site"
   ],
+  "type": "module",
   "scripts": {
     "fmt": "vp fmt",
     "lint": "vp lint",

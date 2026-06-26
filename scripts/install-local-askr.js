@@ -8,7 +8,7 @@ const run = promisify(execFile);
 const entries = await readdir(packDirectory);
 const tarballs = askrPackages.map((pkg) => {
   const match = entries.find(
-    (entry) => entry.startsWith(`${pkg.tarballPrefix}-`) && entry.endsWith(".tgz")
+    (entry) => entry.startsWith(`${pkg.tarballPrefix}-`) && entry.endsWith(".tgz"),
   );
 
   if (!match) {
@@ -23,8 +23,8 @@ const { stdout, stderr } = await run(
   ["install", "--save-dev", "--workspaces=false", ...tarballs],
   {
     cwd: repoRoot,
-    maxBuffer: 1024 * 1024 * 10
-  }
+    maxBuffer: 1024 * 1024 * 10,
+  },
 );
 
 if (stdout.trim()) {
@@ -34,4 +34,3 @@ if (stdout.trim()) {
 if (stderr.trim()) {
   process.stderr.write(stderr);
 }
-

@@ -1,6 +1,29 @@
 import { Button } from "@askrjs/ui";
 import { ThemeProvider } from "@askrjs/themes/theme";
-import { metrics, scenarios } from "@destroyer/shared";
+
+const metrics = [
+  { label: "Requests", value: "128k" },
+  { label: "Latency", value: "42ms" },
+  { label: "Errors", value: "0.02%" },
+];
+
+const scenarios = [
+  {
+    mode: "SSR",
+    label: "Hydration",
+    intent: "Validate server markup can hydrate without route drift.",
+  },
+  {
+    mode: "SSR",
+    label: "Fallback",
+    intent: "Keep unmatched routes observable through a rendered fallback.",
+  },
+  {
+    mode: "SSR",
+    label: "Actions",
+    intent: "Exercise interactive UI from server-rendered content.",
+  },
+];
 
 function SsrShell({ children }: { children?: unknown }) {
   return (
@@ -71,6 +94,6 @@ export function getSsrRoutes() {
   return [
     { path: "/", handler: OverviewPage },
     { path: "/incidents", handler: IncidentsPage },
-    { path: "*", handler: MissingPage }
+    { path: "*", handler: MissingPage },
   ];
 }

@@ -11,7 +11,7 @@ if (!root) {
 
 const options = {
   root,
-  routes: getSsrRoutes()
+  routes: getSsrRoutes(),
 };
 
 if (root.hasChildNodes()) {

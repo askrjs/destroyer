@@ -18,7 +18,7 @@ async function readClientAssets() {
 
   return [
     ...(entry.css ?? []).map((file) => ({ href: `/${file}`, kind: "style" })),
-    { href: `/${entry.file}`, kind: "script" }
+    { href: `/${entry.file}`, kind: "script" },
   ];
 }
 

@@ -11,9 +11,7 @@ export type RenderOptions = {
   assets?: ClientAsset[];
 };
 
-const developmentAssets: ClientAsset[] = [
-  { href: "/src/client.tsx", kind: "script" }
-];
+const developmentAssets: ClientAsset[] = [{ href: "/src/client.tsx", kind: "script" }];
 
 function escapeAttribute(value: string) {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
@@ -33,7 +31,7 @@ function renderAssetTags(assets: ClientAsset[]) {
 export function render(url = "/", options: RenderOptions = {}) {
   const appHtml = renderToString({
     url,
-    routes: getSsrRoutes()
+    routes: getSsrRoutes(),
   });
   const assetTags = renderAssetTags(options.assets ?? developmentAssets);
 
