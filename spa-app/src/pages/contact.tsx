@@ -1,4 +1,5 @@
 import { state } from "@askrjs/askr";
+import { Link } from "@askrjs/askr/router";
 import { CheckCircle2Icon, MailIcon, MessageSquareIcon, SendIcon, XIcon } from "@askrjs/lucide";
 import {
   Badge,
@@ -12,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
   Field,
+  FieldError,
   FieldHint,
   Input,
   InputGroup,
@@ -21,25 +23,32 @@ import {
   PageHeader,
   Separator,
   Textarea,
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
 } from "@askrjs/themes/components";
-
-const contactChecks = [
-  "Route transition keeps the shell mounted",
-  "Field spacing follows theme density",
-  "Buttons and inputs inherit the active mode",
-] as const;
+import { contactChecks } from "../features/contact/contact-data";
 
 export function ContactPage() {
   const toastOpen = state(false);
+  const messageError = state(false);
+
+  const handleSendSample = (event?: { preventDefault?: () => void }) => {
+    event?.preventDefault?.();
+    const message =
+      typeof document === "undefined"
+        ? ""
+        : ((document.getElementById("contact-message") as HTMLTextAreaElement | null)?.value ?? "");
+
+    if (message.trim().length === 0) {
+      toastOpen.set(false);
+      messageError.set(true);
+      return;
+    }
+
+    messageError.set(false);
+    toastOpen.set(true);
+  };
 
   return (
-    <ToastProvider duration={4000}>
+    <>
       <Page>
         <PageHeader
           title="Contact"
@@ -60,7 +69,16 @@ export function ContactPage() {
                 </CardAction>
               </CardHeader>
               <CardContent>
-                <Block as="form" direction="column" gap="md">
+                <Block
+                  as="form"
+                  direction="column"
+                  gap="md"
+                  onReset={() => {
+                    messageError.set(false);
+                    toastOpen.set(false);
+                  }}
+                  onSubmit={handleSendSample}
+                >
                   <Field>
                     <Label for="contact-name">Name</Label>
                     <Input id="contact-name" name="name" placeholder="Jane Developer" />
@@ -79,18 +97,34 @@ export function ContactPage() {
                       />
                     </InputGroup>
                   </Field>
-                  <Field>
+                  <Field invalid={messageError()}>
                     <Label for="contact-message">Message</Label>
                     <Textarea
                       id="contact-message"
                       name="message"
                       placeholder="What should this sample cover next?"
                       rows={5}
+                      aria-describedby={
+                        messageError()
+                          ? "contact-message-error contact-message-hint"
+                          : "contact-message-hint"
+                      }
+                      aria-invalid={messageError() ? "true" : undefined}
+                      onInput={() => {
+                        if (messageError()) {
+                          messageError.set(false);
+                        }
+                      }}
                     />
-                    <FieldHint>This form is presentational for the destroyer sample.</FieldHint>
+                    <FieldHint id="contact-message-hint">
+                      This form is presentational for the destroyer sample.
+                    </FieldHint>
+                    {messageError() ? (
+                      <FieldError id="contact-message-error">Message is required.</FieldError>
+                    ) : null}
                   </Field>
                   <ButtonGroup attached={false}>
-                    <Button type="button" variant="primary" onPress={() => toastOpen.set(true)}>
+                    <Button type="submit" variant="primary">
                       <SendIcon size={16} aria-hidden="true" />
                       Send sample
                     </Button>
@@ -127,17 +161,40 @@ export function ContactPage() {
           </Block>
         </Block>
       </Page>
-      <ToastViewport />
-      <Toast open={toastOpen()} onOpenChange={(open) => toastOpen.set(open)} variant="success">
-        <span data-slot="toast-icon" aria-hidden="true">
-          <CheckCircle2Icon size={16} />
-        </span>
-        <ToastTitle>Message queued</ToastTitle>
-        <ToastDescription>The note is ready for review in the support queue.</ToastDescription>
-        <ToastClose aria-label="Dismiss notification">
-          <XIcon size={14} aria-hidden="true" />
-        </ToastClose>
-      </Toast>
-    </ToastProvider>
+      {toastOpen() ? (
+        <div data-slot="toast-viewport">
+          <div
+            data-slot="toast"
+            data-state="open"
+            data-variant="success"
+            role="status"
+            aria-live="polite"
+            aria-labelledby="contact-toast-title"
+            aria-describedby="contact-toast-description"
+          >
+            <span data-slot="toast-icon" aria-hidden="true">
+              <CheckCircle2Icon size={16} />
+            </span>
+            <div id="contact-toast-title" data-slot="toast-title">
+              Message queued
+            </div>
+            <div id="contact-toast-description" data-slot="toast-description">
+              The note is ready for review in the support queue.
+            </div>
+            <Link href="/logs" data-slot="toast-action">
+              Review logs
+            </Link>
+            <button
+              type="button"
+              data-slot="toast-close"
+              aria-label="Dismiss notification"
+              onClick={() => toastOpen.set(false)}
+            >
+              <XIcon size={14} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

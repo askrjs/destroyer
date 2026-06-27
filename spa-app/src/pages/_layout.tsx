@@ -16,6 +16,7 @@ import {
   Brand,
   BrandLabel,
   BrandMark,
+  Button,
   Container,
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +44,7 @@ import { demoUser, isSignedIn } from "../auth";
 function ProfileMenu() {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger aria-label="Open profile menu" data-variant="ghost" data-size="icon">
+      <DropdownMenuTrigger aria-label="Open profile menu" variant="ghost" size="icon">
         <CircleUserRoundIcon size={18} aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8}>
@@ -73,7 +74,7 @@ function ProfileMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem data-variant="destructive" asChild>
+        <DropdownMenuItem variant="destructive" asChild>
           <Link href="/logout">
             <LogOutIcon size={16} aria-hidden="true" />
             Sign out
@@ -98,21 +99,19 @@ function AuthNavControl() {
   return (
     <>
       <Block hide={{ base: true, md: false }}>
-        <Link href="/login" data-slot="button" data-variant="outline" data-size="sm">
-          <LogInIcon size={16} aria-hidden="true" />
-          Sign in
-        </Link>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/login">
+            <LogInIcon size={16} aria-hidden="true" />
+            Sign in
+          </Link>
+        </Button>
       </Block>
       <Block hide={{ base: false, md: true }}>
-        <Link
-          href="/login"
-          data-slot="button"
-          data-variant="outline"
-          data-size="icon"
-          aria-label="Sign in"
-        >
-          <LogInIcon size={16} aria-hidden="true" />
-        </Link>
+        <Button asChild variant="outline" size="icon">
+          <Link href="/login" aria-label="Sign in">
+            <LogInIcon size={16} aria-hidden="true" />
+          </Link>
+        </Button>
       </Block>
     </>
   );
@@ -141,11 +140,9 @@ export function PageLayout({ children }: { children?: unknown }) {
                   </Brand>
                 </NavBrand>
                 <NavGroup>
-                  <NavLink href="/" match="exact">
-                    Overview
-                  </NavLink>
                   <NavLink href="/docs">Docs</NavLink>
                   <NavLink href="/logs">Logs</NavLink>
+                  <NavLink href="/metrics">Metrics</NavLink>
                   <Block hide={{ base: true, md: false }}>
                     <NavLink href="/about">About</NavLink>
                   </Block>

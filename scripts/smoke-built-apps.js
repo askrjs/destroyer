@@ -79,8 +79,8 @@ async function assertSpaBuild() {
   assert(scriptAsset, "SPA manifest is missing a script asset.");
 
   const script = await readText(resolve(distDirectory, scriptAsset.href.replace(/^\//, "")));
-  assertIncludes(script, "Interactive release dashboard", "SPA client bundle");
-  assertIncludes(script, "AskR surfaces under test", "SPA client bundle");
+  assertIncludes(script, "Design system baseline", "SPA client bundle");
+  assertIncludes(script, "A small Askr workspace showing routing", "SPA client bundle");
 }
 
 async function assertSsrBuild() {

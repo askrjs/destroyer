@@ -16,7 +16,7 @@ Destroyer is a realistic integration app for hardening `@askrjs/themes` in norma
    - Keep copy and layout domain-specific.
    - Reuse `@askrjs/themes/components` and existing page primitives.
    - Keep responsive props readable; prefer named helpers such as `rowFrom` when they express the layout directly.
-   - Use `data-tooltip` with an explicit `data-tooltip-side` for simple icon-only hints.
+   - Use component props such as `SidebarMenuButton tooltip` and explicit `tooltipSide` before reaching for raw data attributes.
 
 4. Verify functionality with focused tests.
    - If the underlying primitive changed, run the focused `askr-ui` browser test for that primitive.
@@ -56,7 +56,7 @@ Current coverage:
 - `Select`: Settings > Preferences > Display defaults.
 - `Checkbox`: Settings > Notifications > Delivery channels.
 - `RadioGroup`: Settings > Workspace > Default role.
-- `data-tooltip`: Docs collapsed navigation and rail controls.
+- `Sidebar` tooltip props: Docs collapsed navigation and rail controls.
 - `AlertDialog`: Settings > Workspace > Invite links.
 - `ScrollArea`: Settings > Security > Security activity.
 - `Accordion`: Docs article verification notes.

@@ -19,8 +19,9 @@
     "build:ssr": "npm --workspace @destroyer/ssr-app run build",
     "build:ssg": "npm --workspace @destroyer/ssg-site run build",
     "typecheck": "npm --workspaces --if-present run typecheck",
+    "check:spa-smells": "node scripts/check-spa-userland-smells.js",
     "smoke": "node scripts/smoke-built-apps.js",
-    "test": "npm run typecheck && npm run build && npm run smoke",
+    "test": "npm run typecheck && npm run build && npm run check:spa-smells && npm run smoke",
     "pack:local-askr": "node scripts/pack-local-askr.js",
     "install:local-askr": "node scripts/install-local-askr.js",
     "test:release": "node scripts/run-release-matrix.js"

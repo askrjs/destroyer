@@ -25,7 +25,8 @@ import {
 import { demoUser, signIn } from "../auth";
 
 export function LoginPage() {
-  const handleSignIn = () => {
+  const handleSignIn = (event?: { preventDefault?: () => void }) => {
+    event?.preventDefault?.();
     signIn();
     navigate("/");
   };
@@ -48,7 +49,7 @@ export function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Block as="form" direction="column" gap="md">
+              <Block as="form" direction="column" gap="md" onSubmit={handleSignIn}>
                 <Field>
                   <Label for="login-email">Email</Label>
                   <InputGroup>
@@ -78,18 +79,18 @@ export function LoginPage() {
                     />
                   </InputGroup>
                 </Field>
-                <Button type="button" variant="primary" data-width="full" onPress={handleSignIn}>
+                <Button type="submit" variant="primary" width="full">
                   Sign in
                 </Button>
                 <Separator decorative />
                 <Text tone="muted" size="sm">
                   Or continue with
                 </Text>
-                <Button type="button" variant="outline" data-width="full" onPress={handleSignIn}>
+                <Button type="button" variant="outline" width="full" onPress={handleSignIn}>
                   <GoogleLogo size={16} aria-hidden="true" />
                   Login with Google
                 </Button>
-                <Button type="button" variant="outline" data-width="full" onPress={handleSignIn}>
+                <Button type="button" variant="outline" width="full" onPress={handleSignIn}>
                   <MicrosoftLogo size={16} aria-hidden="true" />
                   Login with Microsoft
                 </Button>

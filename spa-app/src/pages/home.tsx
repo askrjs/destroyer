@@ -22,6 +22,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DataTable,
   Field,
   Grid,
   Input,
@@ -41,6 +42,8 @@ import {
   PopoverPortal,
   PopoverTrigger,
   Progress,
+  ProgressCircle,
+  ProgressCircleIndicator,
   ProgressIndicator,
   Separator,
   Stat,
@@ -56,42 +59,7 @@ import {
   Text,
 } from "@askrjs/themes/components";
 import { ThemePicker } from "@askrjs/themes/theme";
-
-const metrics = [
-  {
-    label: "Routes",
-    value: "3",
-    detail: "SPA paths share one mounted shell.",
-    badge: "Live",
-    variant: "success",
-  },
-  {
-    label: "Theme modes",
-    value: "3",
-    detail: "Light, dark, and system are token-driven.",
-    badge: "Synced",
-    variant: "info",
-  },
-  {
-    label: "Entrypoint",
-    value: "1",
-    detail: "Askr components import from one package surface.",
-    badge: "Simple",
-    variant: "secondary",
-  },
-] as const;
-
-const packages = [
-  { name: "@askrjs/themes", role: "Theme CSS", status: "Aligned", variant: "success" },
-  { name: "@askrjs/ui", role: "Primitives", status: "Mounted", variant: "info" },
-  { name: "@askrjs/lucide", role: "Icons", status: "Ready", variant: "secondary" },
-] as const;
-
-const checks = [
-  "Active navigation is route-aware",
-  "Theme state persists through the provider",
-  "Cards, tables, forms, badges, and progress share one theme",
-] as const;
+import { checks, metrics, packages } from "../features/home/home-data";
 
 export function HomePage() {
   return (
@@ -101,13 +69,15 @@ export function HomePage() {
         description="A small Askr workspace showing routing, theming, and component composition in one app surface."
         actions={
           <ButtonGroup attached={false}>
-            <Link href="/about" data-slot="button" data-variant="primary">
-              <SparklesIcon size={16} aria-hidden="true" />
-              Review app
-            </Link>
-            <Link href="/contact" data-slot="button" data-variant="outline">
-              Open form
-            </Link>
+            <Button asChild variant="primary">
+              <Link href="/about">
+                <SparklesIcon size={16} aria-hidden="true" />
+                Review app
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/contact">Open form</Link>
+            </Button>
           </ButtonGroup>
         }
       />
@@ -166,21 +136,13 @@ export function HomePage() {
             <CardDescription>What this sample exercises.</CardDescription>
             <CardAction>
               <Popover>
-                <PopoverTrigger
-                  aria-label="View coverage details"
-                  data-slot="button"
-                  data-variant="ghost"
-                  data-size="icon"
-                >
-                  <GaugeIcon size={18} aria-hidden="true" />
-                </PopoverTrigger>
+                <Button asChild variant="ghost" size="icon">
+                  <PopoverTrigger aria-label="View coverage details">
+                    <GaugeIcon size={18} aria-hidden="true" />
+                  </PopoverTrigger>
+                </Button>
                 <PopoverPortal>
-                  <PopoverContent
-                    side="bottom"
-                    align="end"
-                    sideOffset={8}
-                    style={{ inlineSize: "min(20rem, calc(100vw - 2rem))" }}
-                  >
+                  <PopoverContent side="bottom" align="end" sideOffset={8} width="md">
                     <Text as="strong" weight="semibold" size="sm">
                       Coverage details
                     </Text>
@@ -201,6 +163,29 @@ export function HomePage() {
           </CardHeader>
           <CardContent>
             <Block direction="column" gap="md">
+              <Block
+                direction="row"
+                align="center"
+                gap="md"
+                background="muted"
+                padding="md"
+                radius="md"
+              >
+                <ProgressCircle aria-label="Overall component coverage" value={89}>
+                  <ProgressCircleIndicator />
+                </ProgressCircle>
+                <Block direction="column" gap="xs">
+                  <Block direction="row" align="baseline" gap="sm">
+                    <Text as="strong" size="lg" weight="semibold" numeric="tabular">
+                      89%
+                    </Text>
+                    <Text weight="medium">Overall coverage</Text>
+                  </Block>
+                  <Text tone="muted" size="sm">
+                    Routes, overlays, forms, and virtualized surfaces are exercised together.
+                  </Text>
+                </Block>
+              </Block>
               <Block direction="column" gap="xs">
                 <Block direction="row" align="center" justify="between" gap="md">
                   <Text as="span" tone="muted" size="sm">
@@ -281,7 +266,7 @@ export function HomePage() {
             </CardAction>
           </CardHeader>
           <CardContent>
-            <div data-slot="data-table">
+            <DataTable>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -302,7 +287,7 @@ export function HomePage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
+            </DataTable>
           </CardContent>
         </Card>
 

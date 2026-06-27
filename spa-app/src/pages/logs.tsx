@@ -1,5 +1,5 @@
 import { state } from "@askrjs/askr";
-import { createQuery, queryScope } from "@askrjs/askr/data";
+import { createQuery } from "@askrjs/askr/data";
 import { documentVisible, routeActive, timer } from "@askrjs/askr/resources";
 import { Link } from "@askrjs/askr/router";
 import {
@@ -7,9 +7,9 @@ import {
   CirclePauseIcon,
   CirclePlayIcon,
   FileCode2Icon,
-  InfoIcon,
   ListChecksIcon,
   RouteIcon,
+  SearchIcon,
   ServerCogIcon,
   TablePropertiesIcon,
 } from "@askrjs/lucide";
@@ -24,361 +24,60 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DebouncedInput,
+  EmptyState,
   Grid,
+  InputGroup,
+  InputGroupText,
   Page,
   PageHeader,
-  Popover,
-  PopoverContent,
-  PopoverPortal,
-  PopoverTrigger,
   Separator,
   Stat,
   StatDescription,
   StatLabel,
   StatValue,
   Text,
+  Toolbar,
   VirtualList,
-  type VirtualListRowComponentProps,
   VirtualTable,
-  type VirtualTableColumn,
 } from "@askrjs/themes/components";
+import { logColumns } from "../features/logs/log-table-columns";
+import { LogStreamRow } from "../features/logs/log-stream-row";
+import {
+  latestErrors,
+  liveLogFallbackEntries,
+  logEntries,
+  warningCount,
+} from "../features/logs/logs-data";
+import {
+  fetchLiveLogs,
+  liveLogQueryKey,
+  liveLogScope,
+  type LiveLogSnapshot,
+} from "../features/logs/live-logs-resource";
 
-type LogSeverity = "debug" | "info" | "warning" | "error";
+function matchesLogFilter(entry: (typeof logEntries)[number], filter: string): boolean {
+  const query = filter.trim().toLowerCase();
+  if (!query) return true;
 
-type LogEntry = {
-  id: string;
-  time: string;
-  service: string;
-  route: string;
-  severity: LogSeverity;
-  latency: number;
-  requestId: string;
-  message: string;
-};
-
-type LiveLogSnapshot = {
-  entries: LogEntry[];
-  sequence: number;
-};
-
-const LIVE_LOG_LIMIT = 80;
-const LIVE_LOG_START_INDEX = 9600;
-const liveLogScope = queryScope("destroyer.logs");
-const liveLogQueryKey = liveLogScope.key("live");
-
-const services = ["router", "theme", "auth", "billing", "docs", "settings"] as const;
-const routes = [
-  "/docs",
-  "/docs/components",
-  "/settings/security",
-  "/settings/preferences",
-  "/profile/activity",
-  "/contact",
-] as const;
-const messages = [
-  "Route transition committed without remounting shell state.",
-  "Theme token read completed from local storage.",
-  "Virtualized viewport retained its scroll anchor.",
-  "Security activity table refreshed from local cache.",
-  "Profile route badge metadata resolved for hover details.",
-  "Settings form state synchronized with route segment.",
-  "Docs rail collapsed state restored before first paint.",
-  "Contact workflow queued toast confirmation.",
-] as const;
-
-function getSeverity(index: number): LogSeverity {
-  if (index % 29 === 0) return "error";
-  if (index % 11 === 0) return "warning";
-  if (index % 5 === 0) return "debug";
-  return "info";
+  return [
+    entry.id,
+    entry.time,
+    entry.service,
+    entry.route,
+    entry.severity,
+    entry.requestId,
+    entry.message,
+  ]
+    .join(" ")
+    .toLowerCase()
+    .includes(query);
 }
-
-function getBadgeVariant(severity: LogSeverity) {
-  if (severity === "error") return "danger";
-  if (severity === "warning") return "warning";
-  if (severity === "debug") return "secondary";
-  return "info";
-}
-
-function getSeverityTone(severity: LogSeverity) {
-  if (severity === "error") return "danger";
-  if (severity === "warning") return "warning";
-  if (severity === "debug") return "muted";
-  return "info";
-}
-
-function createLogEntry(index: number): LogEntry {
-  const service = services[index % services.length];
-  const route = routes[(index * 2) % routes.length];
-  const minute = String(58 - (index % 55)).padStart(2, "0");
-  const second = String((index * 7) % 60).padStart(2, "0");
-
-  return {
-    id: `evt-${String(84720 + index)}`,
-    time: `09:${minute}:${second}`,
-    service,
-    route,
-    severity: getSeverity(index),
-    latency: 38 + ((index * 17) % 220),
-    requestId: `req_${(index * 7919).toString(16).padStart(6, "0")}`,
-    message: messages[index % messages.length],
-  };
-}
-
-function formatLocalLogTime(timestamp: number): string {
-  const date = new Date(timestamp);
-  const hour = String(date.getHours()).padStart(2, "0");
-  const minute = String(date.getMinutes()).padStart(2, "0");
-  const second = String(date.getSeconds()).padStart(2, "0");
-
-  return `${hour}:${minute}:${second}`;
-}
-
-function createLiveLogEntry(index: number, timestamp: number): LogEntry {
-  return {
-    ...createLogEntry(index),
-    time: formatLocalLogTime(timestamp),
-  };
-}
-
-function createLiveLogWindow(sequence: number, timestamp: number): LogEntry[] {
-  const snapshotStart = LIVE_LOG_START_INDEX + sequence * LIVE_LOG_LIMIT;
-
-  return Array.from({ length: LIVE_LOG_LIMIT }, (_, index) =>
-    createLiveLogEntry(snapshotStart + index, timestamp - index * 1000),
-  );
-}
-
-const logEntries: LogEntry[] = Array.from({ length: 420 }, (_, index) => createLogEntry(index));
-const liveLogFallbackEntries = createLiveLogWindow(0, Date.now());
-
-function createAbortError(): Error {
-  const error = new Error("The operation was aborted.");
-  error.name = "AbortError";
-  return error;
-}
-
-function waitForLiveLogDelay(ms: number, signal: AbortSignal): Promise<void> {
-  if (signal.aborted) {
-    return Promise.reject(createAbortError());
-  }
-
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      signal.removeEventListener("abort", handleAbort);
-      resolve();
-    }, ms);
-
-    function handleAbort() {
-      clearTimeout(timeout);
-      reject(createAbortError());
-    }
-
-    signal.addEventListener("abort", handleAbort, { once: true });
-  });
-}
-
-let liveLogSequence = 0;
-
-async function fetchLiveLogs({ signal }: { signal: AbortSignal }): Promise<LiveLogSnapshot> {
-  await waitForLiveLogDelay(120 + (liveLogSequence % 4) * 25, signal);
-
-  liveLogSequence += 1;
-  const timestamp = Date.now();
-
-  return {
-    sequence: liveLogSequence,
-    entries: createLiveLogWindow(liveLogSequence, timestamp),
-  };
-}
-
-const latestErrors = logEntries.filter((entry) => entry.severity === "error").length;
-const warningCount = logEntries.filter((entry) => entry.severity === "warning").length;
-
-function virtualNode(node: unknown): never {
-  return node as never;
-}
-
-function LogStreamRow({ item }: VirtualListRowComponentProps<LogEntry>): never {
-  return virtualNode(
-    <Block
-      width="full"
-      direction="row"
-      align="stretch"
-      data-severity={item.severity}
-      aria-label={`${item.severity} ${item.service} event at ${item.time}`}
-    >
-      <Block width="full" direction="row" align="center" paddingX="md" paddingY="sm">
-        <Block gap="xs" grow>
-          <Block direction="row" align="center" justify="between" gap="sm">
-            <Block direction="row" align="center" gap="sm" grow>
-              <Block as="span" shrink={false}>
-                <Text as="span" tone={getSeverityTone(item.severity)} weight="semibold" size="sm">
-                  {item.severity}
-                </Text>
-              </Block>
-              <Text size="sm" truncate>
-                {item.message}
-              </Text>
-            </Block>
-            <Block as="span" shrink={false}>
-              <Text as="span" tone="muted" size="sm" font="mono" numeric="tabular">
-                {item.time}
-              </Text>
-            </Block>
-          </Block>
-
-          <Block direction="row" align="center" justify="between" gap="sm">
-            <Block direction="row" align="center" gap="sm" grow>
-              <Block as="span" shrink={false}>
-                <Text as="span" tone="muted" size="sm" font="mono">
-                  {item.service}
-                </Text>
-              </Block>
-              <Text as="span" tone="muted" size="sm" truncate>
-                {item.route}
-              </Text>
-            </Block>
-            <Block direction="row" align="center" shrink={false}>
-              <Text as="span" tone="muted" size="sm" font="mono" numeric="tabular">
-                {item.latency}ms
-              </Text>
-            </Block>
-          </Block>
-        </Block>
-      </Block>
-    </Block>,
-  );
-}
-
-function LogDetailPopover({ entry }: { entry: LogEntry }) {
-  return (
-    <Popover>
-      <PopoverTrigger
-        aria-label={`View details for ${entry.id}`}
-        data-variant="ghost"
-        data-size="icon-xs"
-      >
-        <InfoIcon size={16} aria-hidden="true" />
-      </PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent
-          aria-label="Log event details"
-          side="left"
-          align="start"
-          sideOffset={8}
-          data-width="md"
-        >
-          <Block gap="sm">
-            <Block direction="row" align="center" justify="between" gap="md">
-              <Badge variant={getBadgeVariant(entry.severity)}>{entry.severity}</Badge>
-              <Text as="span" tone="muted" size="sm" font="mono" numeric="tabular">
-                {entry.time}
-              </Text>
-            </Block>
-            <Text weight="semibold" size="sm" wrap="anywhere">
-              {entry.message}
-            </Text>
-            <Separator decorative />
-            <Block gap="xs">
-              <Block direction="row" align="center" justify="between" gap="md">
-                <Text tone="subtle" size="sm">
-                  Service
-                </Text>
-                <Text size="sm" font="mono">
-                  {entry.service}
-                </Text>
-              </Block>
-              <Block direction="row" align="center" justify="between" gap="md">
-                <Text tone="subtle" size="sm">
-                  Latency
-                </Text>
-                <Text size="sm" font="mono" numeric="tabular">
-                  {entry.latency}ms
-                </Text>
-              </Block>
-              <Block direction="row" align="center" justify="between" gap="md">
-                <Text tone="subtle" size="sm">
-                  Route
-                </Text>
-                <Text size="sm" font="mono">
-                  {entry.route}
-                </Text>
-              </Block>
-              <Block direction="row" align="center" justify="between" gap="md">
-                <Text tone="subtle" size="sm">
-                  Request
-                </Text>
-                <Text size="sm" font="mono" numeric="tabular">
-                  {entry.requestId}
-                </Text>
-              </Block>
-            </Block>
-          </Block>
-        </PopoverContent>
-      </PopoverPortal>
-    </Popover>
-  );
-}
-
-const logColumns: readonly VirtualTableColumn<LogEntry>[] = [
-  {
-    id: "time",
-    header: "Time",
-    width: "6rem",
-    cellComponent: ({ row }) =>
-      virtualNode(
-        <Text as="span" tone="muted" size="sm">
-          {row.time}
-        </Text>,
-      ),
-  },
-  {
-    id: "severity",
-    header: "Severity",
-    width: "7rem",
-    cellComponent: ({ row }) =>
-      virtualNode(<Badge variant={getBadgeVariant(row.severity)}>{row.severity}</Badge>),
-  },
-  {
-    id: "service",
-    header: "Service",
-    width: "8rem",
-    cellComponent: ({ row }) => virtualNode(<Text size="sm">{row.service}</Text>),
-  },
-  {
-    id: "route",
-    header: "Route",
-    width: "12rem",
-    cellComponent: ({ row }) =>
-      virtualNode(
-        <Text as="span" tone="muted" size="sm">
-          {row.route}
-        </Text>,
-      ),
-  },
-  {
-    id: "latency",
-    header: "Latency",
-    width: "6rem",
-    cellComponent: ({ row }) => virtualNode(<Text size="sm">{row.latency}ms</Text>),
-  },
-  {
-    id: "details",
-    header: "Details",
-    width: "4rem",
-    cellComponent: ({ row }) =>
-      virtualNode(
-        <Block center>
-          <LogDetailPopover entry={row} />
-        </Block>,
-      ),
-  },
-];
 
 export function LogsPage() {
   const livePaused = state(false);
   const frozenLiveSnapshot = state<LiveLogSnapshot | null>(null);
+  const tableFilter = state("");
   const liveLogs = createQuery({
     key: liveLogQueryKey,
     fetch: fetchLiveLogs,
@@ -402,6 +101,7 @@ export function LogsPage() {
     sequence: 0,
   };
   const liveSnapshot = frozenLiveSnapshot() ?? activeLiveSnapshot;
+  const filteredLogEntries = logEntries.filter((entry) => matchesLogFilter(entry, tableFilter()));
   const pauseLiveMode = (event: Event) => {
     const viewport = event.currentTarget as HTMLElement | null;
     const hasScrolled = Boolean(viewport && (viewport.scrollTop > 0 || viewport.scrollLeft > 0));
@@ -425,6 +125,9 @@ export function LogsPage() {
     void liveLogs.refresh();
   };
   const toggleLiveMode = () => setLiveMode(liveModePaused);
+  const clearTableFilter = () => {
+    tableFilter.set("");
+  };
 
   return (
     <Page>
@@ -433,10 +136,12 @@ export function LogsPage() {
         description="A high-volume operations surface for validating virtualized list and table styling in Destroyer."
         actions={
           <ButtonGroup attached={false}>
-            <Link href="/docs/components" data-slot="button" data-variant="outline">
-              <FileCode2Icon size={16} aria-hidden="true" />
-              Component notes
-            </Link>
+            <Button asChild variant="outline">
+              <Link href="/docs/components">
+                <FileCode2Icon size={16} aria-hidden="true" />
+                Component notes
+              </Link>
+            </Button>
           </ButtonGroup>
         }
       />
@@ -522,7 +227,7 @@ export function LogsPage() {
           <CardContent>
             <VirtualList
               aria-label="Recent log stream"
-              data-viewport="lg"
+              viewport="lg"
               data-live-paused={liveModePaused ? "true" : "false"}
               data-live-sequence={liveSnapshot.sequence}
               items={liveSnapshot.entries}
@@ -546,19 +251,52 @@ export function LogsPage() {
             </CardAction>
           </CardHeader>
           <CardContent>
-            <VirtualTable
-              aria-label="Log event details"
-              data-viewport="lg"
-              data-table-width="compact"
-              rows={logEntries}
-              rowHeight={44}
-              headerHeight={40}
-              overscan={4}
-              getKey={(entry) => entry.id}
-              columns={logColumns}
-              defaultSelectedRowKey={logEntries[0]?.id}
-              onScroll={pauseLiveMode}
-            />
+            <Block gap="md">
+              <Toolbar
+                title="Event rows"
+                actions={
+                  <InputGroup>
+                    <InputGroupText>
+                      <SearchIcon size={16} aria-hidden="true" />
+                    </InputGroupText>
+                    <DebouncedInput
+                      aria-label="Filter log events"
+                      debounceMs={0}
+                      placeholder="Filter events"
+                      value={tableFilter()}
+                      onDebouncedInput={(value) => tableFilter.set(value)}
+                    />
+                  </InputGroup>
+                }
+              />
+              {filteredLogEntries.length > 0 ? (
+                <VirtualTable
+                  aria-label="Log event details"
+                  viewport="lg"
+                  tableWidth="compact"
+                  rows={filteredLogEntries}
+                  rowHeight={44}
+                  headerHeight={40}
+                  overscan={4}
+                  getKey={(entry) => entry.id}
+                  columns={logColumns}
+                  defaultSelectedRowKey={filteredLogEntries[0]?.id}
+                  onScroll={pauseLiveMode}
+                />
+              ) : (
+                <EmptyState
+                  icon={<SearchIcon size={22} aria-hidden="true" />}
+                  title="No matching events"
+                  titleAs="h3"
+                  description="No log events match the current filter."
+                  action={
+                    <Button type="button" variant="outline" onPress={clearTableFilter}>
+                      Clear filter
+                    </Button>
+                  }
+                />
+              )}
+            </Block>
           </CardContent>
         </Card>
       </Grid>

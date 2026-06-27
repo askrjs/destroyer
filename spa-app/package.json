@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@askrjs/askr": "file:../../askr",
+    "@askrjs/charts": "file:../../askr-charts",
     "@askrjs/logos": "file:../../askr-logos",
     "@askrjs/lucide": "file:../../askr-lucide",
     "@askrjs/themes": "file:../../askr-themes",

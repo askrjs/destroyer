@@ -1,4 +1,5 @@
 import "@askrjs/themes/default";
+import "@askrjs/charts";
 import { createSPA } from "@askrjs/askr/boot";
 import { getManifest } from "@askrjs/askr/router";
 import "./pages/_routes";

@@ -7,6 +7,7 @@ import { HomePage } from "./home";
 import { LoginPage } from "./login";
 import { LogsPage } from "./logs";
 import { LogoutPage } from "./logout";
+import { MetricsPage } from "./metrics";
 import { ProfilePage } from "./profile";
 import { SettingsPage } from "./settings";
 
@@ -25,6 +26,7 @@ registerRoutes(() => {
     route("/docs/settings", DocsPage);
     route("/docs/deployment", DocsPage);
     route("/logs", LogsPage);
+    route("/metrics", MetricsPage);
     route("/login", LoginPage);
     route("/logout", LogoutPage);
     route("/profile", ProfilePage);

@@ -1,9 +1,10 @@
 import { Link } from "@askrjs/askr/router";
-import { LayoutPanelTopIcon, PaintbrushIcon, RouteIcon, ShieldCheckIcon } from "@askrjs/lucide";
+import { ShieldCheckIcon } from "@askrjs/lucide";
 import {
   Alert,
   Badge,
   Block,
+  Button,
   Card,
   CardAction,
   CardContent,
@@ -14,30 +15,7 @@ import {
   PageHeader,
   Separator,
 } from "@askrjs/themes/components";
-
-const validations = [
-  {
-    title: "Client routing",
-    description: "The layout keeps active navigation stable across three SPA routes.",
-    badge: "Routes",
-    variant: "info",
-    Icon: RouteIcon,
-  },
-  {
-    title: "Theme contract",
-    description: "Shared tokens drive light, dark, and persisted theme state.",
-    badge: "Tokens",
-    variant: "success",
-    Icon: PaintbrushIcon,
-  },
-  {
-    title: "Page composition",
-    description: "Page headers, cards, alerts, and forms stay in the theme system.",
-    badge: "Catalog",
-    variant: "secondary",
-    Icon: LayoutPanelTopIcon,
-  },
-] as const;
+import { validations } from "../features/about/about-data";
 
 export function AboutPage() {
   return (
@@ -46,9 +24,9 @@ export function AboutPage() {
         title="About Destroyer"
         description="Destroyer is a small integration target for the Askr SPA path and the default theme catalog."
         actions={
-          <Link href="/contact" data-slot="button" data-variant="primary">
-            Contact
-          </Link>
+          <Button asChild variant="primary">
+            <Link href="/contact">Contact</Link>
+          </Button>
         }
       />
 

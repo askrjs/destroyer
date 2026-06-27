@@ -48,18 +48,13 @@ export function LogoutPage() {
                   browser is changed.
                 </Text>
                 <Separator decorative />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  data-width="full"
-                  onPress={handleSignOut}
-                >
+                <Button type="button" variant="destructive" width="full" onPress={handleSignOut}>
                   <LogOutIcon size={16} aria-hidden="true" />
                   Sign out
                 </Button>
-                <Link href="/" data-slot="button" data-variant="outline" data-width="full">
-                  Stay signed in
-                </Link>
+                <Button asChild variant="outline" width="full">
+                  <Link href="/">Stay signed in</Link>
+                </Button>
               </Block>
             </CardContent>
             <CardFooter>
