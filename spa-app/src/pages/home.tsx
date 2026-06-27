@@ -1,4 +1,4 @@
-import { navigate } from "@askrjs/askr/router";
+import { Link } from "@askrjs/askr/router";
 import {
   CheckCircle2Icon,
   Code2Icon,
@@ -36,6 +36,10 @@ import {
   Label,
   Page,
   PageHeader,
+  Popover,
+  PopoverContent,
+  PopoverPortal,
+  PopoverTrigger,
   Progress,
   ProgressIndicator,
   Separator,
@@ -54,9 +58,27 @@ import {
 import { ThemePicker } from "@askrjs/themes/theme";
 
 const metrics = [
-  { label: "Routes", value: "3", detail: "SPA paths share one mounted shell.", badge: "Live", variant: "success" },
-  { label: "Theme modes", value: "3", detail: "Light, dark, and system are token-driven.", badge: "Synced", variant: "info" },
-  { label: "Entrypoint", value: "1", detail: "Askr components import from one package surface.", badge: "Simple", variant: "secondary" },
+  {
+    label: "Routes",
+    value: "3",
+    detail: "SPA paths share one mounted shell.",
+    badge: "Live",
+    variant: "success",
+  },
+  {
+    label: "Theme modes",
+    value: "3",
+    detail: "Light, dark, and system are token-driven.",
+    badge: "Synced",
+    variant: "info",
+  },
+  {
+    label: "Entrypoint",
+    value: "1",
+    detail: "Askr components import from one package surface.",
+    badge: "Simple",
+    variant: "secondary",
+  },
 ] as const;
 
 const packages = [
@@ -79,13 +101,13 @@ export function HomePage() {
         description="A small Askr workspace showing routing, theming, and component composition in one app surface."
         actions={
           <ButtonGroup attached={false}>
-            <Button type="button" variant="primary" onPress={() => navigate("/about")}>
+            <Link href="/about" data-slot="button" data-variant="primary">
               <SparklesIcon size={16} aria-hidden="true" />
               Review app
-            </Button>
-            <Button type="button" variant="outline" onPress={() => navigate("/contact")}>
+            </Link>
+            <Link href="/contact" data-slot="button" data-variant="outline">
               Open form
-            </Button>
+            </Link>
           </ButtonGroup>
         }
       />
@@ -114,7 +136,9 @@ export function HomePage() {
                 </ItemMedia>
                 <ItemContent>
                   <ItemTitle>Application shell</ItemTitle>
-                  <ItemDescription>Sticky header, active routes, and responsive content.</ItemDescription>
+                  <ItemDescription>
+                    Sticky header, active routes, and responsive content.
+                  </ItemDescription>
                 </ItemContent>
                 <ItemActions>
                   <Badge variant="outline">Ready</Badge>
@@ -141,15 +165,50 @@ export function HomePage() {
             <CardTitle>Coverage</CardTitle>
             <CardDescription>What this sample exercises.</CardDescription>
             <CardAction>
-              <GaugeIcon size={18} aria-hidden="true" />
+              <Popover>
+                <PopoverTrigger
+                  aria-label="View coverage details"
+                  data-slot="button"
+                  data-variant="ghost"
+                  data-size="icon"
+                >
+                  <GaugeIcon size={18} aria-hidden="true" />
+                </PopoverTrigger>
+                <PopoverPortal>
+                  <PopoverContent
+                    side="bottom"
+                    align="end"
+                    sideOffset={8}
+                    style={{ inlineSize: "min(20rem, calc(100vw - 2rem))" }}
+                  >
+                    <Text as="strong" weight="semibold" size="sm">
+                      Coverage details
+                    </Text>
+                    <Text tone="muted" size="sm">
+                      These scores track how much of the current shell is exercised by routes, theme
+                      controls, forms, tables, and navigation states.
+                    </Text>
+                    <Block direction="row" align="center" justify="between" gap="md">
+                      <Text tone="muted" size="sm">
+                        Next target
+                      </Text>
+                      <Badge variant="info">Overlays</Badge>
+                    </Block>
+                  </PopoverContent>
+                </PopoverPortal>
+              </Popover>
             </CardAction>
           </CardHeader>
           <CardContent>
             <Block direction="column" gap="md">
               <Block direction="column" gap="xs">
                 <Block direction="row" align="center" justify="between" gap="md">
-                  <Text as="span" tone="muted" size="sm">Visual parity</Text>
-                  <Text as="strong" weight="semibold" size="sm">92%</Text>
+                  <Text as="span" tone="muted" size="sm">
+                    Visual parity
+                  </Text>
+                  <Text as="strong" weight="semibold" size="sm">
+                    92%
+                  </Text>
                 </Block>
                 <Progress value={92}>
                   <ProgressIndicator />
@@ -157,8 +216,12 @@ export function HomePage() {
               </Block>
               <Block direction="column" gap="xs">
                 <Block direction="row" align="center" justify="between" gap="md">
-                  <Text as="span" tone="muted" size="sm">Route polish</Text>
-                  <Text as="strong" weight="semibold" size="sm">86%</Text>
+                  <Text as="span" tone="muted" size="sm">
+                    Route polish
+                  </Text>
+                  <Text as="strong" weight="semibold" size="sm">
+                    86%
+                  </Text>
                 </Block>
                 <Progress value={86}>
                   <ProgressIndicator />
@@ -166,8 +229,12 @@ export function HomePage() {
               </Block>
               <Block direction="column" gap="xs">
                 <Block direction="row" align="center" justify="between" gap="md">
-                  <Text as="span" tone="muted" size="sm">Day one UX</Text>
-                  <Text as="strong" weight="semibold" size="sm">89%</Text>
+                  <Text as="span" tone="muted" size="sm">
+                    Day one UX
+                  </Text>
+                  <Text as="strong" weight="semibold" size="sm">
+                    89%
+                  </Text>
                 </Block>
                 <Progress value={89}>
                   <ProgressIndicator />

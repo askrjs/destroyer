@@ -1,4 +1,4 @@
-import { currentRoute, navigate } from "@askrjs/askr/router";
+import { Link, currentRoute } from "@askrjs/askr/router";
 import {
   BellIcon,
   Building2Icon,
@@ -20,13 +20,24 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Checkbox,
   Field,
   Grid,
   Input,
   Label,
   Page,
   PageHeader,
+  RadioGroup,
+  RadioGroupItem,
   Separator,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectPortal,
+  SelectTrigger,
+  SelectValue,
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -81,6 +92,56 @@ const settingsItems = [
   },
 ] as const;
 
+const notificationChannels = [
+  {
+    id: "settings-channel-email",
+    label: "Email digest",
+    description: "Send a daily summary for account and workspace changes.",
+    value: "email",
+    defaultChecked: true,
+  },
+  {
+    id: "settings-channel-browser",
+    label: "Browser alerts",
+    description: "Show route and component updates while the app is open.",
+    value: "browser",
+    defaultChecked: true,
+  },
+  {
+    id: "settings-channel-weekly",
+    label: "Weekly report",
+    description: "Bundle low-priority theme coverage notes into one update.",
+    value: "weekly",
+    defaultChecked: false,
+  },
+  {
+    id: "settings-channel-webhook",
+    label: "Webhook handoff",
+    description: "Forward high-severity route events to workspace integrations.",
+    value: "webhook",
+    defaultChecked: false,
+  },
+] as const;
+
+const defaultRoleOptions = [
+  {
+    value: "viewer",
+    label: "Viewer",
+    description: "Can read workspace activity and route checks.",
+  },
+  {
+    value: "member",
+    label: "Member",
+    description: "Can create checks and update shared settings.",
+  },
+  {
+    value: "admin",
+    label: "Admin",
+    description: "Available after the workspace moves off Starter.",
+    disabled: true,
+  },
+] as const;
+
 type SettingsPath = (typeof settingsItems)[number]["href"];
 
 function getActivePath(path: string): SettingsPath {
@@ -91,9 +152,11 @@ function SettingsSidebar({ activePath }: { activePath: SettingsPath }) {
   const groups = ["Account", "Workspace", "Admin"] as const;
 
   return (
-    <Sidebar width="full" minHeight="auto" padding="0" shrink={false}>
+    <Sidebar width="full" minHeight="auto" padding="0" borderRight={false} shrink={false}>
       <SidebarHeader>
-        <Text as="strong" weight="semibold">Settings</Text>
+        <Text as="strong" weight="semibold">
+          Settings
+        </Text>
       </SidebarHeader>
       <SidebarContent>
         {groups.map((group) => (
@@ -109,13 +172,14 @@ function SettingsSidebar({ activePath }: { activePath: SettingsPath }) {
 
                     return (
                       <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          active={activePath === item.href}
-                          onClick={() => navigate(item.href)}
-                        >
-                          <Icon size={16} aria-hidden="true" />
-                          <Text as="span" size="sm" weight="medium">{item.label}</Text>
-                          {badge ? <Badge variant="secondary">{badge}</Badge> : null}
+                        <SidebarMenuButton active={activePath === item.href} asChild>
+                          <Link href={item.href}>
+                            <Icon size={16} aria-hidden="true" />
+                            <Text as="span" size="sm" weight="medium">
+                              {item.label}
+                            </Text>
+                            {badge ? <Badge variant="secondary">{badge}</Badge> : null}
+                          </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -163,7 +227,9 @@ function ProfileSettings() {
             <Block direction="row" align="center" justify="between" gap="md">
               <Block gap="0">
                 <Text weight="medium">Show workspace activity</Text>
-                <Text tone="muted" size="sm">Display recent route and component checks.</Text>
+                <Text tone="muted" size="sm">
+                  Display recent route and component checks.
+                </Text>
               </Block>
               <Switch defaultChecked />
             </Block>
@@ -171,7 +237,9 @@ function ProfileSettings() {
             <Block direction="row" align="center" justify="between" gap="md">
               <Block gap="0">
                 <Text weight="medium">Include contact email</Text>
-                <Text tone="muted" size="sm">Let teammates reach this demo account.</Text>
+                <Text tone="muted" size="sm">
+                  Let teammates reach this demo account.
+                </Text>
               </Block>
               <Switch />
             </Block>
@@ -198,7 +266,9 @@ function SecuritySettings() {
             <Block direction="row" align="center" justify="between" gap="md">
               <Block gap="0">
                 <Text weight="medium">Two-factor authentication</Text>
-                <Text tone="muted" size="sm">Require a verification step before signing in.</Text>
+                <Text tone="muted" size="sm">
+                  Require a verification step before signing in.
+                </Text>
               </Block>
               <Switch defaultChecked />
             </Block>
@@ -206,7 +276,9 @@ function SecuritySettings() {
             <Block direction="row" align="center" justify="between" gap="md">
               <Block gap="0">
                 <Text weight="medium">Session timeout</Text>
-                <Text tone="muted" size="sm">Automatically end idle sessions after 30 minutes.</Text>
+                <Text tone="muted" size="sm">
+                  Automatically end idle sessions after 30 minutes.
+                </Text>
               </Block>
               <Badge variant="secondary">30m</Badge>
             </Block>
@@ -224,7 +296,9 @@ function SecuritySettings() {
               <MonitorIcon size={18} aria-hidden="true" />
               <Block gap="0">
                 <Text weight="medium">Current browser</Text>
-                <Text tone="muted" size="sm">Local demo session</Text>
+                <Text tone="muted" size="sm">
+                  Local demo session
+                </Text>
               </Block>
             </Block>
             <Badge variant="success">Current</Badge>
@@ -251,7 +325,9 @@ function PreferenceSettings() {
             <Block direction="row" align="center" justify="between" gap="md">
               <Block gap="0">
                 <Text weight="medium">Compact density</Text>
-                <Text tone="muted" size="sm">Use tighter spacing in data-heavy surfaces.</Text>
+                <Text tone="muted" size="sm">
+                  Use tighter spacing in data-heavy surfaces.
+                </Text>
               </Block>
               <Switch />
             </Block>
@@ -259,7 +335,9 @@ function PreferenceSettings() {
             <Block direction="row" align="center" justify="between" gap="md">
               <Block gap="0">
                 <Text weight="medium">Sync theme mode</Text>
-                <Text tone="muted" size="sm">Keep theme preference in local storage.</Text>
+                <Text tone="muted" size="sm">
+                  Keep theme preference in local storage.
+                </Text>
               </Block>
               <Switch defaultChecked />
             </Block>
@@ -279,7 +357,21 @@ function PreferenceSettings() {
             </Field>
             <Field>
               <Label for="settings-region">Region</Label>
-              <Input id="settings-region" value="US East" readonly />
+              <Select name="region" defaultValue="us-east">
+                <SelectTrigger id="settings-region">
+                  <SelectValue placeholder="Choose a region" />
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectContent align="start" sideOffset={6}>
+                    <SelectGroup>
+                      <SelectLabel>Workspace region</SelectLabel>
+                      <SelectItem value="us-east">US East</SelectItem>
+                      <SelectItem value="us-west">US West</SelectItem>
+                      <SelectItem value="eu-central">EU Central</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
             </Field>
           </Grid>
         </CardContent>
@@ -299,20 +391,51 @@ function NotificationSettings() {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <Block gap="md">
-          {[
-            ["Route alerts", "Notify when route behavior changes.", true],
-            ["Component updates", "Send weekly summaries about theme coverage.", false],
-            ["Security notices", "Alert when a session setting changes.", true],
-          ].map(([label, description, checked]) => (
-            <Block key={String(label)} direction="row" align="center" justify="between" gap="md">
-              <Block gap="0">
-                <Text weight="medium">{label}</Text>
-                <Text tone="muted" size="sm">{description}</Text>
+        <Block gap="lg">
+          <Block gap="md">
+            {[
+              ["Route alerts", "Notify when route behavior changes.", true],
+              ["Component updates", "Send weekly summaries about theme coverage.", false],
+              ["Security notices", "Alert when a session setting changes.", true],
+            ].map(([label, description, checked]) => (
+              <Block key={String(label)} direction="row" align="center" justify="between" gap="md">
+                <Block gap="0">
+                  <Text weight="medium">{label}</Text>
+                  <Text tone="muted" size="sm">
+                    {description}
+                  </Text>
+                </Block>
+                <Switch defaultChecked={Boolean(checked)} />
               </Block>
-              <Switch defaultChecked={Boolean(checked)} />
+            ))}
+          </Block>
+          <Separator decorative />
+          <Block gap="md">
+            <Block gap="xs">
+              <Text weight="medium">Delivery channels</Text>
+              <Text tone="muted" size="sm">
+                Choose where enabled notifications can appear.
+              </Text>
             </Block>
-          ))}
+            <Grid columns={{ base: 1, md: 2 }} gap="md">
+              {notificationChannels.map((channel) => (
+                <Block key={channel.id} direction="row" align="start" gap="sm">
+                  <Checkbox
+                    id={channel.id}
+                    name="notification-channel"
+                    value={channel.value}
+                    defaultChecked={channel.defaultChecked}
+                  />
+                  <Block gap="0">
+                    <Label for={channel.id}>{channel.label}</Label>
+                    <Text tone="muted" size="sm">
+                      {channel.description}
+                    </Text>
+                  </Block>
+                </Block>
+              ))}
+            </Grid>
+          </Block>
         </Block>
       </CardContent>
     </Card>
@@ -333,15 +456,21 @@ function BillingSettings() {
         <CardContent>
           <Grid columns={{ base: 1, md: 3 }} gap="md">
             <Block background="muted" padding="md" radius="lg" gap="xs">
-              <Text tone="muted" size="sm">Plan</Text>
+              <Text tone="muted" size="sm">
+                Plan
+              </Text>
               <Text weight="semibold">Starter</Text>
             </Block>
             <Block background="muted" padding="md" radius="lg" gap="xs">
-              <Text tone="muted" size="sm">Seats</Text>
+              <Text tone="muted" size="sm">
+                Seats
+              </Text>
               <Text weight="semibold">3 active</Text>
             </Block>
             <Block background="muted" padding="md" radius="lg" gap="xs">
-              <Text tone="muted" size="sm">Renewal</Text>
+              <Text tone="muted" size="sm">
+                Renewal
+              </Text>
               <Text weight="semibold">Demo only</Text>
             </Block>
           </Grid>
@@ -354,8 +483,12 @@ function BillingSettings() {
         </CardHeader>
         <CardContent>
           <Block direction="row" align="center" justify="between" gap="md">
-            <Text tone="muted" size="sm">No invoices are generated for local demo sessions.</Text>
-            <Button type="button" variant="outline" size="sm">Download sample</Button>
+            <Text tone="muted" size="sm">
+              No invoices are generated for local demo sessions.
+            </Text>
+            <Button type="button" variant="outline" size="sm">
+              Download sample
+            </Button>
           </Block>
         </CardContent>
       </Card>
@@ -381,8 +514,28 @@ function WorkspaceSettings() {
               <Input id="settings-workspace-name" value="Destroyer" readonly />
             </Field>
             <Field>
-              <Label for="settings-access">Default role</Label>
-              <Input id="settings-access" value="Member" readonly />
+              <Label id="settings-access-label">Default role</Label>
+              <RadioGroup
+                aria-labelledby="settings-access-label"
+                name="default-role"
+                defaultValue="member"
+                orientation="horizontal"
+              >
+                {defaultRoleOptions.map((role) => (
+                  <RadioGroupItem
+                    key={role.value}
+                    value={role.value}
+                    disabled={"disabled" in role ? role.disabled : false}
+                  >
+                    <Block gap="0">
+                      <Text weight="medium">{role.label}</Text>
+                      <Text tone="muted" size="sm">
+                        {role.description}
+                      </Text>
+                    </Block>
+                  </RadioGroupItem>
+                ))}
+              </RadioGroup>
             </Field>
           </Grid>
         </CardContent>
@@ -397,7 +550,9 @@ function WorkspaceSettings() {
             <Block direction="row" align="center" justify="between" gap="md">
               <Block gap="0">
                 <Text weight="medium">Invite links</Text>
-                <Text tone="muted" size="sm">Allow admins to create scoped invite links.</Text>
+                <Text tone="muted" size="sm">
+                  Allow admins to create scoped invite links.
+                </Text>
               </Block>
               <Switch defaultChecked />
             </Block>
@@ -405,7 +560,9 @@ function WorkspaceSettings() {
             <Block direction="row" align="center" justify="between" gap="md">
               <Block gap="0">
                 <Text weight="medium">Require approval</Text>
-                <Text tone="muted" size="sm">New members need an admin review.</Text>
+                <Text tone="muted" size="sm">
+                  New members need an admin review.
+                </Text>
               </Block>
               <Switch />
             </Block>

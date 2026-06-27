@@ -82,7 +82,9 @@ export function LoginPage() {
                   Sign in
                 </Button>
                 <Separator decorative />
-                <Text tone="muted" size="sm">Or continue with</Text>
+                <Text tone="muted" size="sm">
+                  Or continue with
+                </Text>
                 <Button type="button" variant="outline" data-width="full" onPress={handleSignIn}>
                   <GoogleLogo size={16} aria-hidden="true" />
                   Login with Google

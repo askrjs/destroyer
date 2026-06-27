@@ -1,15 +1,9 @@
-import { navigate } from "@askrjs/askr/router";
-import {
-  LayoutPanelTopIcon,
-  PaintbrushIcon,
-  RouteIcon,
-  ShieldCheckIcon,
-} from "@askrjs/lucide";
+import { Link } from "@askrjs/askr/router";
+import { LayoutPanelTopIcon, PaintbrushIcon, RouteIcon, ShieldCheckIcon } from "@askrjs/lucide";
 import {
   Alert,
   Badge,
   Block,
-  Button,
   Card,
   CardAction,
   CardContent,
@@ -52,9 +46,9 @@ export function AboutPage() {
         title="About Destroyer"
         description="Destroyer is a small integration target for the Askr SPA path and the default theme catalog."
         actions={
-          <Button type="button" variant="primary" onPress={() => navigate("/contact")}>
+          <Link href="/contact" data-slot="button" data-variant="primary">
             Contact
-          </Button>
+          </Link>
         }
       />
 
@@ -65,7 +59,7 @@ export function AboutPage() {
         description="This app stays intentionally small so visual and routing regressions are easy to spot."
       />
 
-      <Block direction={{ base: "column", lg: "row" }} gap="lg" align="stretch">
+      <Block rowFrom="lg" gap="lg">
         {validations.map(({ Icon, badge, description, title, variant }) => (
           <Block key={title} direction="column" grow>
             <Card>
@@ -101,7 +95,9 @@ export function AboutPage() {
           <Block direction="column" gap="sm" paddingY="md">
             <Block direction="row" align="center" gap="sm">
               <ShieldCheckIcon size={16} aria-hidden="true" />
-              <span>No app-local styling unless the theme primitives cannot express the layout.</span>
+              <span>
+                No app-local styling unless the theme primitives cannot express the layout.
+              </span>
             </Block>
             <Block direction="row" align="center" gap="sm">
               <ShieldCheckIcon size={16} aria-hidden="true" />

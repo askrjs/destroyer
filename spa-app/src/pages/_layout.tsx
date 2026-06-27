@@ -1,4 +1,4 @@
-import { Link, currentRoute, navigate } from "@askrjs/askr/router";
+import { Link, currentRoute } from "@askrjs/askr/router";
 import {
   BoxIcon,
   CircleUserRoundIcon,
@@ -16,7 +16,6 @@ import {
   Brand,
   BrandLabel,
   BrandMark,
-  Button,
   Container,
   DropdownMenu,
   DropdownMenuContent,
@@ -53,22 +52,32 @@ function ProfileMenu() {
             <AvatarFallback>{demoUser.initials}</AvatarFallback>
           </Avatar>
           <Block direction="column" gap="0">
-            <Text as="span" weight="semibold" size="sm">{demoUser.name}</Text>
-            <Text as="span" tone="muted" size="sm">{demoUser.email}</Text>
+            <Text as="span" weight="semibold" size="sm">
+              {demoUser.name}
+            </Text>
+            <Text as="span" tone="muted" size="sm">
+              {demoUser.email}
+            </Text>
           </Block>
         </DropdownMenuLabel>
-        <DropdownMenuItem onSelect={() => navigate("/profile")}>
-          <UserRoundIcon size={16} aria-hidden="true" />
-          Profile
+        <DropdownMenuItem asChild>
+          <Link href="/profile">
+            <UserRoundIcon size={16} aria-hidden="true" />
+            Profile
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => navigate("/settings")}>
-          <SettingsIcon size={16} aria-hidden="true" />
-          Settings
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <SettingsIcon size={16} aria-hidden="true" />
+            Settings
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem data-variant="destructive" onSelect={() => navigate("/logout")}>
-          <LogOutIcon size={16} aria-hidden="true" />
-          Sign out
+        <DropdownMenuItem data-variant="destructive" asChild>
+          <Link href="/logout">
+            <LogOutIcon size={16} aria-hidden="true" />
+            Sign out
+          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -89,21 +98,21 @@ function AuthNavControl() {
   return (
     <>
       <Block hide={{ base: true, md: false }}>
-        <Button type="button" variant="outline" size="sm" onPress={() => navigate("/login")}>
+        <Link href="/login" data-slot="button" data-variant="outline" data-size="sm">
           <LogInIcon size={16} aria-hidden="true" />
           Sign in
-        </Button>
+        </Link>
       </Block>
       <Block hide={{ base: false, md: true }}>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
+        <Link
+          href="/login"
+          data-slot="button"
+          data-variant="outline"
+          data-size="icon"
           aria-label="Sign in"
-          onPress={() => navigate("/login")}
         >
           <LogInIcon size={16} aria-hidden="true" />
-        </Button>
+        </Link>
       </Block>
     </>
   );

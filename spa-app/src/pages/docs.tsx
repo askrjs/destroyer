@@ -1,11 +1,10 @@
 import { state } from "@askrjs/askr";
-import { currentRoute, navigate } from "@askrjs/askr/router";
+import { Link, currentRoute } from "@askrjs/askr/router";
 import {
   BookOpenIcon,
   BoxIcon,
   BoxesIcon,
   CircleUserRoundIcon,
-  Code2Icon,
   ComponentIcon,
   FileCode2Icon,
   FileTextIcon,
@@ -35,7 +34,6 @@ import {
   Brand,
   BrandLabel,
   BrandMark,
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -156,7 +154,11 @@ const docsContent: Record<
         body: "Each section is a route-backed page so the sidebar active state, browser history, and app shell all stay in sync.",
       },
     ],
-    checks: ["Full app shell remains mounted", "Sidebar uses page background", "Content stays readable on mobile"],
+    checks: [
+      "Full app shell remains mounted",
+      "Sidebar uses page background",
+      "Content stays readable on mobile",
+    ],
   },
   "/docs/installation": {
     title: "Installation",
@@ -174,7 +176,11 @@ const docsContent: Record<
         body: "Importing from @askrjs/themes/components brings the default theme CSS and the component surface together.",
       },
     ],
-    checks: ["Use one component import surface", "Keep charts in askr-charts", "Prefer package primitives over local CSS"],
+    checks: [
+      "Use one component import surface",
+      "Keep charts in askr-charts",
+      "Prefer package primitives over local CSS",
+    ],
   },
   "/docs/routing": {
     title: "Routing",
@@ -192,7 +198,11 @@ const docsContent: Record<
         body: "Navigation components read the current route and apply active styling without route-specific CSS.",
       },
     ],
-    checks: ["Nested docs routes resolve", "Sidebar active state updates", "Fallback still renders the home page"],
+    checks: [
+      "Nested docs routes resolve",
+      "Sidebar active state updates",
+      "Fallback still renders the home page",
+    ],
   },
   "/docs/theming": {
     title: "Theming",
@@ -210,7 +220,11 @@ const docsContent: Record<
         body: "Apps can still choose layout props and composition, while component-level visual defaults stay reusable.",
       },
     ],
-    checks: ["No docs-specific CSS", "Sidebar inherits page background", "Cards use theme elevation"],
+    checks: [
+      "No docs-specific CSS",
+      "Sidebar inherits page background",
+      "Cards use theme elevation",
+    ],
   },
   "/docs/components": {
     title: "Components",
@@ -228,12 +242,17 @@ const docsContent: Record<
         body: "The generated CSS should stay close to shadcn expectations for common controls and application surfaces.",
       },
     ],
-    checks: ["Buttons support full width", "Card headers align without actions", "Sidebar works in page content"],
+    checks: [
+      "Buttons support full width",
+      "Card headers align without actions",
+      "Sidebar works in page content",
+    ],
   },
   "/docs/forms": {
     title: "Forms",
     eyebrow: "UI",
-    description: "Use themed fields, labels, inputs, groups, and actions for compact form surfaces.",
+    description:
+      "Use themed fields, labels, inputs, groups, and actions for compact form surfaces.",
     badge: "Inputs",
     icon: FileTextIcon,
     sections: [
@@ -251,7 +270,8 @@ const docsContent: Record<
   "/docs/layouts": {
     title: "Layouts",
     eyebrow: "Patterns",
-    description: "Build common page structures with Grid, Block, Page, Header, Footer, and Sidebar.",
+    description:
+      "Build common page structures with Grid, Block, Page, Header, Footer, and Sidebar.",
     badge: "Patterns",
     icon: LayoutPanelTopIcon,
     sections: [
@@ -282,7 +302,11 @@ const docsContent: Record<
         body: "Each nested path renders realistic settings content while keeping one route component.",
       },
     ],
-    checks: ["No sidebar border by default", "No forced muted background", "Active state remains clear"],
+    checks: [
+      "No sidebar border by default",
+      "No forced muted background",
+      "Active state remains clear",
+    ],
   },
   "/docs/deployment": {
     title: "Deployment",
@@ -338,9 +362,11 @@ function getThemeIcon(theme: string) {
 
 function ProfileDropdown({
   currentTheme,
+  railLabel = false,
   theme,
 }: {
   currentTheme: string;
+  railLabel?: boolean;
   theme: ReturnType<typeof useTheme>;
 }) {
   const ThemeIcon = getThemeIcon(currentTheme);
@@ -348,12 +374,15 @@ function ProfileDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Open profile menu"
+        aria-label={railLabel ? "Profile" : "Open profile menu"}
         data-slot="sidebar-menu-button"
+        {...getRailTooltipProps("Profile", railLabel)}
       >
         <CircleUserRoundIcon size={16} aria-hidden="true" />
         <Block hide={{ base: true, lg: false }}>
-          <Text as="span" size="sm" weight="medium">Profile</Text>
+          <Text as="span" size="sm" weight="medium">
+            Profile
+          </Text>
         </Block>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="right" align="end" sideOffset={10}>
@@ -362,30 +391,50 @@ function ProfileDropdown({
             <AvatarFallback>{demoUser.initials}</AvatarFallback>
           </Avatar>
           <Block direction="column" gap="0">
-            <Text as="span" weight="semibold" size="sm">{demoUser.name}</Text>
-            <Text as="span" tone="muted" size="sm">{demoUser.email}</Text>
+            <Text as="span" weight="semibold" size="sm">
+              {demoUser.name}
+            </Text>
+            <Text as="span" tone="muted" size="sm">
+              {demoUser.email}
+            </Text>
           </Block>
         </DropdownMenuLabel>
-        <DropdownMenuItem onSelect={() => navigate("/profile")}>
-          <CircleUserRoundIcon size={16} aria-hidden="true" />
-          Profile
+        <DropdownMenuItem asChild>
+          <Link href="/profile">
+            <CircleUserRoundIcon size={16} aria-hidden="true" />
+            Profile
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => navigate("/settings")}>
-          <SettingsIcon size={16} aria-hidden="true" />
-          Settings
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <SettingsIcon size={16} aria-hidden="true" />
+            Settings
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => theme.setTheme(getNextThemeName(currentTheme))}>
           <ThemeIcon size={16} aria-hidden="true" />
           Theme: {getThemeLabel(currentTheme)}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem data-variant="destructive" onSelect={() => navigate("/logout")}>
-          <LogOutIcon size={16} aria-hidden="true" />
-          Sign out
+        <DropdownMenuItem data-variant="destructive" asChild>
+          <Link href="/logout">
+            <LogOutIcon size={16} aria-hidden="true" />
+            Sign out
+          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+function getRailTooltipProps(label: string, enabled: boolean) {
+  if (!enabled) return {};
+
+  return {
+    "aria-label": label,
+    "data-tooltip": label,
+    "data-tooltip-side": "right",
+  };
 }
 
 function DocsSidebar({
@@ -403,6 +452,7 @@ function DocsSidebar({
   const signedIn = isSignedIn();
   const theme = useTheme();
   const currentTheme = theme.theme();
+  const iconRail = collapsed || mobileRail;
 
   return (
     <Sidebar
@@ -412,6 +462,7 @@ function DocsSidebar({
       minHeight="screen"
       maxHeight="screen"
       padding="md"
+      background="muted"
       shrink={false}
       sticky
       top="0"
@@ -421,18 +472,27 @@ function DocsSidebar({
           <BrandMark aria-hidden="true">
             <BoxIcon size={16} />
           </BrandMark>
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
             aria-label="Expand docs navigation"
-            onPress={onToggle}
+            data-slot="button"
+            data-variant="ghost"
+            data-size="icon"
+            data-tooltip="Expand navigation"
+            data-tooltip-side="right"
+            onClick={onToggle}
           >
             <PanelLeftIcon size={16} aria-hidden="true" />
-          </Button>
+          </button>
         </Block>
-        <Block hide={{ base: true, lg: collapsed }} direction="row" align="center" justify="between" gap="sm">
-          <Brand>
+        <Block
+          hide={{ base: true, lg: collapsed }}
+          direction="row"
+          align="center"
+          justify="between"
+          gap="sm"
+        >
+          <Brand style={{ marginInlineStart: "calc(1px - var(--ak-space-sm))" }}>
             <BrandMark aria-hidden="true">
               <BoxIcon size={16} />
             </BrandMark>
@@ -440,15 +500,18 @@ function DocsSidebar({
               <BrandLabel>Destroyer</BrandLabel>
             </Block>
           </Brand>
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
             aria-label="Collapse docs navigation"
-            onPress={onToggle}
+            data-slot="button"
+            data-variant="ghost"
+            data-size="icon"
+            data-tooltip="Collapse navigation"
+            data-tooltip-side="right"
+            onClick={onToggle}
           >
             <PanelLeftCloseIcon size={16} aria-hidden="true" />
-          </Button>
+          </button>
         </Block>
       </SidebarHeader>
       <SidebarContent>
@@ -461,11 +524,15 @@ function DocsSidebar({
 
                 return (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton active={active} onClick={() => navigate(item.href)}>
-                      <Icon size={16} aria-hidden="true" />
-                      <Block hide={{ base: true, lg: false }}>
-                        <Text as="span" size="sm" weight="medium">{item.label}</Text>
-                      </Block>
+                    <SidebarMenuButton active={active} asChild>
+                      <Link href={item.href} {...getRailTooltipProps(item.label, iconRail)}>
+                        <Icon size={16} aria-hidden="true" />
+                        <Block hide={{ base: true, lg: false }}>
+                          <Text as="span" size="sm" weight="medium">
+                            {item.label}
+                          </Text>
+                        </Block>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -488,14 +555,15 @@ function DocsSidebar({
 
                     return (
                       <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          active={activePath === item.href}
-                          onClick={() => navigate(item.href)}
-                        >
-                          <Icon size={16} aria-hidden="true" />
-                          <Block hide={{ base: true, lg: false }}>
-                            <Text as="span" size="sm" weight="medium">{item.label}</Text>
-                          </Block>
+                        <SidebarMenuButton active={activePath === item.href} asChild>
+                          <Link href={item.href} {...getRailTooltipProps(item.label, iconRail)}>
+                            <Icon size={16} aria-hidden="true" />
+                            <Block hide={{ base: true, lg: false }}>
+                              <Text as="span" size="sm" weight="medium">
+                                {item.label}
+                              </Text>
+                            </Block>
+                          </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -509,16 +577,17 @@ function DocsSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             {signedIn ? (
-              <ProfileDropdown
-                currentTheme={currentTheme}
-                theme={theme}
-              />
+              <ProfileDropdown currentTheme={currentTheme} railLabel={iconRail} theme={theme} />
             ) : (
-              <SidebarMenuButton onClick={() => navigate("/login")}>
-                <LogInIcon size={16} aria-hidden="true" />
-                <Block hide={{ base: true, lg: false }}>
-                  <Text as="span" size="sm" weight="medium">Sign in</Text>
-                </Block>
+              <SidebarMenuButton asChild>
+                <Link href="/login" {...getRailTooltipProps("Sign in", iconRail)}>
+                  <LogInIcon size={16} aria-hidden="true" />
+                  <Block hide={{ base: true, lg: false }}>
+                    <Text as="span" size="sm" weight="medium">
+                      Sign in
+                    </Text>
+                  </Block>
+                </Link>
               </SidebarMenuButton>
             )}
           </SidebarMenuItem>
@@ -542,8 +611,12 @@ function DocsArticle({ activePath }: { activePath: DocsPath }) {
           <Badge variant="secondary">{content.badge}</Badge>
         </Block>
         <Block gap="sm">
-          <Text tone="muted" size="sm">{content.eyebrow}</Text>
-          <Text as="strong" weight="bold" size="lg">{content.title}</Text>
+          <Text tone="muted" size="sm">
+            {content.eyebrow}
+          </Text>
+          <Text as="strong" weight="bold" size="lg">
+            {content.title}
+          </Text>
           <Text tone="muted">{content.description}</Text>
         </Block>
       </Block>
@@ -553,7 +626,9 @@ function DocsArticle({ activePath }: { activePath: DocsPath }) {
       <Block gap="2xl">
         {content.sections.map((section) => (
           <Block key={section.title} gap="sm">
-            <Text as="strong" weight="semibold">{section.title}</Text>
+            <Text as="strong" weight="semibold">
+              {section.title}
+            </Text>
             <Text tone="muted">{section.body}</Text>
           </Block>
         ))}
@@ -562,11 +637,15 @@ function DocsArticle({ activePath }: { activePath: DocsPath }) {
       <Block gap="md" padding="lg" background="muted" radius="md">
         <Block direction="row" align="center" gap="sm">
           <LayersIcon size={16} aria-hidden="true" />
-          <Text as="strong" weight="semibold">Checks</Text>
+          <Text as="strong" weight="semibold">
+            Checks
+          </Text>
         </Block>
         <Block gap="sm">
           {content.checks.map((check) => (
-            <Text key={check} tone="muted" size="sm">{check}</Text>
+            <Text key={check} tone="muted" size="sm">
+              {check}
+            </Text>
           ))}
         </Block>
       </Block>
@@ -599,19 +678,21 @@ export function DocsPage() {
         />
         <Block padding={{ base: "md", lg: "2xl" }}>
           <Block maxWidth="lg" gap="2xl">
-          <Block direction={{ base: "column", md: "row" }} align={{ base: "start", md: "center" }} justify="between" gap="md">
-            <Block gap="xs">
-              <Text as="strong" weight="bold" size="lg">Docs</Text>
-              <Text tone="muted">
-                Full-width documentation shell with a collapsible left navigation.
-              </Text>
+            <Block rowFrom="md" align={{ base: "start", md: "center" }} justify="between" gap="md">
+              <Block gap="xs">
+                <Text as="strong" weight="bold" size="lg">
+                  Docs
+                </Text>
+                <Text tone="muted">
+                  Full-width documentation shell with a collapsible left navigation.
+                </Text>
+              </Block>
+              <Link href="/settings" data-slot="button" data-variant="outline" data-size="sm">
+                <BoxesIcon size={16} aria-hidden="true" />
+                Open settings
+              </Link>
             </Block>
-            <Button type="button" variant="outline" size="sm" onPress={() => navigate("/settings")}>
-              <BoxesIcon size={16} aria-hidden="true" />
-              Open settings
-            </Button>
-          </Block>
-          <DocsArticle activePath={activePath} />
+            <DocsArticle activePath={activePath} />
           </Block>
         </Block>
       </Grid>

@@ -1,4 +1,4 @@
-import { navigate } from "@askrjs/askr/router";
+import { Link, navigate } from "@askrjs/askr/router";
 import { BoxIcon, LogOutIcon } from "@askrjs/lucide";
 import {
   Block,
@@ -48,13 +48,18 @@ export function LogoutPage() {
                   browser is changed.
                 </Text>
                 <Separator decorative />
-                <Button type="button" variant="destructive" data-width="full" onPress={handleSignOut}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  data-width="full"
+                  onPress={handleSignOut}
+                >
                   <LogOutIcon size={16} aria-hidden="true" />
                   Sign out
                 </Button>
-                <Button type="button" variant="outline" data-width="full" onPress={() => navigate("/")}>
+                <Link href="/" data-slot="button" data-variant="outline" data-width="full">
                   Stay signed in
-                </Button>
+                </Link>
               </Block>
             </CardContent>
             <CardFooter>
