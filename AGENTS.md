@@ -44,6 +44,12 @@ Prioritize components that expose real integration risks:
 4. `Table` with `ScrollArea` for audit/activity data.
 5. `Accordion` or `Collapsible` in Docs.
 6. `Tabs` on Profile or Settings.
+7. `Slider` for numeric settings that need keyboard and pointer coverage.
+8. `ToggleGroup` for compact segmented choices.
+9. `HoverCard` for contextual metadata that should not interrupt the workflow.
+10. `Menubar` for dense document or app actions with nested menus.
+11. `Skeleton` for loading states inside existing content structure.
+12. `VirtualList` and `VirtualTable` for dense operational data surfaces.
 
 Current coverage:
 
@@ -51,3 +57,14 @@ Current coverage:
 - `Checkbox`: Settings > Notifications > Delivery channels.
 - `RadioGroup`: Settings > Workspace > Default role.
 - `data-tooltip`: Docs collapsed navigation and rail controls.
+- `AlertDialog`: Settings > Workspace > Invite links.
+- `ScrollArea`: Settings > Security > Security activity.
+- `Accordion`: Docs article verification notes.
+- `Tabs`: Profile route sections.
+- `Slider`: Settings > Security > Session timeout.
+- `ToggleGroup`: Settings > Preferences > Workspace density.
+- `HoverCard`: Profile > Activity > Surface metadata badges.
+- `Menubar`: Docs article header tools.
+- `Skeleton`: Settings > Security > Security activity refresh.
+- `VirtualList`: Logs > Live stream.
+- `VirtualTable`: Logs > Event detail.

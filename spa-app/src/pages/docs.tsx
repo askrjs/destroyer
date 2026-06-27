@@ -25,8 +25,14 @@ import {
   SettingsIcon,
   Settings2Icon,
   SunIcon,
+  TerminalIcon,
 } from "@askrjs/lucide";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionHeader,
+  AccordionItem,
+  AccordionTrigger,
   Avatar,
   AvatarFallback,
   Badge,
@@ -41,6 +47,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Grid,
+  Menubar,
+  MenubarContent,
+  MenubarGroup,
+  MenubarItem,
+  MenubarLabel,
+  MenubarMenu,
+  MenubarPortal,
+  MenubarSeparator,
+  MenubarTrigger,
   Separator,
   Sidebar,
   SidebarContent,
@@ -117,6 +132,7 @@ const docsItems = [
 const appNavItems = [
   { href: "/", label: "Overview", icon: HomeIcon },
   { href: "/docs", label: "Docs", icon: BookOpenIcon },
+  { href: "/logs", label: "Logs", icon: TerminalIcon },
   { href: "/about", label: "About", icon: InfoIcon },
   { href: "/contact", label: "Contact", icon: MailIcon },
 ] as const;
@@ -597,6 +613,88 @@ function DocsSidebar({
   );
 }
 
+function DocsArticleTools({ activePath }: { activePath: DocsPath }) {
+  const content = docsContent[activePath];
+  const copyRoutePath = () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard) return;
+    void navigator.clipboard.writeText(activePath).catch(() => {});
+  };
+  const menuLink = (href: string, children: unknown) =>
+    (<Link href={href}>{children as never}</Link>) as never;
+
+  return (
+    <Menubar aria-label={`${content.title} article tools`}>
+      <MenubarMenu value="view">
+        <MenubarTrigger>
+          <RouteIcon size={16} aria-hidden="true" />
+          View
+        </MenubarTrigger>
+        <MenubarPortal>
+          <MenubarContent side="bottom" align="start" sideOffset={8}>
+            <MenubarLabel>Article</MenubarLabel>
+            <MenubarGroup>
+              <MenubarItem onPress={copyRoutePath}>
+                <RouteIcon size={16} aria-hidden="true" />
+                Copy route path
+              </MenubarItem>
+            </MenubarGroup>
+            <MenubarSeparator />
+            <MenubarLabel>Related</MenubarLabel>
+            <MenubarGroup>
+              <MenubarItem asChild>
+                {menuLink(
+                  "/docs/components",
+                  <>
+                    <ComponentIcon size={16} aria-hidden="true" />
+                    Component guide
+                  </>,
+                )}
+              </MenubarItem>
+              <MenubarItem asChild>
+                {menuLink(
+                  "/settings",
+                  <>
+                    <SettingsIcon size={16} aria-hidden="true" />
+                    Settings shell
+                  </>,
+                )}
+              </MenubarItem>
+              <MenubarItem asChild>
+                {menuLink(
+                  "/profile/activity",
+                  <>
+                    <CircleUserRoundIcon size={16} aria-hidden="true" />
+                    Profile activity
+                  </>,
+                )}
+              </MenubarItem>
+            </MenubarGroup>
+          </MenubarContent>
+        </MenubarPortal>
+      </MenubarMenu>
+      <MenubarMenu value="export">
+        <MenubarTrigger>
+          <FileTextIcon size={16} aria-hidden="true" />
+          Export
+        </MenubarTrigger>
+        <MenubarPortal>
+          <MenubarContent side="bottom" align="end" sideOffset={8}>
+            <MenubarLabel>Checks</MenubarLabel>
+            <MenubarItem>
+              <FileCode2Icon size={16} aria-hidden="true" />
+              Copy markdown
+            </MenubarItem>
+            <MenubarItem disabled>
+              <FileTextIcon size={16} aria-hidden="true" />
+              Download PDF
+            </MenubarItem>
+          </MenubarContent>
+        </MenubarPortal>
+      </MenubarMenu>
+    </Menubar>
+  );
+}
+
 function DocsArticle({ activePath }: { activePath: DocsPath }) {
   const content = docsContent[activePath];
   const Icon = content.icon;
@@ -614,9 +712,12 @@ function DocsArticle({ activePath }: { activePath: DocsPath }) {
           <Text tone="muted" size="sm">
             {content.eyebrow}
           </Text>
-          <Text as="strong" weight="bold" size="lg">
-            {content.title}
-          </Text>
+          <Block rowFrom="md" align={{ base: "start", md: "center" }} justify="between" gap="md">
+            <Text as="strong" weight="bold" size="lg">
+              {content.title}
+            </Text>
+            <DocsArticleTools activePath={activePath} />
+          </Block>
           <Text tone="muted">{content.description}</Text>
         </Block>
       </Block>
@@ -638,16 +739,47 @@ function DocsArticle({ activePath }: { activePath: DocsPath }) {
         <Block direction="row" align="center" gap="sm">
           <LayersIcon size={16} aria-hidden="true" />
           <Text as="strong" weight="semibold">
-            Checks
+            Verification notes
           </Text>
         </Block>
-        <Block gap="sm">
-          {content.checks.map((check) => (
-            <Text key={check} tone="muted" size="sm">
-              {check}
-            </Text>
-          ))}
-        </Block>
+        <Accordion defaultValue="route-checks" collapsible>
+          <AccordionItem value="route-checks">
+            <AccordionHeader>
+              <AccordionTrigger>Route and shell checks</AccordionTrigger>
+            </AccordionHeader>
+            <AccordionContent>
+              <Block gap="sm">
+                {content.checks.map((check) => (
+                  <Text key={check} tone="muted" size="sm">
+                    {check}
+                  </Text>
+                ))}
+              </Block>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="responsive-review">
+            <AccordionHeader>
+              <AccordionTrigger>Responsive review</AccordionTrigger>
+            </AccordionHeader>
+            <AccordionContent>
+              <Text tone="muted" size="sm">
+                Check the docs page at mobile, tablet, and desktop widths so the rail, article copy,
+                and route action stay readable without clipped text.
+              </Text>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="theme-ownership">
+            <AccordionHeader>
+              <AccordionTrigger>Theme ownership</AccordionTrigger>
+            </AccordionHeader>
+            <AccordionContent>
+              <Text tone="muted" size="sm">
+                Any visual issue found here should be fixed in the shared theme unless the docs page
+                is composing the primitive incorrectly.
+              </Text>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </Block>
     </Block>
   );

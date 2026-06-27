@@ -12,7 +12,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    dedupe: ["@askrjs/askr"],
+    dedupe: ["@askrjs/askr", "@askrjs/ui"],
   },
   build: {
     manifest: true,

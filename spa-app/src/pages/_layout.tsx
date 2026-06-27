@@ -145,6 +145,7 @@ export function PageLayout({ children }: { children?: unknown }) {
                     Overview
                   </NavLink>
                   <NavLink href="/docs">Docs</NavLink>
+                  <NavLink href="/logs">Logs</NavLink>
                   <Block hide={{ base: true, md: false }}>
                     <NavLink href="/about">About</NavLink>
                   </Block>

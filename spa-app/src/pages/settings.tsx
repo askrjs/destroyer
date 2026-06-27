@@ -1,16 +1,29 @@
+import { state } from "@askrjs/askr";
 import { Link, currentRoute } from "@askrjs/askr/router";
 import {
   BellIcon,
   Building2Icon,
   CreditCardIcon,
+  FileClockIcon,
   KeyRoundIcon,
+  Link2OffIcon,
   MonitorIcon,
   PaletteIcon,
   ShieldCheckIcon,
   SlidersHorizontalIcon,
+  Trash2Icon,
   UserRoundIcon,
 } from "@askrjs/lucide";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogOverlay,
+  AlertDialogPortal,
+  AlertDialogTitle,
+  AlertDialogTrigger,
   Badge,
   Block,
   Button,
@@ -29,6 +42,8 @@ import {
   PageHeader,
   RadioGroup,
   RadioGroupItem,
+  ScrollArea,
+  ScrollAreaViewport,
   Separator,
   Select,
   SelectContent,
@@ -47,8 +62,21 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  Skeleton,
+  Slider,
+  SliderRange,
+  SliderThumb,
+  SliderTrack,
   Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
   Text,
+  ToggleGroup,
+  ToggleGroupItem,
 } from "@askrjs/themes/components";
 import { demoUser } from "../auth";
 
@@ -139,6 +167,89 @@ const defaultRoleOptions = [
     label: "Admin",
     description: "Available after the workspace moves off Starter.",
     disabled: true,
+  },
+] as const;
+
+const securityActivity = [
+  {
+    event: "Two-factor check",
+    actor: "Jamie Repanich",
+    target: "Current browser",
+    result: "Passed",
+    time: "2 minutes ago",
+    variant: "success",
+  },
+  {
+    event: "Theme storage read",
+    actor: "Destroyer SPA",
+    target: "localStorage",
+    result: "Allowed",
+    time: "8 minutes ago",
+    variant: "info",
+  },
+  {
+    event: "Invite link review",
+    actor: "Admin policy",
+    target: "Workspace invites",
+    result: "Watched",
+    time: "18 minutes ago",
+    variant: "secondary",
+  },
+  {
+    event: "Session timeout check",
+    actor: "Security settings",
+    target: "Idle session",
+    result: "Passed",
+    time: "31 minutes ago",
+    variant: "success",
+  },
+  {
+    event: "Readonly profile audit",
+    actor: "Destroyer SPA",
+    target: "Profile fields",
+    result: "Allowed",
+    time: "44 minutes ago",
+    variant: "info",
+  },
+  {
+    event: "Workspace role check",
+    actor: "Access policy",
+    target: "Default member role",
+    result: "Passed",
+    time: "1 hour ago",
+    variant: "success",
+  },
+  {
+    event: "Notification route check",
+    actor: "Route monitor",
+    target: "Settings navigation",
+    result: "Watched",
+    time: "2 hours ago",
+    variant: "secondary",
+  },
+  {
+    event: "Billing access review",
+    actor: "Admin policy",
+    target: "Starter plan",
+    result: "Allowed",
+    time: "3 hours ago",
+    variant: "info",
+  },
+  {
+    event: "Profile tab visit",
+    actor: "Destroyer SPA",
+    target: "Access tab",
+    result: "Passed",
+    time: "Yesterday",
+    variant: "success",
+  },
+  {
+    event: "Invite policy sync",
+    actor: "Workspace defaults",
+    target: "Invite links",
+    result: "Watched",
+    time: "Yesterday",
+    variant: "secondary",
   },
 ] as const;
 
@@ -251,6 +362,17 @@ function ProfileSettings() {
 }
 
 function SecuritySettings() {
+  const [sessionTimeout, setSessionTimeout] = state(30);
+  const [activityLoading, setActivityLoading] = state(false);
+  const refreshActivity = () => {
+    if (activityLoading()) return;
+
+    setActivityLoading(true);
+    window.setTimeout(() => {
+      setActivityLoading(false);
+    }, 800);
+  };
+
   return (
     <Block gap="lg">
       <Card variant="raised">
@@ -273,14 +395,37 @@ function SecuritySettings() {
               <Switch defaultChecked />
             </Block>
             <Separator decorative />
-            <Block direction="row" align="center" justify="between" gap="md">
-              <Block gap="0">
-                <Text weight="medium">Session timeout</Text>
+            <Block gap="sm">
+              <Block direction="row" align="center" justify="between" gap="md">
+                <Block gap="0">
+                  <Text weight="medium">Session timeout</Text>
+                  <Text tone="muted" size="sm">
+                    Automatically end idle sessions after {sessionTimeout()} minutes.
+                  </Text>
+                </Block>
+                <Badge variant="secondary">{sessionTimeout()}m</Badge>
+              </Block>
+              <Slider
+                aria-label="Session timeout"
+                min={15}
+                max={120}
+                step={15}
+                value={sessionTimeout()}
+                onValueChange={setSessionTimeout}
+              >
+                <SliderTrack>
+                  <SliderRange />
+                  <SliderThumb aria-label="Session timeout in minutes" />
+                </SliderTrack>
+              </Slider>
+              <Block direction="row" align="center" justify="between" gap="sm">
                 <Text tone="muted" size="sm">
-                  Automatically end idle sessions after 30 minutes.
+                  15m
+                </Text>
+                <Text tone="muted" size="sm">
+                  2h
                 </Text>
               </Block>
-              <Badge variant="secondary">30m</Badge>
             </Block>
           </Block>
         </CardContent>
@@ -305,6 +450,76 @@ function SecuritySettings() {
           </Block>
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Security activity</CardTitle>
+          <CardDescription>Recent local checks that touched account access.</CardDescription>
+          <CardAction>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={activityLoading()}
+              onPress={refreshActivity}
+            >
+              <FileClockIcon size={16} aria-hidden="true" />
+              Refresh
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea>
+            <ScrollAreaViewport data-size="content" tabindex={0}>
+              <div data-slot="data-table">
+                <Table aria-label="Security activity" style={{ minInlineSize: "44rem" }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeaderCell>Event</TableHeaderCell>
+                      <TableHeaderCell>Actor</TableHeaderCell>
+                      <TableHeaderCell>Target</TableHeaderCell>
+                      <TableHeaderCell>Result</TableHeaderCell>
+                      <TableHeaderCell>Time</TableHeaderCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {activityLoading()
+                      ? Array.from({ length: 5 }).map((_, index) => (
+                          <TableRow key={`security-activity-loading-${index}`}>
+                            <TableCell>
+                              <Skeleton style={{ blockSize: "1rem", inlineSize: "9rem" }} />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton style={{ blockSize: "1rem", inlineSize: "7rem" }} />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton style={{ blockSize: "1rem", inlineSize: "8rem" }} />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton style={{ blockSize: "1.25rem", inlineSize: "4.5rem" }} />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton style={{ blockSize: "1rem", inlineSize: "6rem" }} />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : securityActivity.map((entry) => (
+                          <TableRow key={`${entry.event}-${entry.time}`}>
+                            <TableCell>{entry.event}</TableCell>
+                            <TableCell>{entry.actor}</TableCell>
+                            <TableCell>{entry.target}</TableCell>
+                            <TableCell>
+                              <Badge variant={entry.variant}>{entry.result}</Badge>
+                            </TableCell>
+                            <TableCell>{entry.time}</TableCell>
+                          </TableRow>
+                        ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollAreaViewport>
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </Block>
   );
 }
@@ -322,14 +537,17 @@ function PreferenceSettings() {
         </CardHeader>
         <CardContent>
           <Block gap="md">
-            <Block direction="row" align="center" justify="between" gap="md">
+            <Block rowFrom="md" align={{ base: "start", md: "center" }} justify="between" gap="md">
               <Block gap="0">
-                <Text weight="medium">Compact density</Text>
+                <Text weight="medium">Workspace density</Text>
                 <Text tone="muted" size="sm">
-                  Use tighter spacing in data-heavy surfaces.
+                  Choose the default spacing for data-heavy surfaces.
                 </Text>
               </Block>
-              <Switch />
+              <ToggleGroup aria-label="Workspace density" type="single" defaultValue="comfortable">
+                <ToggleGroupItem value="comfortable">Comfortable</ToggleGroupItem>
+                <ToggleGroupItem value="compact">Compact</ToggleGroupItem>
+              </ToggleGroup>
             </Block>
             <Separator decorative />
             <Block direction="row" align="center" justify="between" gap="md">
@@ -566,6 +784,49 @@ function WorkspaceSettings() {
               </Block>
               <Switch />
             </Block>
+          </Block>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Invite links</CardTitle>
+          <CardDescription>Rotate shared links when access policy changes.</CardDescription>
+          <CardAction>
+            <Link2OffIcon size={18} aria-hidden="true" />
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <Block rowFrom="md" align={{ base: "start", md: "center" }} justify="between" gap="md">
+            <Block gap="xs">
+              <Text weight="medium">Reset all active invite links</Text>
+              <Text tone="muted" size="sm">
+                Existing demo invite URLs stop working and admins can generate fresh links.
+              </Text>
+            </Block>
+            <AlertDialog>
+              <AlertDialogTrigger data-slot="button" data-variant="destructive">
+                <Trash2Icon size={16} aria-hidden="true" />
+                Reset links
+              </AlertDialogTrigger>
+              <AlertDialogPortal>
+                <AlertDialogOverlay />
+                <AlertDialogContent>
+                  <AlertDialogTitle>Reset workspace invite links?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This is a local Destroyer action, but it uses the same confirmation pattern a
+                    production workspace would need before invalidating shared access.
+                  </AlertDialogDescription>
+                  <Block direction="row" justify="end" gap="sm">
+                    <AlertDialogCancel data-slot="button" data-variant="outline">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction data-slot="button" data-variant="destructive">
+                      Reset links
+                    </AlertDialogAction>
+                  </Block>
+                </AlertDialogContent>
+              </AlertDialogPortal>
+            </AlertDialog>
           </Block>
         </CardContent>
       </Card>
