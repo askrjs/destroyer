@@ -5,4 +5,5 @@ dist-types/
 .DS_Store
 *.log
 coverage/
-
+.data/
+test-results/

@@ -1,40 +1,50 @@
 {
   "name": "destroyer",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "spa-app",
-    "ssr-app",
-    "ssg-site"
-  ],
   "type": "module",
   "scripts": {
-    "fmt": "vp fmt",
-    "lint": "vp lint",
-    "dev:spa": "npm --workspace @destroyer/spa-app run dev",
-    "dev:ssr": "npm --workspace @destroyer/ssr-app run dev",
-    "dev:ssg": "npm --workspace @destroyer/ssg-site run dev",
-    "build": "npm run build:spa && npm run build:ssr && npm run build:ssg",
-    "build:spa": "npm --workspace @destroyer/spa-app run build",
-    "build:ssr": "npm --workspace @destroyer/ssr-app run build",
-    "build:ssg": "npm --workspace @destroyer/ssg-site run build",
-    "typecheck": "npm --workspaces --if-present run typecheck",
-    "check:spa-smells": "node scripts/check-spa-userland-smells.js",
-    "smoke": "node scripts/smoke-built-apps.js",
-    "test": "npm run typecheck && npm run build && npm run check:spa-smells && npm run smoke",
-    "pack:local-askr": "node scripts/pack-local-askr.js",
-    "install:local-askr": "node scripts/install-local-askr.js",
-    "test:release": "node scripts/run-release-matrix.js"
+    "dev": "vp dev --host 127.0.0.1 --port 5173",
+    "build": "vp build --configLoader native && vp build --ssr server.ts --outDir dist/server --configLoader native",
+    "preview": "node dist/server/server.js",
+    "fmt": "vp fmt .",
+    "lint": "vp lint src server.ts tests vite.config.ts",
+    "typecheck": "tsc --noEmit --pretty false",
+    "test": "vp test run",
+    "test:production": "npm run build && vp test run tests/production.test.ts",
+    "test:browser": "playwright test",
+    "acceptance": "npm run check && npm run test:production && npm run test:browser",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build"
   },
-  "devDependencies": {
+  "dependencies": {
     "@askrjs/askr": "file:../askr",
+    "@askrjs/auth": "file:../askr-auth",
+    "@askrjs/charts": "file:../askr-charts",
+    "@askrjs/fetch": "file:../askr-fetch",
+    "@askrjs/i18n": "file:../askr-i18n",
+    "@askrjs/logos": "file:../askr-logos",
     "@askrjs/lucide": "file:../askr-lucide",
+    "@askrjs/node": "file:../askr-node",
+    "@askrjs/otel": "file:../askr-otel",
+    "@askrjs/schema": "file:../askr-schema",
+    "@askrjs/server": "file:../askr-server",
     "@askrjs/themes": "file:../askr-themes",
     "@askrjs/ui": "file:../askr-ui",
+    "argon2": "^0.44.0",
+    "better-sqlite3": "^12.11.1"
+  },
+  "devDependencies": {
+    "@askrjs/cli": "file:../askr-cli",
     "@askrjs/vite": "file:../askr-vite",
-    "@types/node": "^24.0.0",
+    "@playwright/test": "^1.61.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^26.0.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
-    "vite-plus": "^0.1.22"
+    "vite-plus": "^0.2.4",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

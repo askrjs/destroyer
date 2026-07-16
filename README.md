@@ -1,21 +1,26 @@
-# destroyer
+# Destroyer
 
-Destroyer is a stress-test monorepo for the AskR ecosystem. It keeps one realistic app for each primary delivery mode so we can surface integration issues before users do.
+Destroyer is one realistic full-stack Askr application. It is the integration and product-hardening workspace that sits beyond the progressive learning path in `askr-examples`.
 
-## Apps
+The existing operations SPA is the product foundation. The same route registry now supports direct client rendering and server rendering, while one server composition root owns APIs, cookie sessions, request IDs, security headers, rate limits, access logs, lifecycle probes, and production startup.
 
-- `spa-app`: client-rendered dashboard-style app.
-- `ssr-app`: server-rendered operations app with client hydration.
-- `ssg-site`: static documentation and content site.
+## Application shape
+
+- `src/pages` and `src/features` contain the real operations product surfaces.
+- `src/server/api.ts` declares the OpenAPI-backed operational and support APIs.
+- `src/server/app.ts` composes middleware, authentication, API routing, probes, and SSR fallback.
+- `src/server/dependencies.ts` is the adapter boundary for repositories and infrastructure.
+- `server.ts` is the production Node entrypoint.
+
+The in-memory adapters keep the repository self-contained. Production adapters belong behind the same dependency interfaces rather than inside route handlers.
 
 ## Commands
 
 ```sh
 npm install
-npm run dev:spa
-npm run dev:ssr
-npm run dev:ssg
-npm run test
+npm run dev
+npm run check
+npm run preview
 ```
 
-Local AskR packages are referenced with `file:` dependencies. The release-matrix scripts can pack and reinstall local tarballs when we want to test the same shape consumers get from npm.
+Local Askr packages remain `file:` dependencies so Destroyer exercises the current workspace implementation directly.

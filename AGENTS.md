@@ -20,7 +20,7 @@ Destroyer is a realistic integration app for hardening `@askrjs/themes` in norma
 
 4. Verify functionality with focused tests.
    - If the underlying primitive changed, run the focused `askr-ui` browser test for that primitive.
-   - If only Destroyer changed, run `npm run build` from `destroyer/spa-app`.
+   - If only Destroyer changed, run `npm run check` from `destroyer`.
    - If `askr-themes` was rebuilt, restart the Destroyer dev server because packaging refreshes `askr-themes/dist` while Vite is watching it.
 
 5. Verify visually in the running SPA.
