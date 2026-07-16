@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   Text,
 } from "@askrjs/themes/components";
-import type { useTheme } from "@askrjs/themes/theme";
+import type { ThemeScopeValue } from "@askrjs/themes/theme";
 import { demoUser } from "../../auth";
 import { getNextThemeName, getThemeIcon, getThemeLabel } from "./docs-theme";
 
@@ -24,7 +24,7 @@ export function ProfileDropdown({
 }: {
   currentTheme: string;
   railLabel?: boolean;
-  theme: ReturnType<typeof useTheme>;
+  theme: ThemeScopeValue;
 }) {
   const ThemeIcon = getThemeIcon(currentTheme);
 

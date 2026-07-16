@@ -38,7 +38,7 @@ import {
   NavLink,
   Text,
 } from "@askrjs/themes/components";
-import { ThemeProvider, ThemeToggle } from "@askrjs/themes/theme";
+import { ThemeScope, ThemeToggle } from "@askrjs/themes/theme";
 import { demoUser, isSignedIn } from "../auth";
 
 function ProfileMenu() {
@@ -123,7 +123,7 @@ export function PageLayout({ children }: { children?: unknown }) {
   const isDocsRoute = route.path === "/docs" || route.path.startsWith("/docs/");
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="destroyer-theme">
+    <ThemeScope defaultTheme="light" storageKey="destroyer-theme">
       <Block minHeight="screen">
         {!isAuthRoute && !isDocsRoute && (
           <Header sticky>
@@ -206,6 +206,6 @@ export function PageLayout({ children }: { children?: unknown }) {
           </Footer>
         )}
       </Block>
-    </ThemeProvider>
+    </ThemeScope>
   );
 }

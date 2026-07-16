@@ -1,14 +1,9 @@
-import type { Props } from "@askrjs/askr";
+import type { JSXElement } from "@askrjs/askr/foundations";
 
 declare global {
   namespace JSX {
-    interface Element {
+    interface Element extends JSXElement {
       readonly __destroyerElementBrand?: never;
-      readonly $$typeof?: symbol;
-      type: string | ((props: Props) => unknown) | symbol;
-      props?: Props;
-      children?: Array<Element | string | number | boolean | null | undefined>;
-      key?: string | number | null;
     }
 
     interface IntrinsicElements {

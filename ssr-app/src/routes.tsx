@@ -1,5 +1,5 @@
 import { Button } from "@askrjs/ui";
-import { ThemeProvider } from "@askrjs/themes/theme";
+import { ThemeScope } from "@askrjs/themes/theme";
 
 const metrics = [
   { label: "Requests", value: "128k" },
@@ -27,7 +27,7 @@ const scenarios = [
 
 function SsrShell({ children }: { children?: unknown }) {
   return (
-    <ThemeProvider>
+    <ThemeScope>
       <main class="ssr-shell">
         <header>
           <a href="/">destroyer ssr</a>
@@ -38,7 +38,7 @@ function SsrShell({ children }: { children?: unknown }) {
         </header>
         <section>{children}</section>
       </main>
-    </ThemeProvider>
+    </ThemeScope>
   );
 }
 

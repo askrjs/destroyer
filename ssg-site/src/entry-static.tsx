@@ -1,5 +1,5 @@
 import { renderToString } from "@askrjs/askr/ssr";
-import { ThemeProvider } from "@askrjs/themes/theme";
+import { ThemeScope } from "@askrjs/themes/theme";
 import "./style.css";
 
 export const staticPaths = ["/", "/guide", "/reference"];
@@ -53,7 +53,7 @@ function renderAssetTags(assets: ClientAsset[]) {
 
 function SiteShell({ children }: { children?: unknown }) {
   return (
-    <ThemeProvider>
+    <ThemeScope>
       <main class="site-shell">
         <header>
           <a href="/">destroyer ssg</a>
@@ -65,7 +65,7 @@ function SiteShell({ children }: { children?: unknown }) {
         </header>
         {children}
       </main>
-    </ThemeProvider>
+    </ThemeScope>
   );
 }
 

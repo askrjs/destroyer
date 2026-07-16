@@ -19,7 +19,7 @@ import {
   Text,
   SidebarTrigger,
 } from "@askrjs/themes/components";
-import { useTheme } from "@askrjs/themes/theme";
+import { theme } from "@askrjs/themes/theme";
 import { isSignedIn } from "../../auth";
 import { appNavItems, docsItems, type DocsPath } from "./docs-data";
 import { ProfileDropdown } from "./profile-dropdown";
@@ -37,8 +37,8 @@ export function DocsSidebar({
   const mobileRail =
     typeof window !== "undefined" && window.matchMedia("(max-width: 63.999rem)").matches;
   const signedIn = isSignedIn();
-  const theme = useTheme();
-  const currentTheme = theme.theme();
+  const themeScope = theme();
+  const currentTheme = themeScope.theme();
   const iconRail = collapsed || mobileRail;
 
   return (
@@ -166,7 +166,7 @@ export function DocsSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             {signedIn ? (
-              <ProfileDropdown currentTheme={currentTheme} railLabel={iconRail} theme={theme} />
+              <ProfileDropdown currentTheme={currentTheme} railLabel={iconRail} theme={themeScope} />
             ) : (
               <SidebarMenuButton
                 asChild
