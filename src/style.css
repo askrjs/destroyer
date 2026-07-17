@@ -1,2 +1,31 @@
 @import "@askrjs/themes/default";
-@import "@askrjs/charts";
+@import "@askrjs/charts/styles";
+
+.metrics-plot {
+  --ak-chart-height: 18rem;
+
+  min-inline-size: 0;
+}
+
+.metrics-plot--primary {
+  --ak-chart-height: 20rem;
+}
+
+.metrics-plot--compact {
+  --ak-chart-height: 16rem;
+}
+
+.metrics-plot--trace {
+  --ak-chart-height: 14rem;
+}
+
+@media (max-width: 40rem) {
+  .metrics-plot,
+  .metrics-plot--primary {
+    --ak-chart-height: 16rem;
+  }
+
+  .metrics-plot--trace {
+    --ak-chart-height: 12rem;
+  }
+}

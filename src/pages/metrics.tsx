@@ -1,31 +1,23 @@
+import { createPlot } from "@askrjs/charts";
 import { Link } from "@askrjs/askr/router";
 import {
+  ActivityIcon,
   ChartBarIcon,
   ChartColumnIncreasingIcon,
   ChartLineIcon,
-  ChartPieIcon,
-  DonutIcon,
   FileCode2Icon,
   FlameIcon,
 } from "@askrjs/lucide";
 import {
-  BarChart,
-  ChartPanel,
-  ChartShell,
-  DonutChart,
-  FlameGraph,
-  LineChart,
-  PieChart,
-} from "@askrjs/charts/components";
-import {
   Badge,
-  Block,
   Button,
   ButtonGroup,
   Card,
   CardAction,
   CardContent,
+  CardDescription,
   CardHeader,
+  CardTitle,
   Grid,
   Page,
   PageHeader,
@@ -33,27 +25,35 @@ import {
   StatDescription,
   StatLabel,
   StatValue,
-  Text,
 } from "@askrjs/themes/components";
 import {
-  channelMix,
-  formatCount,
-  formatMs,
+  formatDay,
   formatPercent,
-  issueShare,
   metricHighlights,
   reliabilityTrend,
-  requestTraceFlame,
-  responseHistogram,
+  requestTrace,
+  responseDistribution,
   routeWorkload,
+  subsystemMix,
+  type ReliabilityRow,
+  type RequestTraceRow,
+  type ResponseDistributionRow,
+  type RouteWorkloadRow,
+  type SubsystemMixRow,
 } from "../features/metrics/metrics-data";
+
+const ResponseDistributionPlot = createPlot<ResponseDistributionRow>();
+const RouteWorkloadPlot = createPlot<RouteWorkloadRow>();
+const SubsystemMixPlot = createPlot<SubsystemMixRow>();
+const ReliabilityPlot = createPlot<ReliabilityRow>();
+const RequestTracePlot = createPlot<RequestTraceRow>();
 
 export function MetricsPage() {
   return (
     <Page>
       <PageHeader
         title="Metrics"
-        description="Operational charts for checking Askr chart primitives inside a realistic dashboard route."
+        description="Service telemetry for investigating load, reliability, and request cost across the workspace."
         actions={
           <ButtonGroup attached={false}>
             <Button asChild variant="outline">
@@ -85,134 +85,164 @@ export function MetricsPage() {
         ))}
       </Grid>
 
-      <ChartShell
-        title="Service telemetry"
-        description="Production-style telemetry for latency, route workload, event composition, hardening status, reliability, and request cost."
+      <Grid
+        as="section"
+        columns={{ base: 1, xl: "minmax(0, 1.45fr) minmax(18rem, 0.8fr)" }}
+        gap="lg"
       >
-        <Grid columns={{ base: 1, xl: 2 }} gap="lg">
-          <ChartPanel
-            title="Response distribution"
-            description="Histogram-style bins for route and resource latency."
-          >
-            <Block direction="row" align="center" gap="sm">
+        <Card variant="raised">
+          <CardHeader>
+            <CardTitle>Response distribution</CardTitle>
+            <CardDescription>
+              Requests by latency band over the active 24-hour window.
+            </CardDescription>
+            <CardAction>
               <ChartColumnIncreasingIcon size={18} aria-hidden="true" />
-              <Text tone="muted" size="sm">
-                Requests by latency band
-              </Text>
-            </Block>
-            <BarChart
-              label="Response latency histogram"
-              variant="histogram"
-              data={responseHistogram}
-              summary="Most requests land under 200ms, with slow calls isolated into the tail bin."
-              valueFormatter={formatCount}
-              animate
-            />
-          </ChartPanel>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <ResponseDistributionPlot.Root
+              class="metrics-plot metrics-plot--primary"
+              data={responseDistribution}
+              rowKey="id"
+              label="Response latency distribution"
+              summary="Most requests complete within 200ms; six percent remain in the 400ms-and-over tail."
+            >
+              <ResponseDistributionPlot.Bar x="latencyBand" y="requests" title="description" />
+              <ResponseDistributionPlot.Axis axis="y" label="Requests (thousands)" />
+              <ResponseDistributionPlot.Tooltip />
+            </ResponseDistributionPlot.Root>
+          </CardContent>
+        </Card>
 
-          <ChartPanel
-            title="Route workload"
-            description="Horizontal bars for where app work is happening."
-          >
-            <Block direction="row" align="center" gap="sm">
-              <ChartBarIcon size={18} aria-hidden="true" />
-              <Text tone="muted" size="sm">
-                Activity by route
-              </Text>
-            </Block>
-            <BarChart
-              label="Route workload"
-              data={routeWorkload}
-              summary="Logs currently carry the highest workload because virtual rows and live updates are active."
-              valueFormatter={formatCount}
-              animate
-            />
-          </ChartPanel>
-
-          <ChartPanel
-            title="Event composition"
-            description="Donut chart for subsystem activity across the app shell."
-          >
-            <Block direction="row" align="center" gap="sm">
-              <DonutIcon size={18} aria-hidden="true" />
-              <Text tone="muted" size="sm">
-                Share by subsystem
-              </Text>
-            </Block>
-            <DonutChart
+        <Card>
+          <CardHeader>
+            <CardTitle>Subsystem mix</CardTitle>
+            <CardDescription>Share of observable app events by owning subsystem.</CardDescription>
+            <CardAction>
+              <ActivityIcon size={18} aria-hidden="true" />
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <SubsystemMixPlot.Root
+              class="metrics-plot metrics-plot--compact"
+              data={subsystemMix}
+              rowKey="id"
               label="Subsystem event mix"
-              data={channelMix}
-              totalLabel="Events"
-              summary="Router and theme events account for most of the visible app activity."
-              valueFormatter={formatPercent}
-              animate
-            />
-          </ChartPanel>
+              summary="Router and theme activity account for 64 percent of observed workspace events."
+            >
+              <SubsystemMixPlot.Arc
+                value="share"
+                category="subsystem"
+                fill="subsystem"
+                title="description"
+                innerRadius={0.58}
+              />
+              <SubsystemMixPlot.Legend label="Subsystem" interactive />
+              <SubsystemMixPlot.Tooltip />
+            </SubsystemMixPlot.Root>
+          </CardContent>
+        </Card>
+      </Grid>
 
-          <ChartPanel
-            title="Issue share"
-            description="Pie chart for current hardening work status."
-          >
-            <Block direction="row" align="center" gap="sm">
-              <ChartPieIcon size={18} aria-hidden="true" />
-              <Text tone="muted" size="sm">
-                Work by state
-              </Text>
-            </Block>
-            <PieChart
-              label="Hardening issue share"
-              data={issueShare}
-              summary="Most findings are resolved or being watched; only a small share is escalated."
-              valueFormatter={formatPercent}
-              animate
-            />
-          </ChartPanel>
-        </Grid>
+      <Grid as="section" columns={{ base: 1, xl: 2 }} gap="lg">
+        <Card>
+          <CardHeader>
+            <CardTitle>Route workload</CardTitle>
+            <CardDescription>
+              Where request-handling work is concentrated right now.
+            </CardDescription>
+            <CardAction>
+              <ChartBarIcon size={18} aria-hidden="true" />
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <RouteWorkloadPlot.Root
+              class="metrics-plot"
+              data={routeWorkload}
+              rowKey="id"
+              label="Route workload"
+              summary="Logs carry the highest workload while virtual rows and live updates are active."
+            >
+              <RouteWorkloadPlot.Bar
+                x="route"
+                y="requests"
+                orientation="horizontal"
+                title="description"
+              />
+              <RouteWorkloadPlot.Tooltip />
+            </RouteWorkloadPlot.Root>
+          </CardContent>
+        </Card>
 
-        <Grid columns={{ base: 1, xl: "minmax(0, 1.45fr) minmax(18rem, 0.8fr)" }} gap="lg">
-          <ChartPanel
-            title="Request trace"
-            description="Flame graph for where a logs request spends time."
-          >
-            <Block direction="row" align="center" gap="sm">
-              <FlameIcon size={18} aria-hidden="true" />
-              <Text tone="muted" size="sm">
-                API to service to database
-              </Text>
-            </Block>
-            <FlameGraph
-              label="Logs request trace"
-              data={requestTraceFlame}
-              labelDensity="compact"
-              summary="The request spends most of its time in database work, with service enrichment close behind."
-              valueFormatter={formatMs}
-              animate
-            />
-          </ChartPanel>
-
-          <ChartPanel
-            title="Reliability trend"
-            description="Line chart for the weekly app success rate."
-          >
-            <Block direction="row" align="center" gap="sm">
+        <Card>
+          <CardHeader>
+            <CardTitle>Reliability trend</CardTitle>
+            <CardDescription>Seven-day request success rate for the workspace.</CardDescription>
+            <CardAction>
               <ChartLineIcon size={18} aria-hidden="true" />
-              <Text tone="muted" size="sm">
-                Seven-day success rate
-              </Text>
-            </Block>
-            <LineChart
-              label="Weekly reliability"
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <ReliabilityPlot.Root
+              class="metrics-plot"
               data={reliabilityTrend}
-              min={99.5}
-              max={100}
-              summary="Reliability stays above 99.7% while the app exercises route and data updates."
-              valueFormatter={formatPercent}
-              showGrid
-              animate
+              rowKey="id"
+              label="Weekly reliability"
+              summary="Reliability remains above 99.7 percent and ends the week at 99.92 percent."
+            >
+              <ReliabilityPlot.Scale channel="y" type="linear" domain={[99.5, 100]} nice={false} />
+              <ReliabilityPlot.Axis axis="x" tickFormat={formatDay} />
+              <ReliabilityPlot.Axis axis="y" tickFormat={(value) => formatPercent(Number(value))} />
+              <ReliabilityPlot.Grid axis="y" />
+              <ReliabilityPlot.Line
+                x="observedAt"
+                y="successRate"
+                title="description"
+                strokeWidth={2}
+              />
+              <ReliabilityPlot.Point x="observedAt" y="successRate" title="description" r={4} />
+              <ReliabilityPlot.Tooltip />
+              <ReliabilityPlot.Crosshair axes="x" />
+            </ReliabilityPlot.Root>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Slow request anatomy</CardTitle>
+          <CardDescription>
+            A 246ms logs search, broken down from ingress through database aggregation.
+          </CardDescription>
+          <CardAction>
+            <FlameIcon size={18} aria-hidden="true" />
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <RequestTracePlot.Root
+            class="metrics-plot metrics-plot--trace"
+            data={requestTrace}
+            rowKey="id"
+            label="Logs request trace"
+            summary="Database work consumes 114ms, service work consumes 74ms, and API work consumes 58ms."
+          >
+            <RequestTracePlot.Scale channel="x" type="linear" domain={[0, 246]} nice={false} />
+            <RequestTracePlot.Scale channel="y" type="band" />
+            <RequestTracePlot.Axis axis="x" label="Elapsed time (ms)" />
+            <RequestTracePlot.Rect
+              x="startMs"
+              x2="endMs"
+              y="lane"
+              fill="subsystem"
+              title="description"
+              radius={3}
             />
-          </ChartPanel>
-        </Grid>
-      </ChartShell>
+            <RequestTracePlot.Legend label="Request stage" interactive />
+            <RequestTracePlot.Tooltip />
+          </RequestTracePlot.Root>
+        </CardContent>
+      </Card>
     </Page>
   );
 }
