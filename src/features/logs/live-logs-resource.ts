@@ -1,50 +1,38 @@
-import { queryScope } from "@askrjs/askr/data";
-import { createLiveLogWindow, type LogEntry } from "./logs-data";
+import { defineQuery, queryScope } from "@askrjs/askr/data";
+import type { OperationsLogPage } from "../../server/contracts";
+import type { LogEntry } from "./logs-data";
 
-export type LiveLogSnapshot = {
-  entries: LogEntry[];
-  sequence: number;
-};
+export interface LiveLogSnapshot {
+  readonly entries: readonly LogEntry[];
+  readonly nextCursor: string | null;
+  readonly sequence: number;
+}
 
 export const liveLogScope = queryScope("destroyer.logs");
-export const liveLogQueryKey = liveLogScope.key("live");
-
-let liveLogSequence = 0;
-
-export async function fetchLiveLogs({ signal }: { signal: AbortSignal }): Promise<LiveLogSnapshot> {
-  await waitForLiveLogDelay(120 + (liveLogSequence % 4) * 25, signal);
-
-  liveLogSequence += 1;
-  const timestamp = Date.now();
-
+export function toLogEntry(entry: OperationsLogPage["entries"][number]): LogEntry {
   return {
-    sequence: liveLogSequence,
-    entries: createLiveLogWindow(liveLogSequence, timestamp),
+    id: entry.id,
+    time: new Date(entry.timestamp).toLocaleTimeString([], { hour12: false }),
+    service: entry.service,
+    route: entry.route,
+    severity: entry.severity,
+    latency: entry.latency,
+    requestId: entry.requestId,
+    message: entry.message,
   };
 }
 
-function createAbortError(): Error {
-  const error = new Error("The operation was aborted.");
-  error.name = "AbortError";
-  return error;
-}
-
-function waitForLiveLogDelay(ms: number, signal: AbortSignal): Promise<void> {
-  if (signal.aborted) {
-    return Promise.reject(createAbortError());
-  }
-
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      signal.removeEventListener("abort", handleAbort);
-      resolve();
-    }, ms);
-
-    function handleAbort() {
-      clearTimeout(timeout);
-      reject(createAbortError());
-    }
-
-    signal.addEventListener("abort", handleAbort, { once: true });
+export async function fetchLiveLogs({ signal }: { signal: AbortSignal }): Promise<LiveLogSnapshot> {
+  const response = await fetch("/api/operations/logs?limit=80", {
+    signal,
+    credentials: "same-origin",
   });
+  if (!response.ok) throw new Error(`Operations log request failed (${response.status}).`);
+  const page = (await response.json()) as OperationsLogPage;
+  return { ...page, entries: page.entries.map(toLogEntry) };
 }
+
+export const liveLogQuery = defineQuery<{ principalId: string }, LiveLogSnapshot>({
+  key: ({ principalId }) => liveLogScope.key("live", principalId),
+  fetch: fetchLiveLogs,
+});

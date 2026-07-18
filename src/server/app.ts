@@ -9,8 +9,9 @@ import { pageRegistry } from "../pages/_routes";
 import { defineOperationsApi } from "./api";
 import type { AppDependencies } from "./dependencies";
 import { SESSION_COOKIE } from "./dependencies";
+import { RepositoryConflictError } from "./contracts";
 import { createQueryRegistry } from "./queries";
-import { profileActionHandlers } from "./actions";
+import { settingsActionHandlers } from "./actions";
 
 export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
   const principalSchema: Schema = {
@@ -35,7 +36,7 @@ export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
     pages: pageRegistry,
     queryRegistry: createQueryRegistry(deps),
     actions: {
-      handlers: profileActionHandlers,
+      handlers: settingsActionHandlers,
       csrf: { sessionId: (context) => context.auth.principal?.id },
     },
     api: {
@@ -67,7 +68,7 @@ export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
           try {
             return await deps.accounts.register(input.email, input.password);
           } catch (error) {
-            if (String(error).includes("UNIQUE constraint failed"))
+            if (error instanceof RepositoryConflictError)
               throw new AuthRouteError(409, "An account with this email already exists.");
             throw error;
           }
@@ -82,7 +83,7 @@ export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
         contentSecurityPolicy:
           "default-src 'self'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:",
       }),
-      rateLimit({ store: deps.rateLimits, limit: 120, windowMs: 60_000 }),
+      rateLimit({ store: deps.rateLimits, limit: 600, windowMs: 60_000 }),
       accessLog(({ request, response, requestId: id }) =>
         deps.logger.write({
           method: request.method,
@@ -94,18 +95,11 @@ export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
     ],
     probes: {
       livez: () => true,
-      readyz: () => deps.db.open,
-      startupz: () => deps.migrationCurrent,
-      targetz: async () => {
-        const summary = await deps.operations.summary();
-        return (
-          summary.healthyServices === 18 &&
-          summary.degradedServices === 1 &&
-          summary.openIncidents >= 2
-        );
-      },
+      readyz: () => deps.health.ready(),
+      startupz: () => deps.health.migrationsCurrent(),
+      targetz: () => deps.health.target(),
     },
     onError: (_error, ctx) => ctx.internalServerError("The request could not be completed"),
-    close: (dependencies) => dependencies.close(),
+    close: (dependencies) => dependencies.lifecycle.close(),
   });
 }

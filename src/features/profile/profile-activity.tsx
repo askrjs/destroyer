@@ -1,40 +1,18 @@
-import {
-  Badge,
-  Block,
-  HoverCard,
-  HoverCardContent,
-  HoverCardPortal,
-  HoverCardTrigger,
-  Text,
-} from "@askrjs/themes/components";
-import { profileActivity } from "./profile-data";
+import { currentAuth } from "@askrjs/askr/router";
+import { Badge, Block, Text } from "@askrjs/themes/components";
+import { operatorActivityData } from "../settings/settings-model";
 
 export function ProfileActivity() {
+  const activity = operatorActivityData(currentAuth().principal?.id ?? "anonymous");
   return (
     <Block direction="column" gap="md">
-      {profileActivity.map((entry) => (
-        <Block key={entry.title} direction="row" gap="md" align="start">
-          <HoverCard openDelay={120} closeDelay={120}>
-            <HoverCardTrigger data-variant="plain">
-              <Badge variant="outline">{entry.surface}</Badge>
-            </HoverCardTrigger>
-            <HoverCardPortal>
-              <HoverCardContent side="top" align="start" sideOffset={8}>
-                <Block gap="xs">
-                  <Text weight="semibold" size="sm">
-                    {entry.owner}
-                  </Text>
-                  <Text tone="muted" size="sm">
-                    {entry.detail}
-                  </Text>
-                </Block>
-              </HoverCardContent>
-            </HoverCardPortal>
-          </HoverCard>
+      {(activity.data ?? []).map((entry) => (
+        <Block key={entry.id} direction="row" gap="md" align="start">
+          <Badge variant="outline">{entry.action}</Badge>
           <Block gap="0">
-            <Text weight="medium">{entry.title}</Text>
+            <Text weight="medium">{entry.target}</Text>
             <Text tone="muted" size="sm">
-              {entry.description}
+              {new Date(entry.occurredAt).toLocaleString()}
             </Text>
           </Block>
         </Block>

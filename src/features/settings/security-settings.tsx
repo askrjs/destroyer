@@ -1,5 +1,7 @@
 import { state } from "@askrjs/askr";
-import { FileClockIcon, KeyRoundIcon, MonitorIcon } from "@askrjs/lucide";
+import { action, ActionForm } from "@askrjs/askr/actions";
+import { currentAuth } from "@askrjs/askr/router";
+import { KeyRoundIcon } from "@askrjs/lucide";
 import {
   Badge,
   Block,
@@ -11,16 +13,12 @@ import {
   CardHeader,
   CardTitle,
   DataTable,
-  ScrollArea,
-  ScrollAreaViewport,
-  Separator,
-  Skeleton,
-  Spinner,
+  Field,
+  Label,
   Slider,
   SliderRange,
   SliderThumb,
   SliderTrack,
-  Switch,
   Table,
   TableBody,
   TableCell,
@@ -29,53 +27,56 @@ import {
   TableRow,
   Text,
 } from "@askrjs/themes/components";
-import { securityActivity } from "./settings-data";
+import { operatorActivityData, operatorSettingsData, updateSecurityAction } from "./settings-model";
 
 export function SecuritySettings() {
-  const [sessionTimeout, setSessionTimeout] = state(30);
-  const [activityLoading, setActivityLoading] = state(false);
-  const refreshActivity = () => {
-    if (activityLoading()) return;
-
-    setActivityLoading(true);
-    window.setTimeout(() => {
-      setActivityLoading(false);
-    }, 800);
-  };
+  const principalId = currentAuth().principal?.id ?? "anonymous";
+  const settings = operatorSettingsData(principalId);
+  const activity = operatorActivityData(principalId);
+  const save = action<{ sessionTimeoutMinutes: string; version: string }>(updateSecurityAction);
+  const [sessionTimeout, setSessionTimeout] = state(settings.data?.sessionTimeoutMinutes ?? 30);
+  const mutationError = state("");
 
   return (
     <Block gap="lg">
       <Card variant="raised">
         <CardHeader>
           <CardTitle>Security</CardTitle>
-          <CardDescription>Keep the local demo session locked down.</CardDescription>
+          <CardDescription>Session policy backed by persisted operator settings.</CardDescription>
           <CardAction>
             <KeyRoundIcon size={18} aria-hidden="true" />
           </CardAction>
         </CardHeader>
         <CardContent>
-          <Block gap="md">
-            <Block direction="row" align="center" justify="between" gap="md">
-              <Block gap="0">
-                <Text weight="medium">Two-factor authentication</Text>
-                <Text tone="muted" size="sm">
-                  Require a verification step before signing in.
-                </Text>
-              </Block>
-              <Switch defaultChecked />
-            </Block>
-            <Separator decorative />
-            <Block gap="sm">
+          <ActionForm
+            action={updateSecurityAction}
+            onSubmit={(event: Event) => {
+              event.preventDefault();
+              mutationError.set("");
+              void save
+                .submit({
+                  sessionTimeoutMinutes: String(sessionTimeout()),
+                  version: String(settings.data?.version ?? 1),
+                })
+                .catch((error: unknown) =>
+                  mutationError.set(
+                    error instanceof Error ? error.message : "Security update failed.",
+                  ),
+                );
+            }}
+          >
+            <Field>
               <Block direction="row" align="center" justify="between" gap="md">
                 <Block gap="0">
-                  <Text weight="medium">Session timeout</Text>
+                  <Label for="session-timeout">Session timeout</Label>
                   <Text tone="muted" size="sm">
-                    Automatically end idle sessions after {sessionTimeout()} minutes.
+                    End idle sessions after {sessionTimeout()} minutes.
                   </Text>
                 </Block>
                 <Badge variant="secondary">{sessionTimeout()}m</Badge>
               </Block>
               <Slider
+                id="session-timeout"
                 aria-label="Session timeout"
                 min={15}
                 max={120}
@@ -88,110 +89,49 @@ export function SecuritySettings() {
                   <SliderThumb aria-label="Session timeout in minutes" />
                 </SliderTrack>
               </Slider>
-              <Block direction="row" align="center" justify="between" gap="sm">
-                <Text tone="muted" size="sm">
-                  15m
-                </Text>
-                <Text tone="muted" size="sm">
-                  2h
-                </Text>
-              </Block>
-            </Block>
-          </Block>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Active sessions</CardTitle>
-          <CardDescription>Devices currently using this browser session.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Block direction="row" align="center" justify="between" gap="md">
-            <Block direction="row" align="center" gap="md">
-              <MonitorIcon size={18} aria-hidden="true" />
-              <Block gap="0">
-                <Text weight="medium">Current browser</Text>
-                <Text tone="muted" size="sm">
-                  Local demo session
-                </Text>
-              </Block>
-            </Block>
-            <Badge variant="success">Current</Badge>
-          </Block>
+            </Field>
+            {mutationError() ? (
+              <Text tone="danger" role="alert">
+                {mutationError()}
+              </Text>
+            ) : null}
+            <Button type="submit" variant="primary" disabled={save.state().pending}>
+              {save.state().pending ? "Saving…" : "Save security"}
+            </Button>
+          </ActionForm>
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
           <CardTitle>Security activity</CardTitle>
-          <CardDescription>Recent local checks that touched account access.</CardDescription>
+          <CardDescription>Persisted account and settings audit events.</CardDescription>
           <CardAction>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={activityLoading()}
-              onPress={refreshActivity}
-            >
-              {activityLoading() ? (
-                <Spinner label="Refreshing activity" size="sm" />
-              ) : (
-                <FileClockIcon size={16} aria-hidden="true" />
-              )}
-              {activityLoading() ? "Refreshing" : "Refresh"}
+            <Button type="button" variant="ghost" size="sm" onPress={() => void activity.refresh()}>
+              Refresh
             </Button>
           </CardAction>
         </CardHeader>
         <CardContent>
-          <ScrollArea>
-            <ScrollAreaViewport data-size="content" tabindex={0}>
-              <DataTable>
-                <Table aria-label="Security activity" style={{ minInlineSize: "44rem" }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeaderCell>Event</TableHeaderCell>
-                      <TableHeaderCell>Actor</TableHeaderCell>
-                      <TableHeaderCell>Target</TableHeaderCell>
-                      <TableHeaderCell>Result</TableHeaderCell>
-                      <TableHeaderCell>Time</TableHeaderCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {activityLoading()
-                      ? Array.from({ length: 5 }).map((_, index) => (
-                          <TableRow key={`security-activity-loading-${index}`}>
-                            <TableCell>
-                              <Skeleton height="1rem" width="9rem" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton height="1rem" width="7rem" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton height="1rem" width="8rem" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton height="1.25rem" width="4.5rem" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton height="1rem" width="6rem" />
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      : securityActivity.map((entry) => (
-                          <TableRow key={`${entry.event}-${entry.time}`}>
-                            <TableCell>{entry.event}</TableCell>
-                            <TableCell>{entry.actor}</TableCell>
-                            <TableCell>{entry.target}</TableCell>
-                            <TableCell>
-                              <Badge variant={entry.variant}>{entry.result}</Badge>
-                            </TableCell>
-                            <TableCell>{entry.time}</TableCell>
-                          </TableRow>
-                        ))}
-                  </TableBody>
-                </Table>
-              </DataTable>
-            </ScrollAreaViewport>
-          </ScrollArea>
+          <DataTable>
+            <Table aria-label="Security activity">
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>Event</TableHeaderCell>
+                  <TableHeaderCell>Target</TableHeaderCell>
+                  <TableHeaderCell>Time</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(activity.data ?? []).map((entry) => (
+                  <TableRow key={entry.id}>
+                    <TableCell>{entry.action}</TableCell>
+                    <TableCell>{entry.target}</TableCell>
+                    <TableCell>{new Date(entry.occurredAt).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </DataTable>
         </CardContent>
       </Card>
     </Block>

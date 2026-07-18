@@ -1,18 +1,32 @@
 # Destroyer
 
-Destroyer is one realistic full-stack Askr application. It is the integration and product-hardening workspace that sits beyond the progressive learning path in `askr-examples`.
+Destroyer is a production-shaped Askr operations application. It exercises SSR, protected APIs,
+actions, cookie authentication, SQLite migrations, live operational queries, themed product flows,
+and route-lifecycle behavior as one deployable consumer—not as a component gallery.
 
-The existing operations SPA is the product foundation. The same route registry now supports direct client rendering and server rendering, while one server composition root owns APIs, cookie sessions, request IDs, security headers, rate limits, access logs, lifecycle probes, and production startup.
+## Runtime shape
 
-## Application shape
+- `src/pages` and `src/features` own product routes, query models, and presentation.
+- `src/server/config.ts` validates the host, port, database path, JWT key, key ID, and environment
+  once at startup.
+- `src/server/database.ts` applies idempotent SQLite migrations and deterministic seed input while
+  preserving existing operator accounts and support records.
+- `src/server/repositories.ts` exposes typed account, settings, operations, support, invoice,
+  health, and lifecycle boundaries. Route and action handlers never receive raw database access.
+- `src/server/api.ts` declares protected settings, activity, summary, cursor-paged logs, metrics,
+  and invoice APIs plus the public, persisted, rate-limited contact endpoint.
+- `server.ts` is the production Node entry point.
 
-- `src/pages` and `src/features` contain the real operations product surfaces.
-- `src/server/api.ts` declares the OpenAPI-backed operational and support APIs.
-- `src/server/app.ts` composes middleware, authentication, API routing, probes, and SSR fallback.
-- `src/server/dependencies.ts` is the adapter boundary for repositories and infrastructure.
-- `server.ts` is the production Node entrypoint.
+Local development stores data in `.data/destroyer.sqlite` by default. Browser tests use an isolated
+in-memory database. Set `DESTROYER_DB_PATH` to retain data elsewhere. Production startup also
+requires `DESTROYER_JWT_PRIVATE_KEY` containing an RSA private JWK; `DESTROYER_JWT_KID`, `HOST`, and
+`PORT` are configurable.
 
-The in-memory adapters keep the repository self-contained. Production adapters belong behind the same dependency interfaces rather than inside route handlers.
+## Askr packages
+
+Destroyer installs ranged releases from the npm registry for `@askrjs/askr`, auth, charts, lucide,
+node, schema, server, themes, UI, and the Vite integration. It has no sibling aliases, `file:`
+dependencies, local package declarations, or consumer-owned compatibility wrappers.
 
 ## Commands
 
@@ -20,7 +34,15 @@ The in-memory adapters keep the repository self-contained. Production adapters b
 npm install
 npm run dev
 npm run check
+npm run test:production
+npm run test:browser
+npm run test:journey
+npm run test:heap
+npm run acceptance
 npm run preview
 ```
 
-Local Askr packages remain `file:` dependencies so Destroyer exercises the current workspace implementation directly.
+`check` runs lint, typecheck, unit tests, and one production build. Production-artifact and browser
+tests consume that build; unit tests explicitly exclude `dist`. The responsiveness lane retains its
+five route cycles, while the heap lane retains two warmups plus ten measured cycles and its existing
+long-task, DOM-host, slope, growth, and retention limits.

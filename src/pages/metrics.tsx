@@ -1,12 +1,11 @@
 import { createPlot } from "@askrjs/charts";
-import { Link } from "@askrjs/askr/router";
+import { Link, currentAuth } from "@askrjs/askr/router";
 import {
   ActivityIcon,
   ChartBarIcon,
   ChartColumnIncreasingIcon,
   ChartLineIcon,
   FileCode2Icon,
-  FlameIcon,
 } from "@askrjs/lucide";
 import {
   Badge,
@@ -29,26 +28,68 @@ import {
 import {
   formatDay,
   formatPercent,
-  metricHighlights,
-  reliabilityTrend,
-  requestTrace,
-  responseDistribution,
-  routeWorkload,
-  subsystemMix,
   type ReliabilityRow,
-  type RequestTraceRow,
   type ResponseDistributionRow,
   type RouteWorkloadRow,
   type SubsystemMixRow,
 } from "../features/metrics/metrics-data";
+import { operationsMetricsData } from "../features/metrics/metrics-model";
 
 const ResponseDistributionPlot = createPlot<ResponseDistributionRow>();
 const RouteWorkloadPlot = createPlot<RouteWorkloadRow>();
 const SubsystemMixPlot = createPlot<SubsystemMixRow>();
 const ReliabilityPlot = createPlot<ReliabilityRow>();
-const RequestTracePlot = createPlot<RequestTraceRow>();
 
 export function MetricsPage() {
+  const metrics = operationsMetricsData(currentAuth().principal?.id ?? "anonymous");
+  const responseDistribution: readonly ResponseDistributionRow[] = (
+    metrics.data?.latencyBands ?? []
+  ).map((row) => ({
+    id: row.id,
+    latencyBand: row.label,
+    requests: row.requests,
+    description: `${row.requests} persisted requests in ${row.label}.`,
+  }));
+  const routeWorkload: readonly RouteWorkloadRow[] = (metrics.data?.routeWorkload ?? []).map(
+    (row) => ({ ...row, description: `${row.requests} persisted requests for ${row.route}.` }),
+  );
+  const subsystemMix: readonly SubsystemMixRow[] = (metrics.data?.serviceMix ?? []).map((row) => ({
+    id: row.id,
+    subsystem: row.service,
+    share: row.share,
+    description: `${row.service} handled ${row.share.toFixed(1)}% of persisted requests.`,
+  }));
+  const reliabilityTrend: readonly ReliabilityRow[] = (metrics.data?.reliability ?? []).map(
+    (row) => ({
+      id: row.id,
+      observedAt: new Date(row.observedAt),
+      successRate: row.successRate,
+      description: `${row.id} success rate: ${row.successRate.toFixed(2)}%.`,
+    }),
+  );
+  const metricHighlights = [
+    {
+      label: "Requests",
+      value: String(metrics.data?.requests ?? 0),
+      detail: "Persisted operational events.",
+      badge: "SQLite",
+      variant: "success" as const,
+    },
+    {
+      label: "P95 latency",
+      value: `${metrics.data?.p95LatencyMs ?? 0}ms`,
+      detail: "Calculated from stored log latency.",
+      badge: "Live",
+      variant: "info" as const,
+    },
+    {
+      label: "Error rate",
+      value: `${(metrics.data?.errorRate ?? 0).toFixed(2)}%`,
+      detail: "Calculated from stored error events.",
+      badge: "Measured",
+      variant: "secondary" as const,
+    },
+  ];
   return (
     <Page>
       <PageHeader
@@ -208,41 +249,6 @@ export function MetricsPage() {
           </CardContent>
         </Card>
       </Grid>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Slow request anatomy</CardTitle>
-          <CardDescription>
-            A 246ms logs search, broken down from ingress through database aggregation.
-          </CardDescription>
-          <CardAction>
-            <FlameIcon size={18} aria-hidden="true" />
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <RequestTracePlot.Root
-            class="metrics-plot metrics-plot--trace"
-            data={requestTrace}
-            rowKey="id"
-            label="Logs request trace"
-            summary="Database work consumes 114ms, service work consumes 74ms, and API work consumes 58ms."
-          >
-            <RequestTracePlot.Scale channel="x" type="linear" domain={[0, 246]} nice={false} />
-            <RequestTracePlot.Scale channel="y" type="band" />
-            <RequestTracePlot.Axis axis="x" label="Elapsed time (ms)" />
-            <RequestTracePlot.Rect
-              x="startMs"
-              x2="endMs"
-              y="lane"
-              fill="subsystem"
-              title="description"
-              radius={3}
-            />
-            <RequestTracePlot.Legend label="Request stage" interactive />
-            <RequestTracePlot.Tooltip />
-          </RequestTracePlot.Root>
-        </CardContent>
-      </Card>
     </Page>
   );
 }

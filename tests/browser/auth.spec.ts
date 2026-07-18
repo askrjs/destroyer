@@ -14,7 +14,8 @@ test("should complete self-service authentication given a new operator", async (
   await page.reload();
   await page.getByRole("button", { name: "Open profile menu" }).click();
   await expect(page.getByText("browser.operator", { exact: true }).first()).toBeVisible();
-  await page.goto("/settings");
+  await page.getByRole("menuitem", { name: "Settings" }).click();
+  await expect(page).toHaveURL(/\/settings$/);
   await page.getByLabel("Display name").fill("Browser Operator");
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.getByLabel("Display name")).toHaveValue("Browser Operator");

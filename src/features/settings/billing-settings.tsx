@@ -1,3 +1,4 @@
+import { state } from "@askrjs/askr";
 import {
   Badge,
   Block,
@@ -13,6 +14,27 @@ import {
 } from "@askrjs/themes/components";
 
 export function BillingSettings() {
+  const pending = state(false);
+  const error = state("");
+  const downloadInvoice = async () => {
+    if (pending()) return;
+    pending.set(true);
+    error.set("");
+    try {
+      const response = await fetch("/api/invoices/sample", { credentials: "same-origin" });
+      if (!response.ok) throw new Error(`Invoice download failed (${response.status}).`);
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "destroyer-sample-invoice.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (caught) {
+      error.set(caught instanceof Error ? caught.message : "Invoice download failed.");
+    } finally {
+      pending.set(false);
+    }
+  };
   return (
     <Block gap="lg">
       <Card variant="raised">
@@ -54,12 +76,22 @@ export function BillingSettings() {
         <CardContent>
           <Block direction="row" align="center" justify="between" gap="md">
             <Text tone="muted" size="sm">
-              No invoices are generated for local demo sessions.
+              Download a deterministic authenticated sample invoice.
             </Text>
-            <Button type="button" variant="outline" size="sm">
-              Download sample
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pending()}
+              onPress={() => void downloadInvoice()}
+            >
+              {pending() ? "Preparing…" : "Download sample"}
             </Button>
           </Block>
+          {error() ? (
+            <Text tone="danger" role="alert">
+              {error()}
+            </Text>
+          ) : null}
         </CardContent>
       </Card>
     </Block>

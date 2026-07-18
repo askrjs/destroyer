@@ -127,7 +127,7 @@ export const docsContent: Record<
     sections: [
       {
         title: "Packages",
-        body: "Destroyer composes @askrjs/askr, @askrjs/themes, @askrjs/ui, @askrjs/lucide, and @askrjs/logos.",
+        body: "Destroyer composes registry releases of @askrjs/askr, @askrjs/themes, @askrjs/ui, and @askrjs/lucide.",
       },
       {
         title: "Theme entry",

@@ -1,91 +1,15 @@
-import { expect, test, type CDPSession, type Locator, type Page } from "@playwright/test";
-import { mkdir, writeFile } from "node:fs/promises";
+import { expect, test } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-
-type ChromeMetric = { name: string; value: number };
+import {
+  clickThroughPaint,
+  componentHostStats,
+  linearSlope,
+  takeHeapSnapshot,
+  usedHeapBytes,
+} from "./performance-helpers";
 
 test.use({ trace: "off" });
-
-async function componentHostStats(page: Page) {
-  return page.evaluate(() => {
-    const instances = new Set<unknown>();
-    let hostReferences = 0;
-    let elementHostReferences = 0;
-    let commentHostReferences = 0;
-    const walker = document.createTreeWalker(document, NodeFilter.SHOW_ALL);
-    let node: Node | null = walker.currentNode;
-    while (node) {
-      const host = node as Node & {
-        __ASKR_INSTANCE?: unknown;
-        __ASKR_INSTANCES?: unknown[];
-      };
-      if (host.__ASKR_INSTANCE) {
-        instances.add(host.__ASKR_INSTANCE);
-        hostReferences += 1;
-        if (node instanceof Element) elementHostReferences += 1;
-        else if (node.nodeType === Node.COMMENT_NODE) commentHostReferences += 1;
-      }
-      for (const instance of host.__ASKR_INSTANCES ?? []) {
-        instances.add(instance);
-        hostReferences += 1;
-        if (node instanceof Element) elementHostReferences += 1;
-        else if (node.nodeType === Node.COMMENT_NODE) commentHostReferences += 1;
-      }
-      node = walker.nextNode();
-    }
-    return {
-      uniqueInstances: instances.size,
-      hostReferences,
-      elementHostReferences,
-      commentHostReferences,
-    };
-  });
-}
-
-async function usedHeapBytes(session: CDPSession): Promise<number> {
-  await session.send("HeapProfiler.collectGarbage");
-  const result = (await session.send("Performance.getMetrics")) as {
-    metrics: ChromeMetric[];
-  };
-  return result.metrics.find((metric) => metric.name === "JSHeapUsedSize")?.value ?? 0;
-}
-
-function linearSlope(samples: number[]): number {
-  const count = samples.length;
-  const meanX = (count - 1) / 2;
-  const meanY = samples.reduce((sum, value) => sum + value, 0) / count;
-  let numerator = 0;
-  let denominator = 0;
-  for (let index = 0; index < count; index += 1) {
-    numerator += (index - meanX) * (samples[index]! - meanY);
-    denominator += (index - meanX) ** 2;
-  }
-  return denominator === 0 ? 0 : numerator / denominator;
-}
-
-async function takeHeapSnapshot(session: CDPSession, path: string): Promise<void> {
-  const chunks: string[] = [];
-  const collect = ({ chunk }: { chunk: string }) => chunks.push(chunk);
-  session.on("HeapProfiler.addHeapSnapshotChunk", collect);
-  try {
-    await session.send("HeapProfiler.takeHeapSnapshot", { reportProgress: false });
-    await writeFile(path, chunks.join(""));
-  } finally {
-    session.off("HeapProfiler.addHeapSnapshotChunk", collect);
-  }
-}
-
-async function clickThroughPaint(locator: Locator): Promise<number> {
-  return locator.evaluate((element) => {
-    const start = performance.now();
-    (element as HTMLElement).click();
-    return new Promise<number>((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => resolve(performance.now() - start));
-      });
-    });
-  });
-}
 
 test("should keep five workspace journeys responsive without forced collection", async ({
   page,
@@ -183,11 +107,11 @@ test.describe("workspace route heap retention", () => {
     // the heap baseline so module and style caches are not mistaken for leaks.
     await page.locator('a[href="/metrics"]').click();
     await expect(page.getByRole("heading", { name: "Metrics" })).toBeVisible();
-    await page.getByRole("button", { name: "Open profile menu" }).click();
-    await page.getByRole("menuitem", { name: "Settings" }).click();
+    await page.locator('a[href="/settings"]').first().click();
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+    await expect(page.getByLabel("Display name")).toBeVisible();
     await page.locator('a[href="/settings/security"]').click();
-    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+    await expect(page.getByRole("slider", { name: "Session timeout in minutes" })).toBeVisible();
     await page.locator('a[href="/docs"]').first().click();
     await expect(page.getByText("Full-width documentation shell")).toBeVisible();
     await page.locator('a[href="/logs"]').first().click();
@@ -229,16 +153,15 @@ test.describe("workspace route heap retention", () => {
       if (measuredCycle >= 0) await recordHeapCheckpoint(`${measuredCycle + 1}:metrics`);
 
       stage = `cycle ${cycle + 1} metrics to settings`;
-      await page.getByRole("button", { name: "Open profile menu" }).click();
       stage = `cycle ${cycle + 1} settings to workspace`;
-      actionDurationsMs.push(
-        await clickThroughPaint(page.getByRole("menuitem", { name: "Settings" })),
-      );
+      actionDurationsMs.push(await clickThroughPaint(page.locator('a[href="/settings"]').first()));
       await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+      await expect(page.getByLabel("Display name")).toBeVisible();
 
       actionDurationsMs.push(
         await clickThroughPaint(page.locator('a[href="/settings/workspace"]')),
       );
+      await expect(page.getByRole("heading", { name: "Workspace", exact: true })).toBeVisible();
       stage = `cycle ${cycle + 1} workspace dialog`;
       await page.getByRole("button", { name: "Reset links" }).click();
       await expect(page.getByRole("dialog")).toBeVisible();

@@ -1,4 +1,5 @@
 import { Link } from "@askrjs/askr/router";
+import { derive, state } from "@askrjs/askr";
 import {
   CheckCircle2Icon,
   Code2Icon,
@@ -62,6 +63,15 @@ import { ThemePicker } from "@askrjs/themes/theme";
 import { checks, metrics, packages } from "../features/home/home-data";
 
 export function HomePage() {
+  const packageSearch = state("");
+  const filteredPackages = derive(() => {
+    const query = packageSearch().trim().toLowerCase();
+    return query
+      ? packages.filter((pkg) =>
+          `${pkg.name} ${pkg.role} ${pkg.status}`.toLowerCase().includes(query),
+        )
+      : packages;
+  });
   return (
     <Page>
       <PageHeader
@@ -259,9 +269,11 @@ export function HomePage() {
             <CardTitle>Release surface</CardTitle>
             <CardDescription>Package status shown with the shared table primitive.</CardDescription>
             <CardAction>
-              <Button size="sm" variant="ghost">
-                <Code2Icon size={14} aria-hidden="true" />
-                Inspect
+              <Button asChild size="sm" variant="ghost">
+                <Link href="/logs">
+                  <Code2Icon size={14} aria-hidden="true" />
+                  Inspect logs
+                </Link>
               </Button>
             </CardAction>
           </CardHeader>
@@ -276,7 +288,7 @@ export function HomePage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {packages.map((pkg) => (
+                  {filteredPackages().map((pkg) => (
                     <TableRow key={pkg.name}>
                       <TableCell>{pkg.name}</TableCell>
                       <TableCell>{pkg.role}</TableCell>
@@ -307,7 +319,15 @@ export function HomePage() {
                   <InputGroupText>
                     <SearchIcon size={16} aria-hidden="true" />
                   </InputGroupText>
-                  <Input id="theme-search" name="theme-search" placeholder="button, card, table" />
+                  <Input
+                    id="theme-search"
+                    name="theme-search"
+                    placeholder="themes, primitives, icons"
+                    value={packageSearch()}
+                    onInput={(event: Event) =>
+                      packageSearch.set((event.target as HTMLInputElement).value)
+                    }
+                  />
                 </InputGroup>
               </Field>
               <Field>

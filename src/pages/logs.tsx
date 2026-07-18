@@ -1,7 +1,7 @@
 import { derive, state } from "@askrjs/askr";
 import { createQuery } from "@askrjs/askr/data";
 import { documentVisible, routeActive, timer } from "@askrjs/askr/resources";
-import { Link, currentRoute, updateRouteQuery } from "@askrjs/askr/router";
+import { Link, currentAuth, currentRoute, updateRouteQuery } from "@askrjs/askr/router";
 import {
   ActivityIcon,
   CirclePauseIcon,
@@ -43,15 +43,9 @@ import {
 } from "@askrjs/themes/components";
 import { logColumns } from "../features/logs/log-table-columns";
 import { LogStreamRow } from "../features/logs/log-stream-row";
+import type { LogEntry } from "../features/logs/logs-data";
 import {
-  latestErrors,
-  liveLogFallbackEntries,
-  logEntries,
-  warningCount,
-} from "../features/logs/logs-data";
-import {
-  fetchLiveLogs,
-  liveLogQueryKey,
+  liveLogQuery,
   liveLogScope,
   type LiveLogSnapshot,
 } from "../features/logs/live-logs-resource";
@@ -71,7 +65,7 @@ function syncLogSearchQuery(filter: string): void {
   );
 }
 
-function matchesLogFilter(entry: (typeof logEntries)[number], filter: string): boolean {
+function matchesLogFilter(entry: LogEntry, filter: string): boolean {
   const query = filter.trim().toLowerCase();
   if (!query) return true;
 
@@ -94,12 +88,12 @@ export function LogsPage() {
   const frozenLiveSnapshot = state<LiveLogSnapshot | null>(null);
   const route = currentRoute();
   const tableFilter = state(normalizeLogFilter(route.query.get(LOG_SEARCH_QUERY_KEY)));
-  const liveLogs = createQuery({
-    key: liveLogQueryKey,
-    fetch: fetchLiveLogs,
+  const liveLogs = createQuery(liveLogQuery, {
+    principalId: currentAuth().principal?.id ?? "anonymous",
   });
+  const currentEntries = () => liveLogs.data?.entries ?? [];
   const filteredLogEntries = derive(() =>
-    logEntries.filter((entry) => matchesLogFilter(entry, tableFilter())),
+    currentEntries().filter((entry) => matchesLogFilter(entry, tableFilter())),
   );
 
   timer(
@@ -115,10 +109,7 @@ export function LogsPage() {
   );
 
   const liveModePaused = livePaused();
-  const activeLiveSnapshot = liveLogs.data ?? {
-    entries: liveLogFallbackEntries,
-    sequence: 0,
-  };
+  const activeLiveSnapshot = liveLogs.data ?? { entries: [], nextCursor: null, sequence: 0 };
   const liveSnapshot = frozenLiveSnapshot() ?? activeLiveSnapshot;
   const currentTableFilter = tableFilter();
   const currentFilteredLogEntries = filteredLogEntries();
@@ -181,7 +172,7 @@ export function LogsPage() {
           <CardHeader>
             <Stat>
               <StatLabel>Events</StatLabel>
-              <StatValue>{logEntries.length}</StatValue>
+              <StatValue>{currentEntries().length}</StatValue>
             </Stat>
             <CardAction>
               <Badge variant="info">Virtualized</Badge>
@@ -195,7 +186,9 @@ export function LogsPage() {
           <CardHeader>
             <Stat>
               <StatLabel>Warnings</StatLabel>
-              <StatValue>{warningCount}</StatValue>
+              <StatValue>
+                {currentEntries().filter((entry) => entry.severity === "warning").length}
+              </StatValue>
             </Stat>
             <CardAction>
               <ListChecksIcon size={18} aria-hidden="true" />
@@ -209,7 +202,9 @@ export function LogsPage() {
           <CardHeader>
             <Stat>
               <StatLabel>Errors</StatLabel>
-              <StatValue>{latestErrors}</StatValue>
+              <StatValue>
+                {currentEntries().filter((entry) => entry.severity === "error").length}
+              </StatValue>
             </Stat>
             <CardAction>
               <Badge variant="danger">Watch</Badge>

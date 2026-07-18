@@ -1,4 +1,4 @@
-import { Link, currentAuth } from "@askrjs/askr/router";
+import { currentAuth, navigate } from "@askrjs/askr/router";
 import { CircleUserRoundIcon, LogOutIcon, SettingsIcon } from "@askrjs/lucide";
 import {
   Avatar,
@@ -56,28 +56,22 @@ export function ProfileDropdown({
             </Text>
           </Block>
         </DropdownMenuLabel>
-        <DropdownMenuItem asChild>
-          <Link href="/profile">
-            <CircleUserRoundIcon size={16} aria-hidden="true" />
-            Profile
-          </Link>
+        <DropdownMenuItem onSelect={() => navigate("/profile")}>
+          <CircleUserRoundIcon size={16} aria-hidden="true" />
+          Profile
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/settings">
-            <SettingsIcon size={16} aria-hidden="true" />
-            Settings
-          </Link>
+        <DropdownMenuItem onSelect={() => navigate("/settings")}>
+          <SettingsIcon size={16} aria-hidden="true" />
+          Settings
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => theme.setTheme(getNextThemeName(currentTheme))}>
           <ThemeIcon size={16} aria-hidden="true" />
           Theme: {getThemeLabel(currentTheme)}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" asChild>
-          <Link href="/logout">
-            <LogOutIcon size={16} aria-hidden="true" />
-            Sign out
-          </Link>
+        <DropdownMenuItem variant="destructive" onSelect={() => navigate("/logout")}>
+          <LogOutIcon size={16} aria-hidden="true" />
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

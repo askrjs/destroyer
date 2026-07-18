@@ -27,20 +27,14 @@ export function SignupPage() {
   const route = currentRoute();
   const next = route.query.get("next");
   const search = next ? `?next=${encodeURIComponent(next)}` : "";
-  const submit = async (event?: {
-    preventDefault?: () => void;
-    currentTarget?: EventTarget | null;
-  }) => {
-    event?.preventDefault?.();
+  const submit = async (event: Event) => {
+    event.preventDefault();
     if (pending()) return;
-    const email =
-      typeof document === "undefined"
-        ? ""
-        : ((document.getElementById("signup-email") as HTMLInputElement | null)?.value ?? "");
-    const password =
-      typeof document === "undefined"
-        ? ""
-        : ((document.getElementById("signup-password") as HTMLInputElement | null)?.value ?? "");
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    const values = new FormData(form);
+    const email = String(values.get("email") ?? "");
+    const password = String(values.get("password") ?? "");
     pending.set(true);
     error.set("");
     try {
@@ -54,8 +48,10 @@ export function SignupPage() {
         error.set("Enter a valid email and a password between 4 and 128 characters.");
       else if (response.status === 429) error.set("Too many attempts. Try again in 15 minutes.");
       else error.set("Account creation could not be completed.");
-    } catch {
-      error.set("Account creation could not be completed.");
+    } catch (caught) {
+      error.set(
+        caught instanceof Error ? caught.message : "Account creation could not be completed.",
+      );
     } finally {
       pending.set(false);
     }

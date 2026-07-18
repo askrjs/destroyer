@@ -3,7 +3,6 @@ import { askr } from "@askrjs/vite";
 import { askrServer } from "@askrjs/vite/server";
 
 export default defineConfig({
-  resolve: { preserveSymlinks: true, dedupe: ["@askrjs/askr", "@askrjs/ui"] },
   plugins: [
     askr({ optimizeTemplates: true }),
     askrServer({ entry: "./src/server/entry-server.ts" }),

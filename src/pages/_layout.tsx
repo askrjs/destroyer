@@ -1,4 +1,4 @@
-import { Link, currentAuth, currentRoute } from "@askrjs/askr/router";
+import { Link, currentAuth, currentRoute, navigate } from "@askrjs/askr/router";
 import {
   BoxIcon,
   CircleUserRoundIcon,
@@ -69,24 +69,18 @@ function ProfileMenu() {
             </Text>
           </Block>
         </DropdownMenuLabel>
-        <DropdownMenuItem asChild>
-          <Link href="/profile">
-            <UserRoundIcon size={16} aria-hidden="true" />
-            Profile
-          </Link>
+        <DropdownMenuItem onSelect={() => navigate("/profile")}>
+          <UserRoundIcon size={16} aria-hidden="true" />
+          Profile
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/settings">
-            <SettingsIcon size={16} aria-hidden="true" />
-            Settings
-          </Link>
+        <DropdownMenuItem onSelect={() => navigate("/settings")}>
+          <SettingsIcon size={16} aria-hidden="true" />
+          Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" asChild>
-          <Link href="/logout">
-            <LogOutIcon size={16} aria-hidden="true" />
-            Sign out
-          </Link>
+        <DropdownMenuItem variant="destructive" onSelect={() => navigate("/logout")}>
+          <LogOutIcon size={16} aria-hidden="true" />
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -152,6 +146,9 @@ export function PageLayout({ children }: { children?: unknown }) {
                   <NavLink href="/docs">Docs</NavLink>
                   <NavLink href="/logs">Logs</NavLink>
                   <NavLink href="/metrics">Metrics</NavLink>
+                  {currentAuth().authenticated ? (
+                    <NavLink href="/settings">Settings</NavLink>
+                  ) : null}
                   <Block hide={{ base: true, md: false }}>
                     <NavLink href="/about">About</NavLink>
                   </Block>

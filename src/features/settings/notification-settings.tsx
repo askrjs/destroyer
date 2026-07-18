@@ -1,78 +1,82 @@
+import { state } from "@askrjs/askr";
+import { action, ActionForm } from "@askrjs/askr/actions";
+import { currentAuth } from "@askrjs/askr/router";
 import { BellIcon } from "@askrjs/lucide";
 import {
   Block,
+  Button,
   Card,
   CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  Checkbox,
-  Grid,
+  Field,
   Label,
-  Separator,
-  Switch,
   Text,
 } from "@askrjs/themes/components";
-import { notificationChannels } from "./settings-data";
+import { operatorSettingsData, updateNotificationsAction } from "./settings-model";
 
 export function NotificationSettings() {
+  const settings = operatorSettingsData(currentAuth().principal?.id ?? "anonymous");
+  const save = action<{ inAppNotifications: "enabled" | "disabled"; version: string }>(
+    updateNotificationsAction,
+  );
+  const [value, setValue] = state<"enabled" | "disabled">(
+    settings.data?.inAppNotifications === false ? "disabled" : "enabled",
+  );
+  const mutationError = state("");
   return (
     <Card variant="raised">
       <CardHeader>
         <CardTitle>Notifications</CardTitle>
-        <CardDescription>Choose how Destroyer should keep you informed.</CardDescription>
+        <CardDescription>Destroyer supports only in-app notifications.</CardDescription>
         <CardAction>
           <BellIcon size={18} aria-hidden="true" />
         </CardAction>
       </CardHeader>
       <CardContent>
-        <Block gap="lg">
-          <Block gap="md">
-            {[
-              ["Route alerts", "Notify when route behavior changes.", true],
-              ["Component updates", "Send weekly summaries about theme coverage.", false],
-              ["Security notices", "Alert when a session setting changes.", true],
-            ].map(([label, description, checked]) => (
-              <Block key={String(label)} direction="row" align="center" justify="between" gap="md">
-                <Block gap="0">
-                  <Text weight="medium">{label}</Text>
-                  <Text tone="muted" size="sm">
-                    {description}
-                  </Text>
-                </Block>
-                <Switch defaultChecked={Boolean(checked)} />
-              </Block>
-            ))}
-          </Block>
-          <Separator decorative />
-          <Block gap="md">
-            <Block gap="xs">
-              <Text weight="medium">Delivery channels</Text>
-              <Text tone="muted" size="sm">
-                Choose where enabled notifications can appear.
+        <ActionForm
+          action={updateNotificationsAction}
+          onSubmit={(event: Event) => {
+            event.preventDefault();
+            mutationError.set("");
+            void save
+              .submit({ inAppNotifications: value(), version: String(settings.data?.version ?? 1) })
+              .catch((error: unknown) =>
+                mutationError.set(
+                  error instanceof Error ? error.message : "Notification update failed.",
+                ),
+              );
+          }}
+        >
+          <Field>
+            <Label for="settings-notifications">In-app notifications</Label>
+            <select
+              id="settings-notifications"
+              value={value()}
+              onChange={(event: Event) =>
+                setValue((event.target as HTMLSelectElement).value as "enabled" | "disabled")
+              }
+            >
+              <option value="enabled">Enabled</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </Field>
+          <Block gap="sm">
+            <Text tone="muted" size="sm">
+              No external email, webhook, or scheduled delivery is claimed.
+            </Text>
+            {mutationError() ? (
+              <Text tone="danger" role="alert">
+                {mutationError()}
               </Text>
-            </Block>
-            <Grid columns={{ base: 1, md: 2 }} gap="md">
-              {notificationChannels.map((channel) => (
-                <Block key={channel.id} direction="row" align="start" gap="sm">
-                  <Checkbox
-                    id={channel.id}
-                    name="notification-channel"
-                    value={channel.value}
-                    defaultChecked={channel.defaultChecked}
-                  />
-                  <Block gap="0">
-                    <Label for={channel.id}>{channel.label}</Label>
-                    <Text tone="muted" size="sm">
-                      {channel.description}
-                    </Text>
-                  </Block>
-                </Block>
-              ))}
-            </Grid>
+            ) : null}
           </Block>
-        </Block>
+          <Button type="submit" variant="primary" disabled={save.state().pending}>
+            Save notifications
+          </Button>
+        </ActionForm>
       </CardContent>
     </Card>
   );
