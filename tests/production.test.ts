@@ -34,6 +34,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  if (!child || child.exitCode !== null) return;
   child.kill("SIGTERM");
   await new Promise<void>((resolve) => child.once("exit", () => resolve()));
 });
