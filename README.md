@@ -46,3 +46,8 @@ npm run preview
 tests consume that build; unit tests explicitly exclude `dist`. The responsiveness lane retains its
 five route cycles, while the heap lane retains two warmups plus ten measured cycles and its existing
 long-task, DOM-host, slope, growth, and retention limits.
+
+CI runs format, static checks, unit tests, builds, and production-artifact tests on Linux, macOS, and
+Windows. A separate Linux job runs deterministic browser product flows. Responsiveness and heap
+measurements remain explicit local lanes because their sub-100ms thresholds require a controlled
+host rather than shared-runner timing.
