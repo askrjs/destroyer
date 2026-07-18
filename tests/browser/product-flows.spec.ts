@@ -8,6 +8,11 @@ async function createOperator(page: Page, email: string): Promise<void> {
   await expect(page).toHaveURL(/\/logs$/);
 }
 
+async function chooseSelectOption(page: Page, label: string, option: string): Promise<void> {
+  await page.getByLabel(label).click();
+  await page.getByRole("option", { name: option, exact: true }).click();
+}
+
 test("should complete persisted product workflows given an authenticated operator", async ({
   page,
 }) => {
@@ -19,12 +24,12 @@ test("should complete persisted product workflows given an authenticated operato
   await createOperator(page, "product.flows@example.test");
 
   await page.goto("/settings/workspace");
-  await page.getByLabel("Default role").selectOption("member");
-  await page.getByLabel("Approval policy").selectOption("automatic");
+  await chooseSelectOption(page, "Default role", "Member");
+  await chooseSelectOption(page, "Approval policy", "Automatic approval");
   await page.getByRole("button", { name: "Save workspace" }).click();
   await page.reload();
-  await expect(page.getByLabel("Default role")).toHaveValue("member");
-  await expect(page.getByLabel("Approval policy")).toHaveValue("automatic");
+  await expect(page.getByLabel("Default role")).toHaveText("Member");
+  await expect(page.getByLabel("Approval policy")).toHaveText("Automatic approval");
 
   const invite = await page.getByLabel("Active invite link").inputValue();
   await page.getByRole("button", { name: "Reset links" }).click();

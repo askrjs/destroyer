@@ -13,6 +13,12 @@ import {
   CardTitle,
   Field,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectPortal,
+  SelectTrigger,
+  SelectValue,
   Text,
 } from "@askrjs/themes/components";
 import { operatorSettingsData, updateNotificationsAction } from "./settings-model";
@@ -52,16 +58,23 @@ export function NotificationSettings() {
         >
           <Field>
             <Label for="settings-notifications">In-app notifications</Label>
-            <select
-              id="settings-notifications"
+            <Select
+              name="inAppNotifications"
               value={value()}
-              onChange={(event: Event) =>
-                setValue((event.target as HTMLSelectElement).value as "enabled" | "disabled")
-              }
+              onValueChange={(nextValue) => {
+                if (nextValue === "enabled" || nextValue === "disabled") setValue(nextValue);
+              }}
             >
-              <option value="enabled">Enabled</option>
-              <option value="disabled">Disabled</option>
-            </select>
+              <SelectTrigger id="settings-notifications">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectPortal>
+                <SelectContent>
+                  <SelectItem value="enabled">Enabled</SelectItem>
+                  <SelectItem value="disabled">Disabled</SelectItem>
+                </SelectContent>
+              </SelectPortal>
+            </Select>
           </Field>
           <Block gap="sm">
             <Text tone="muted" size="sm">

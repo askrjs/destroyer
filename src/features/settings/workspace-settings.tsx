@@ -24,6 +24,12 @@ import {
   Grid,
   Input,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectPortal,
+  SelectTrigger,
+  SelectValue,
   Text,
 } from "@askrjs/themes/components";
 import { operatorSettingsData, resetInviteAction, updateWorkspaceAction } from "./settings-model";
@@ -75,31 +81,43 @@ export function WorkspaceSettings() {
             <Grid columns={{ base: 1, md: 2 }} gap="md">
               <Field>
                 <Label for="settings-default-role">Default role</Label>
-                <select
-                  id="settings-default-role"
+                <Select
+                  name="defaultRole"
                   value={defaultRole()}
-                  onChange={(event: Event) =>
-                    setDefaultRole((event.target as HTMLSelectElement).value as "viewer" | "member")
-                  }
+                  onValueChange={(value) => {
+                    if (value === "viewer" || value === "member") setDefaultRole(value);
+                  }}
                 >
-                  <option value="viewer">Viewer</option>
-                  <option value="member">Member</option>
-                </select>
+                  <SelectTrigger id="settings-default-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectContent>
+                      <SelectItem value="viewer">Viewer</SelectItem>
+                      <SelectItem value="member">Member</SelectItem>
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
               </Field>
               <Field>
                 <Label for="settings-approval">Approval policy</Label>
-                <select
-                  id="settings-approval"
+                <Select
+                  name="approvalPolicy"
                   value={approvalPolicy()}
-                  onChange={(event: Event) =>
-                    setApprovalPolicy(
-                      (event.target as HTMLSelectElement).value as "automatic" | "manual",
-                    )
-                  }
+                  onValueChange={(value) => {
+                    if (value === "automatic" || value === "manual") setApprovalPolicy(value);
+                  }}
                 >
-                  <option value="manual">Manual approval</option>
-                  <option value="automatic">Automatic approval</option>
-                </select>
+                  <SelectTrigger id="settings-approval">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectContent>
+                      <SelectItem value="manual">Manual approval</SelectItem>
+                      <SelectItem value="automatic">Automatic approval</SelectItem>
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
               </Field>
             </Grid>
             {mutationError() ? (

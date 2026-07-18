@@ -13,6 +13,12 @@ import {
   Field,
   Grid,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectPortal,
+  SelectTrigger,
+  SelectValue,
   Text,
 } from "@askrjs/themes/components";
 import { operatorSettingsData, updatePreferencesAction } from "./settings-model";
@@ -61,46 +67,67 @@ export function PreferenceSettings() {
           <Grid columns={{ base: 1, md: 3 }} gap="md">
             <Field>
               <Label for="settings-density">Workspace density</Label>
-              <select
-                id="settings-density"
+              <Select
+                name="density"
                 value={density()}
-                onChange={(event: Event) =>
-                  setDensity((event.target as HTMLSelectElement).value as "comfortable" | "compact")
-                }
+                onValueChange={(value) => {
+                  if (value === "comfortable" || value === "compact") setDensity(value);
+                }}
               >
-                <option value="comfortable">Comfortable</option>
-                <option value="compact">Compact</option>
-              </select>
+                <SelectTrigger id="settings-density">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectContent>
+                    <SelectItem value="comfortable">Comfortable</SelectItem>
+                    <SelectItem value="compact">Compact</SelectItem>
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
             </Field>
             <Field>
               <Label for="settings-region">Region</Label>
-              <select
-                id="settings-region"
+              <Select
+                name="region"
                 value={region()}
-                onChange={(event: Event) =>
-                  setRegion(
-                    (event.target as HTMLSelectElement).value as "us-east" | "us-west" | "eu-west",
-                  )
-                }
+                onValueChange={(value) => {
+                  if (value === "us-east" || value === "us-west" || value === "eu-west") {
+                    setRegion(value);
+                  }
+                }}
               >
-                <option value="us-east">US East</option>
-                <option value="us-west">US West</option>
-                <option value="eu-west">EU West</option>
-              </select>
+                <SelectTrigger id="settings-region">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectContent>
+                    <SelectItem value="us-east">US East</SelectItem>
+                    <SelectItem value="us-west">US West</SelectItem>
+                    <SelectItem value="eu-west">EU West</SelectItem>
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
             </Field>
             <Field>
               <Label for="settings-theme">Theme preference</Label>
-              <select
-                id="settings-theme"
+              <Select
+                name="theme"
                 value={theme()}
-                onChange={(event: Event) =>
-                  setTheme((event.target as HTMLSelectElement).value as "system" | "light" | "dark")
-                }
+                onValueChange={(value) => {
+                  if (value === "system" || value === "light" || value === "dark") setTheme(value);
+                }}
               >
-                <option value="system">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
+                <SelectTrigger id="settings-theme">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectContent>
+                    <SelectItem value="system">System</SelectItem>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
             </Field>
           </Grid>
           {mutationError() ? (

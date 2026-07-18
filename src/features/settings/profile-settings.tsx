@@ -14,6 +14,12 @@ import {
   Grid,
   Input,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectPortal,
+  SelectTrigger,
+  SelectValue,
   Text,
 } from "@askrjs/themes/components";
 import { operatorSettingsData, updateProfileAction } from "./settings-model";
@@ -84,19 +90,23 @@ export function ProfileSettings() {
             </Field>
             <Field>
               <Label for="settings-visibility">Profile visibility</Label>
-              <select
-                id="settings-visibility"
+              <Select
                 name="profileVisibility"
                 value={visibility()}
-                onChange={(event: Event) =>
-                  setVisibility(
-                    (event.target as HTMLSelectElement).value as "workspace" | "private",
-                  )
-                }
+                onValueChange={(value) => {
+                  if (value === "workspace" || value === "private") setVisibility(value);
+                }}
               >
-                <option value="workspace">Workspace members</option>
-                <option value="private">Private</option>
-              </select>
+                <SelectTrigger id="settings-visibility">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectContent>
+                    <SelectItem value="workspace">Workspace members</SelectItem>
+                    <SelectItem value="private">Private</SelectItem>
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
             </Field>
           </Grid>
           {mutationError() ? (
