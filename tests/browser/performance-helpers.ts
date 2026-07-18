@@ -71,16 +71,13 @@ export async function takeHeapSnapshot(session: CDPSession, path: string): Promi
 }
 
 export async function clickThroughPaint(locator: Locator): Promise<number> {
-  const page = locator.page();
-  const start = await page.evaluate(() => performance.now());
-  await locator.click();
-  return page.evaluate(
-    (startedAt) =>
-      new Promise<number>((resolve) => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => resolve(performance.now() - startedAt));
-        });
-      }),
-    start,
-  );
+  return locator.evaluate((element) => {
+    const start = performance.now();
+    (element as HTMLElement).click();
+    return new Promise<number>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve(performance.now() - start));
+      });
+    });
+  });
 }

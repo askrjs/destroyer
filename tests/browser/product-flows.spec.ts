@@ -80,7 +80,10 @@ test("should poll live operations without runtime errors given an active logs ro
   await createOperator(page, "live.polling@example.test");
   await expect(page.getByLabel("Recent log stream")).toBeVisible();
   const resume = page.getByRole("button", { name: "Resume live stream" });
-  if (await resume.isVisible()) await resume.click();
+  const pause = page.getByRole("button", { name: "Pause live stream" });
+  if (await pause.isVisible()) await pause.click();
+  await expect(resume).toBeVisible();
+  await resume.click();
   await expect.poll(() => logResponses, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
   expect(errors).toEqual([]);
 });
