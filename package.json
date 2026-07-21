@@ -29,8 +29,8 @@
     "@askrjs/server": ">=0.0.3 <0.1.0",
     "@askrjs/themes": ">=0.0.13 <0.1.0",
     "@askrjs/ui": ">=0.0.13 <0.1.0",
-    "argon2": "^0.44.0",
-    "better-sqlite3": "^12.11.1"
+    "argon2": "^0.45.0",
+    "better-sqlite3": "^13.0.1"
   },
   "devDependencies": {
     "@askrjs/vite": ">=0.0.7 <0.1.0",
