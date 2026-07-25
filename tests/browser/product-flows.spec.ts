@@ -27,7 +27,6 @@ test("should complete persisted product workflows given an authenticated operato
   await chooseSelectOption(page, "Default role", "Member");
   await chooseSelectOption(page, "Approval policy", "Automatic approval");
   await page.getByRole("button", { name: "Save workspace" }).click();
-  await page.reload();
   await expect(page.getByLabel("Default role")).toHaveText("Member");
   await expect(page.getByLabel("Approval policy")).toHaveText("Automatic approval");
 
@@ -63,7 +62,7 @@ test("should filter and inspect the release surface given Home controls", async 
   await page.getByLabel("Search components").fill("lucide");
   await expect(page.getByRole("cell", { name: "@askrjs/lucide" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "@askrjs/themes" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Inspect logs" }).click();
+  await page.getByRole("link", { name: "Inspect logs" }).click();
   await expect(page).toHaveURL(/\/logs$/);
   await expect(page.getByRole("heading", { name: "Logs" })).toBeVisible();
 });

@@ -83,7 +83,12 @@ export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
         contentSecurityPolicy:
           "default-src 'self'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:",
       }),
-      rateLimit({ store: deps.rateLimits, limit: 600, windowMs: 60_000 }),
+      rateLimit({
+        store: deps.rateLimits,
+        limit: 600,
+        windowMs: 60_000,
+        key: (ctx) => `app:${ctx.auth.session?.id ?? "anonymous"}`,
+      }),
       accessLog(({ request, response, requestId: id }) =>
         deps.logger.write({
           method: request.method,
