@@ -34,7 +34,7 @@ export const settingsActionHandlers = [
       { displayName: input.displayName.trim(), profileVisibility: input.profileVisibility },
       input.version,
     );
-    return { redirect: context.url.pathname, result: value };
+    return { result: value };
   }),
   handleAction<AppDependencies, { sessionTimeoutMinutes: string; version: string }>(
     updateSecurityAction,
@@ -46,7 +46,7 @@ export const settingsActionHandlers = [
         { sessionTimeoutMinutes: Number(input.sessionTimeoutMinutes) },
         input.version,
       );
-      return { redirect: context.url.pathname, result: value };
+      return { result: value };
     },
   ),
   handleAction<
@@ -65,7 +65,7 @@ export const settingsActionHandlers = [
       { density: input.density, region: input.region, theme: input.theme },
       input.version,
     );
-    return { redirect: context.url.pathname, result: value };
+    return { result: value };
   }),
   handleAction<AppDependencies, { inAppNotifications: "enabled" | "disabled"; version: string }>(
     updateNotificationsAction,
@@ -77,7 +77,7 @@ export const settingsActionHandlers = [
         { inAppNotifications: input.inAppNotifications === "enabled" },
         input.version,
       );
-      return { redirect: context.url.pathname, result: value };
+      return { result: value };
     },
   ),
   handleAction<
@@ -91,7 +91,7 @@ export const settingsActionHandlers = [
       { defaultRole: input.defaultRole, approvalPolicy: input.approvalPolicy },
       input.version,
     );
-    return { redirect: context.url.pathname, result: value };
+    return { result: value };
   }),
   handleAction<AppDependencies, { version: string }>(
     resetInviteAction,
@@ -104,7 +104,7 @@ export const settingsActionHandlers = [
       if (result.kind === "conflict") {
         throw new Error("Settings changed in another session; reload and retry.");
       }
-      return { redirect: context.url.pathname, result: result.value };
+      return { result: result.value };
     },
   ),
 ] as const;
