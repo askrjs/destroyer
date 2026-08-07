@@ -86,7 +86,11 @@ export function ProfileSettings() {
             </Field>
             <Field>
               <Label for="settings-email">Email</Label>
-              <Input id="settings-email" value={principal?.email ?? ""} readonly />
+              <Input
+                id="settings-email"
+                value={typeof principal?.email === "string" ? principal.email : ""}
+                readonly
+              />
             </Field>
             <Field>
               <Label for="settings-visibility">Profile visibility</Label>
