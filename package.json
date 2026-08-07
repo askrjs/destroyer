@@ -28,8 +28,8 @@
     "@askrjs/node": ">=0.0.8 <0.1.0",
     "@askrjs/schema": ">=0.0.5 <0.1.0",
     "@askrjs/server": ">=0.0.11 <0.1.0",
-    "@askrjs/themes": ">=0.0.22 <0.1.0",
-    "@askrjs/ui": ">=0.0.25 <0.1.0",
+    "@askrjs/themes": ">=0.0.23 <0.1.0",
+    "@askrjs/ui": ">=0.0.26 <0.1.0",
     "argon2": "^0.45.1",
     "better-sqlite3": "^13.0.3"
   },
@@ -37,7 +37,7 @@
     "@askrjs/vite": ">=0.0.12 <0.1.0",
     "@playwright/test": "^1.62.1",
     "@types/better-sqlite3": "^9.6.0",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "typescript": "^7.0.2",
     "vite-plus": "^0.2.8"
   },

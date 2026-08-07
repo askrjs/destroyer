@@ -1,22 +1,23 @@
-import { createRouteRegistry, group, route, type RouteOptions } from "@askrjs/askr/router";
+import { createRouteRegistry, group, lazy, route, type RouteOptions } from "@askrjs/askr/router";
 import { safeRedirect } from "@askrjs/server/auth";
 import { requireAnonymous, requireUser } from "@askrjs/auth";
 import { resolveAuth } from "../auth";
 import { PageLayout } from "./_layout";
-import { AboutPage } from "./about";
-import { ContactPage } from "./contact";
-import { DocsPage } from "./docs";
-import { HomePage } from "./home";
-import { LoginPage } from "./login";
-import { LogsPage } from "./logs";
-import { LogoutPage } from "./logout";
-import { MetricsPage } from "./metrics";
-import { ProfilePage } from "./profile";
-import { SettingsPage } from "./settings";
-import { SignupPage } from "./signup";
 import { operatorSettingsQuery, settingsActions } from "../features/settings/settings-model";
 import { liveLogQuery } from "../features/logs/live-logs-resource";
 import { operationsMetricsQuery } from "../features/metrics/metrics-model";
+
+const AboutPage = lazy(() => import("./about").then((module) => module.AboutPage));
+const ContactPage = lazy(() => import("./contact").then((module) => module.ContactPage));
+const DocsPage = lazy(() => import("./docs").then((module) => module.DocsPage));
+const HomePage = lazy(() => import("./home").then((module) => module.HomePage));
+const LoginPage = lazy(() => import("./login").then((module) => module.LoginPage));
+const LogsPage = lazy(() => import("./logs").then((module) => module.LogsPage));
+const LogoutPage = lazy(() => import("./logout").then((module) => module.LogoutPage));
+const MetricsPage = lazy(() => import("./metrics").then((module) => module.MetricsPage));
+const ProfilePage = lazy(() => import("./profile").then((module) => module.ProfilePage));
+const SettingsPage = lazy(() => import("./settings").then((module) => module.SettingsPage));
+const SignupPage = lazy(() => import("./signup").then((module) => module.SignupPage));
 
 const settingsRoute = {
   auth: requireUser(),
