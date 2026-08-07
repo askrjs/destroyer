@@ -21,28 +21,34 @@
     "check": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
-    "@askrjs/askr": ">=0.0.55 <0.1.0",
-    "@askrjs/auth": ">=0.0.3 <0.1.0",
-    "@askrjs/charts": ">=0.1.2 <0.2.0",
-    "@askrjs/lucide": ">=0.0.4 <0.1.0",
-    "@askrjs/node": ">=0.0.3 <0.1.0",
-    "@askrjs/schema": ">=0.0.2 <0.1.0",
-    "@askrjs/server": ">=0.0.3 <0.1.0",
-    "@askrjs/themes": ">=0.0.13 <0.1.0",
-    "@askrjs/ui": ">=0.0.13 <0.1.0",
-    "argon2": "^0.45.0",
-    "better-sqlite3": "^13.0.1"
+    "@askrjs/askr": ">=0.0.88 <0.1.0",
+    "@askrjs/auth": ">=0.0.8 <0.1.0",
+    "@askrjs/charts": ">=0.1.5 <0.2.0",
+    "@askrjs/lucide": ">=0.0.8 <0.1.0",
+    "@askrjs/node": ">=0.0.8 <0.1.0",
+    "@askrjs/schema": ">=0.0.5 <0.1.0",
+    "@askrjs/server": ">=0.0.11 <0.1.0",
+    "@askrjs/themes": ">=0.0.22 <0.1.0",
+    "@askrjs/ui": ">=0.0.25 <0.1.0",
+    "argon2": "^0.45.1",
+    "better-sqlite3": "^13.0.3"
   },
   "devDependencies": {
-    "@askrjs/vite": ">=0.0.7 <0.1.0",
-    "@playwright/test": "^1.61.1",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^26.0.0",
+    "@askrjs/vite": ">=0.0.12 <0.1.0",
+    "@playwright/test": "^1.62.1",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.1.2",
     "typescript": "^7.0.2",
-    "vite-plus": "^0.2.4"
+    "vite-plus": "^0.2.8"
   },
   "engines": {
     "node": ">=24.0.0"
   },
-  "packageManager": "npm@12.0.1"
+  "packageManager": "npm@12.0.1",
+  "allowScripts": {
+    "argon2@0.45.1": true,
+    "better-sqlite3@13.0.3": true,
+    "fsevents@2.3.2": true,
+    "fsevents@2.3.3": true
+  }
 }
