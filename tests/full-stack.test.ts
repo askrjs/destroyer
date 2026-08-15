@@ -1,4 +1,5 @@
 import { createJwtIssuer } from "@askrjs/auth/jwt";
+import { listen } from "@askrjs/node";
 import { generateKeyPairSync } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -148,6 +149,73 @@ describe("Destroyer full stack", () => {
     for (let index = 0; index < 3; index += 1) expect((await contact()).status).toBe(201);
     expect((await contact()).status).toBe(429);
     expect(await deps.contacts.count()).toBe(3);
+  });
+
+  it("should hold contact and authentication limits against spoofed forwarding addresses", async () => {
+    const deps = dependencies();
+    const app = testApp(deps);
+    const server = await listen(app, { host: "127.0.0.1" });
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Expected TCP address");
+    const origin = `http://127.0.0.1:${address.port}`;
+    const post = (path: string, body: unknown, spoofed: string) =>
+      fetch(`${origin}${path}`, {
+        method: "POST",
+        redirect: "manual",
+        headers: {
+          "content-type": "application/json",
+          origin,
+          "x-forwarded-for": spoofed,
+        },
+        body: JSON.stringify(body),
+      });
+
+    try {
+      const contactStatuses: number[] = [];
+      for (let index = 0; index < 4; index += 1) {
+        contactStatuses.push(
+          (
+            await post(
+              "/api/contact",
+              {
+                email: "spoof-proof@example.test",
+                subject: "Need help",
+                message: "A spoof-boundary request from the integration suite.",
+              },
+              `198.51.100.${index + 1}`,
+            )
+          ).status,
+        );
+      }
+      expect(
+        (
+          await post(
+            "/auth/v1/accounts",
+            { email: "rate-limited@example.test", password: "destroyer" },
+            "203.0.113.1",
+          )
+        ).status,
+      ).toBe(303);
+      const loginStatuses: number[] = [];
+      for (let index = 0; index < 6; index += 1) {
+        loginStatuses.push(
+          (
+            await post(
+              "/auth/v1/session",
+              { email: "rate-limited@example.test", password: "incorrect" },
+              `203.0.113.${index + 10}`,
+            )
+          ).status,
+        );
+      }
+      expect({ contactStatuses, loginStatuses, persisted: await deps.contacts.count() }).toEqual({
+        contactStatuses: [201, 201, 201, 429],
+        loginStatuses: [401, 401, 401, 401, 401, 429],
+        persisted: 3,
+      });
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   });
 
   it("should reject malformed support payloads given invalid contact input", async () => {
