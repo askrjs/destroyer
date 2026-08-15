@@ -22,6 +22,12 @@ in-memory database. Set `DESTROYER_DB_PATH` to retain data elsewhere. Production
 requires `DESTROYER_JWT_PRIVATE_KEY` containing an RSA private JWK; `DESTROYER_JWT_KID`, `HOST`, and
 `PORT` are configurable.
 
+Contact and authentication rate limits use the TCP peer address authenticated by `@askrjs/node`.
+Client-supplied `X-Forwarded-For` and `x-askr-client-address` values are never trusted; the Node
+adapter overwrites its reserved header from the socket. A deployment behind a reverse proxy is
+therefore limited by the proxy peer unless a separate, explicit trusted-proxy boundary is added.
+Do not enable original-client forwarding by reading `X-Forwarded-For` directly in application code.
+
 ## Askr packages
 
 Destroyer installs ranged releases from the npm registry for `@askrjs/askr`, auth, charts, lucide,

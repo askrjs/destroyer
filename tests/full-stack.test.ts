@@ -1,5 +1,5 @@
 import { createJwtIssuer } from "@askrjs/auth/jwt";
-import { listen } from "@askrjs/node";
+import { CLIENT_ADDRESS_HEADER, listen } from "@askrjs/node";
 import { generateKeyPairSync } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -165,6 +165,7 @@ describe("Destroyer full stack", () => {
         headers: {
           "content-type": "application/json",
           origin,
+          [CLIENT_ADDRESS_HEADER]: spoofed,
           "x-forwarded-for": spoofed,
         },
         body: JSON.stringify(body),
