@@ -4,6 +4,7 @@ import type { AskrAppApi } from "@askrjs/server/askr";
 import { security } from "@askrjs/server/openapi";
 import type { AppDependencies } from "./contracts";
 import { RepositoryConflictError } from "./contracts";
+import { clientAddress } from "./client-address";
 
 export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
   const Summary = api.schema(
@@ -196,7 +197,7 @@ export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
       input: { body: { schema: ContactInput, mediaTypes: ["application/json"] } },
       documentation: { body: { required: true } },
       async handler(ctx, input, deps) {
-        const address = ctx.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+        const address = clientAddress(ctx.headers);
         const limit = await deps.rateLimits.consume(
           `contact:${address}:${input.body.email.toLowerCase()}`,
           3,

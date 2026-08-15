@@ -12,6 +12,7 @@ import { SESSION_COOKIE } from "./dependencies";
 import { RepositoryConflictError } from "./contracts";
 import { createQueryRegistry } from "./queries";
 import { settingsActionHandlers } from "./actions";
+import { clientAddress } from "./client-address";
 
 export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
   const principalSchema: Schema = {
@@ -59,7 +60,7 @@ export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
         allowAttempt: async (ctx, operation, email) =>
           (
             await deps.rateLimits.consume(
-              `auth:${operation}:${email}:${ctx.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local"}`,
+              `auth:${operation}:${email}:${clientAddress(ctx.headers)}`,
               5,
               15 * 60_000,
             )
