@@ -198,12 +198,20 @@ describe("Destroyer full stack", () => {
         ).status,
       ).toBe(303);
       const loginStatuses: number[] = [];
+      const emailVariants = [
+        "rate-limited@example.test",
+        "Rate-Limited@example.test",
+        "RATE-LIMITED@example.test",
+        "rate-limited@EXAMPLE.test",
+        "rate-limited@example.TEST",
+        "RATE-limited@EXAMPLE.TEST",
+      ];
       for (let index = 0; index < 6; index += 1) {
         loginStatuses.push(
           (
             await post(
               "/auth/v1/session",
-              { email: "rate-limited@example.test", password: "incorrect" },
+              { email: emailVariants[index], password: "incorrect" },
               `203.0.113.${index + 10}`,
             )
           ).status,
