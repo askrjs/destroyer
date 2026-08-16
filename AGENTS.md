@@ -2,6 +2,17 @@
 
 Destroyer is a realistic integration app for hardening `@askrjs/themes` in normal product flows. Do not turn it into a component gallery.
 
+## Askr North Star
+
+Destroyer must remain an understandable real application, not a place where
+framework seams disappear. Keep routes, state, fixtures, component composition,
+and configuration explicit enough to narrate from user action to visible
+result. Exercise actionable runtime failures, loading, empty, teardown,
+responsive, keyboard, and focus behavior in natural product flows. Prefer
+named, local composition over inferred conventions or demo-only abstraction.
+Add a surface only when it closes a real integration gap, and keep published
+limitations visible until the real behavior is verified.
+
 ## Adding A Theme Component
 
 1. Pick one component and one natural location for it.
@@ -68,3 +79,23 @@ Current coverage:
 - `Skeleton`: Settings > Security > Security activity refresh.
 - `VirtualList`: Logs > Live stream.
 - `VirtualTable`: Logs > Event detail.
+
+## Optimization Gate
+
+A benchmark number is only half of an optimization's success criterion. The
+change must also preserve a causal path that a human or agent can narrate in one
+sentence.
+
+Every benchmark-driven change must include:
+
+1. the one-sentence causal description of the optimized path;
+2. the exact fallback trigger and proof that optimized and fallback paths have
+   identical observable behavior and error surfaces;
+3. an explicit legibility-cost statement, including `none` when no new path or
+   concept is introduced; and
+4. evidence that a measured bottleneck in a real application justifies the
+   optimization now.
+
+Prefer making the existing single path faster. New caches, inference,
+memoization, shortcuts, fast paths, or scheduler states require an explicit
+legibility decision; a speedup alone does not justify them.
