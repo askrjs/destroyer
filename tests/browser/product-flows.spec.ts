@@ -32,7 +32,7 @@ test("should complete persisted product workflows given an authenticated operato
 
   const invite = await page.getByLabel("Active invite link").inputValue();
   await page.getByRole("button", { name: "Reset links" }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Reset links" }).click();
+  await page.locator("button").filter({ hasText: "Reset links" }).last().click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByLabel("Active invite link")).not.toHaveValue(invite);
 
