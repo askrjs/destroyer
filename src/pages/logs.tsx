@@ -91,7 +91,11 @@ export function LogsPage() {
   const liveLogs = createQuery(liveLogQuery, {
     principalId: currentAuth().principal?.id ?? "anonymous",
   });
-  const currentEntries = () => liveLogs.data?.entries ?? [];
+  const olderEntries = state<readonly LogEntry[]>([]);
+  const nextCursor = state<string | null>(liveLogs.data?.nextCursor ?? null);
+  const historyPending = state(false);
+  const historyError = state("");
+  const currentEntries = () => [...(liveLogs.data?.entries ?? []), ...olderEntries()];
   const filteredLogEntries = derive(() =>
     currentEntries().filter((entry) => matchesLogFilter(entry, tableFilter())),
   );
@@ -148,6 +152,26 @@ export function LogsPage() {
   };
   const clearTableFilter = () => {
     setTableFilter("");
+  };
+  const loadOlder = async () => {
+    const cursor = nextCursor();
+    if (!cursor || historyPending()) return;
+    historyPending.set(true);
+    historyError.set("");
+    try {
+      const response = await fetch(
+        `/api/operations/logs?limit=80&cursor=${encodeURIComponent(cursor)}`,
+        { credentials: "same-origin" },
+      );
+      if (!response.ok) throw new Error(`Log history request failed (${response.status}).`);
+      const page = (await response.json()) as LiveLogSnapshot;
+      olderEntries.set([...olderEntries(), ...page.entries]);
+      nextCursor.set(page.nextCursor);
+    } catch (cause) {
+      historyError.set(cause instanceof Error ? cause.message : "Log history request failed.");
+    } finally {
+      historyPending.set(false);
+    }
   };
 
   return (
@@ -320,6 +344,25 @@ export function LogsPage() {
                     </Button>
                   }
                 />
+              )}
+              {historyError() ? (
+                <Text role="alert" tone="danger">
+                  {historyError()}
+                </Text>
+              ) : null}
+              {nextCursor() ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={historyPending()}
+                  onPress={() => void loadOlder()}
+                >
+                  {historyPending() ? "Loading older events…" : "Load older events"}
+                </Button>
+              ) : (
+                <Text role="status" tone="muted">
+                  All matching history loaded.
+                </Text>
               )}
             </Block>
           </CardContent>

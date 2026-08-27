@@ -1,7 +1,7 @@
 import { state } from "@askrjs/askr";
 import { action, ActionForm } from "@askrjs/askr/actions";
 import { currentAuth } from "@askrjs/askr/router";
-import { KeyRoundIcon } from "@askrjs/lucide";
+import { KeyRoundIcon, Trash2Icon } from "@askrjs/lucide";
 import {
   Badge,
   Block,
@@ -14,6 +14,7 @@ import {
   CardTitle,
   DataTable,
   Field,
+  Input,
   Label,
   Slider,
   SliderRange,
@@ -36,6 +37,9 @@ export function SecuritySettings() {
   const save = action<{ sessionTimeoutMinutes: string; version: string }>(updateSecurityAction);
   const [sessionTimeout, setSessionTimeout] = state(settings.data?.sessionTimeoutMinutes ?? 30);
   const mutationError = state("");
+  const deleteConfirmation = state("");
+  const deleteError = state("");
+  const deleting = state(false);
 
   return (
     <Block gap="lg">
@@ -99,6 +103,58 @@ export function SecuritySettings() {
               {save.state().pending ? "Saving…" : "Save security"}
             </Button>
           </ActionForm>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Delete account</CardTitle>
+          <CardDescription>
+            Delete this operator and clear the authenticated session.
+          </CardDescription>
+          <CardAction>
+            <Trash2Icon size={18} aria-hidden="true" />
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <Field>
+            <Label for="delete-account-confirmation">Type your email to confirm</Label>
+            <Input
+              id="delete-account-confirmation"
+              value={deleteConfirmation()}
+              onInput={(event: Event) =>
+                deleteConfirmation.set((event.currentTarget as HTMLInputElement).value)
+              }
+            />
+          </Field>
+          {deleteError() ? (
+            <Text tone="danger" role="alert">
+              {deleteError()}
+            </Text>
+          ) : null}
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={deleting() || deleteConfirmation() !== currentAuth().principal?.email}
+            onPress={() => {
+              deleting.set(true);
+              deleteError.set("");
+              void fetch("/api/account", {
+                method: "DELETE",
+                credentials: "same-origin",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ confirmation: deleteConfirmation() }),
+              }).then((response) => {
+                if (response.ok) {
+                  location.assign("/login");
+                  return;
+                }
+                deleting.set(false);
+                deleteError.set("Account deletion failed.");
+              });
+            }}
+          >
+            {deleting() ? "Deleting…" : "Delete account"}
+          </Button>
         </CardContent>
       </Card>
       <Card>

@@ -9,7 +9,13 @@ export default defineConfig({
   ],
   lint: { ignorePatterns: ["dist/**", "node_modules/**", "coverage/**"] },
   test: {
-    exclude: ["tests/browser/**", "tests/production.test.ts", "node_modules/**", "dist/**"],
+    exclude: [
+      "tests/browser/**",
+      "tests/visual/**",
+      "tests/production.test.ts",
+      "node_modules/**",
+      "dist/**",
+    ],
   },
   build: { manifest: true, sourcemap: "hidden" },
 });

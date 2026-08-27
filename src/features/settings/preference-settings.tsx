@@ -29,11 +29,13 @@ export function PreferenceSettings() {
     density: "comfortable" | "compact";
     region: "us-east" | "us-west" | "eu-west";
     theme: "system" | "light" | "dark";
+    timezone: "America/New_York" | "America/Los_Angeles" | "Europe/Dublin";
     version: string;
   }>(updatePreferencesAction);
   const [density, setDensity] = state(settings.data?.density ?? "comfortable");
   const [region, setRegion] = state(settings.data?.region ?? "us-east");
   const [theme, setTheme] = state(settings.data?.theme ?? "system");
+  const [timezone, setTimezone] = state(settings.data?.timezone ?? "America/New_York");
   const mutationError = state("");
   return (
     <Card variant="raised">
@@ -55,6 +57,7 @@ export function PreferenceSettings() {
                 density: density(),
                 region: region(),
                 theme: theme(),
+                timezone: timezone(),
                 version: String(settings.data?.version ?? 1),
               })
               .catch((error: unknown) =>
@@ -64,7 +67,39 @@ export function PreferenceSettings() {
               );
           }}
         >
-          <Grid columns={{ base: 1, md: 3 }} gap="md">
+          <Grid columns={{ base: 1, md: 2 }} gap="md">
+            <Field>
+              <Label for="settings-timezone">Timezone</Label>
+              <Select
+                name="timezone"
+                value={timezone()}
+                onValueChange={(value) => {
+                  if (
+                    value === "America/New_York" ||
+                    value === "America/Los_Angeles" ||
+                    value === "Europe/Dublin"
+                  )
+                    setTimezone(value);
+                }}
+              >
+                <SelectTrigger id="settings-timezone">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectContent>
+                    {region() === "us-east" ? (
+                      <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                    ) : null}
+                    {region() === "us-west" ? (
+                      <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
+                    ) : null}
+                    {region() === "eu-west" ? (
+                      <SelectItem value="Europe/Dublin">Dublin Time</SelectItem>
+                    ) : null}
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
+            </Field>
             <Field>
               <Label for="settings-density">Workspace density</Label>
               <Select
@@ -93,6 +128,13 @@ export function PreferenceSettings() {
                 onValueChange={(value) => {
                   if (value === "us-east" || value === "us-west" || value === "eu-west") {
                     setRegion(value);
+                    setTimezone(
+                      value === "us-east"
+                        ? "America/New_York"
+                        : value === "us-west"
+                          ? "America/Los_Angeles"
+                          : "Europe/Dublin",
+                    );
                   }
                 }}
               >
@@ -137,6 +179,20 @@ export function PreferenceSettings() {
           ) : null}
           <Button type="submit" variant="primary" disabled={save.state().pending}>
             Save preferences
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={save.state().pending}
+            onPress={() => {
+              setDensity(settings.data?.density ?? "comfortable");
+              setRegion(settings.data?.region ?? "us-east");
+              setTheme(settings.data?.theme ?? "system");
+              setTimezone(settings.data?.timezone ?? "America/New_York");
+              mutationError.set("");
+            }}
+          >
+            Reset preferences
           </Button>
         </ActionForm>
       </CardContent>

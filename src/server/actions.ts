@@ -15,6 +15,7 @@ async function update(
   values: SettingsUpdate,
   version: string,
 ) {
+  await dependencies.scenarios.before(principalId, "settings.update");
   const result = await dependencies.settings.update(principalId, values, Number(version));
   if (result.kind === "conflict") {
     throw new Error("Settings changed in another session; reload and retry.");
@@ -40,6 +41,7 @@ export const settingsActionHandlers = [
     updateSecurityAction,
     async (context, input, dependencies) => {
       if (!context.auth.principal) return { redirect: "/login" };
+      await dependencies.scenarios.before(context.auth.principal.id, "settings.reset-invite");
       const value = await update(
         dependencies,
         context.auth.principal.id,
@@ -55,6 +57,7 @@ export const settingsActionHandlers = [
       density: "comfortable" | "compact";
       region: "us-east" | "us-west" | "eu-west";
       theme: "system" | "light" | "dark";
+      timezone: "America/New_York" | "America/Los_Angeles" | "Europe/Dublin";
       version: string;
     }
   >(updatePreferencesAction, async (context, input, dependencies) => {
@@ -62,7 +65,12 @@ export const settingsActionHandlers = [
     const value = await update(
       dependencies,
       context.auth.principal.id,
-      { density: input.density, region: input.region, theme: input.theme },
+      {
+        density: input.density,
+        region: input.region,
+        theme: input.theme,
+        timezone: input.timezone,
+      },
       input.version,
     );
     return { result: value };
@@ -82,16 +90,27 @@ export const settingsActionHandlers = [
   ),
   handleAction<
     AppDependencies,
-    { defaultRole: "viewer" | "member"; approvalPolicy: "automatic" | "manual"; version: string }
+    {
+      defaultRole: "viewer" | "member";
+      approvalPolicy: "automatic" | "manual";
+      approverGroup: string;
+      version: string;
+    },
+    | { kind: "updated"; value: Awaited<ReturnType<AppDependencies["settings"]["get"]>> }
+    | { kind: "conflict" }
   >(updateWorkspaceAction, async (context, input, dependencies) => {
     if (!context.auth.principal) return { redirect: "/login" };
-    const value = await update(
-      dependencies,
+    await dependencies.scenarios.before(context.auth.principal.id, "settings.update");
+    const result = await dependencies.settings.update(
       context.auth.principal.id,
-      { defaultRole: input.defaultRole, approvalPolicy: input.approvalPolicy },
-      input.version,
+      {
+        defaultRole: input.defaultRole,
+        approvalPolicy: input.approvalPolicy,
+        approverGroup: input.approverGroup.trim(),
+      },
+      Number(input.version),
     );
-    return { result: value };
+    return { result };
   }),
   handleAction<AppDependencies, { version: string }>(
     resetInviteAction,

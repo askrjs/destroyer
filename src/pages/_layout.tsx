@@ -145,6 +145,9 @@ export function PageLayout({ children }: { children?: unknown }) {
                 <NavGroup>
                   <NavLink href="/docs">Docs</NavLink>
                   <NavLink href="/logs">Logs</NavLink>
+                  {currentAuth().authenticated ? (
+                    <NavLink href="/incidents">Incidents</NavLink>
+                  ) : null}
                   <NavLink href="/metrics">Metrics</NavLink>
                   {currentAuth().authenticated ? (
                     <NavLink href="/settings">Settings</NavLink>

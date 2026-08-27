@@ -320,4 +320,76 @@ describe("Destroyer full stack", () => {
     expect(await response.text()).toContain("Design system baseline");
     expect((await app.fetch(new Request("http://destroyer.test/missing-page"))).status).toBe(404);
   });
+
+  it("should apply one-shot scenario controls only to the authenticated principal", async () => {
+    const app = testApp(dependencies());
+    const firstCookie = await authenticated(app, "controlled@example.test");
+    const secondCookie = await authenticated(app, "uncontrolled@example.test");
+    const request = (path: string, cookie: string, init?: RequestInit) =>
+      app.fetch(
+        new Request(`http://destroyer.test${path}`, {
+          ...init,
+          headers: { cookie, "content-type": "application/json", ...init?.headers },
+        }),
+      );
+
+    expect(
+      (
+        await request("/api/__test/control/arm", firstCookie, {
+          method: "POST",
+          body: JSON.stringify({ operation: "operations.logs", mode: "empty-next" }),
+        })
+      ).status,
+    ).toBe(200);
+    const controlled = await request("/api/operations/logs?limit=5", firstCookie);
+    const unaffected = await request("/api/operations/logs?limit=5", secondCookie);
+    const consumed = await request("/api/operations/logs?limit=5", firstCookie);
+    expect(await controlled.json()).toMatchObject({ entries: [] });
+    expect(((await unaffected.json()) as { entries: unknown[] }).entries).toHaveLength(5);
+    expect(((await consumed.json()) as { entries: unknown[] }).entries).toHaveLength(5);
+  });
+
+  it("should expose versioned incident mutations and exact-confirmation account deletion", async () => {
+    const app = testApp(dependencies());
+    const cookie = await authenticated(app, "delete.me@example.test");
+    const headers = { cookie, "content-type": "application/json" };
+    const incidents = await app.fetch(
+      new Request("http://destroyer.test/api/operations/incidents", { headers }),
+    );
+    const first = ((await incidents.json()) as Array<{ id: string; version: number }>)[0]!;
+    const update = await app.fetch(
+      new Request(`http://destroyer.test/api/operations/incidents/${first.id}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ status: "acknowledged", version: first.version }),
+      }),
+    );
+    expect(update.status).toBe(200);
+    const stale = await app.fetch(
+      new Request(`http://destroyer.test/api/operations/incidents/${first.id}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ status: "resolved", version: first.version }),
+      }),
+    );
+    expect(stale.status).toBe(409);
+
+    const wrong = await app.fetch(
+      new Request("http://destroyer.test/api/account", {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify({ confirmation: "wrong@example.test" }),
+      }),
+    );
+    expect(wrong.status).toBe(422);
+    const deleted = await app.fetch(
+      new Request("http://destroyer.test/api/account", {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify({ confirmation: "delete.me@example.test" }),
+      }),
+    );
+    expect(deleted.status).toBe(204);
+    expect(deleted.headers.get("set-cookie")).toContain("destroyer-session=");
+  });
 });

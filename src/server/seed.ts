@@ -1,7 +1,7 @@
 export const seedServices = [
   "identity-api",
   "billing-worker",
-  "webhook-gateway",
+  "webhook-delivery-gateway-us-east-1",
   "edge-router",
   "audit-stream",
   "notification-api",

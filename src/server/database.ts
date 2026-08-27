@@ -102,15 +102,22 @@ function seed(database: Database.Database, now: () => number): void {
       );
       for (let index = 0; index < 420; index += 1) {
         const severity = index % 29 === 0 ? "error" : index % 11 === 0 ? "warning" : "info";
+        const extreme = index === 0;
         insertLog.run(
           `evt-${10_000 - index}`,
-          `service-${(index % seedServices.length) + 1}`,
+          extreme ? "service-3" : `service-${(index % seedServices.length) + 1}`,
           severity,
-          seedMessages[index % seedMessages.length],
+          extreme
+            ? "Webhook delivery exhausted its retry budget.\nThe receiving workspace endpoint returned a transient failure after the signed payload was accepted for delivery.\nOperators should inspect the complete request identity before retrying."
+            : seedMessages[index % seedMessages.length],
           new Date(timestamp - index * 45_000).toISOString(),
-          seedRoutes[index % seedRoutes.length],
+          extreme
+            ? "/api/workspaces/north-america-production/webhook-deliveries/attempts/retry-pending"
+            : seedRoutes[index % seedRoutes.length],
           38 + ((index * 17) % 420),
-          `req_${(index * 7919).toString(16).padStart(8, "0")}`,
+          extreme
+            ? "req_01JHPA5TG00000000000000000_delivery_attempt_0000042"
+            : `req_${(index * 7919).toString(16).padStart(8, "0")}`,
           JSON.stringify({ seeded: true }),
         );
       }

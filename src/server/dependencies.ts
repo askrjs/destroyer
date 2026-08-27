@@ -3,6 +3,7 @@ import type { AppDependencies } from "./contracts";
 import { createLogger } from "./logging";
 import { createRateLimits } from "./rate-limits";
 import { createRepositories } from "./repositories";
+import { createScenarioController } from "./scenario-controller";
 
 export const SESSION_COOKIE = "destroyer-session";
 export type {
@@ -19,13 +20,17 @@ export function createDependencies(
   options: { path?: string; now?: () => number } = {},
 ): AppDependencies {
   const path = options.path ?? process.env.DESTROYER_DB_PATH ?? ".data/destroyer.sqlite";
-  const now = options.now ?? Date.now;
+  const now =
+    options.now ??
+    (process.env.NODE_ENV === "test" ? () => Date.parse("2026-01-15T12:00:00.000Z") : Date.now);
   const opened = openDatabase(path, now);
   const repositories = createRepositories(opened.database, now);
+  const scenarios = createScenarioController();
   let closed = false;
 
   const dependencies: AppDependencies = {
     ...repositories,
+    scenarios,
     rateLimits: createRateLimits(now),
     logger: createLogger(process.env.NODE_ENV),
     health: {

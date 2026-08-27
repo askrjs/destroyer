@@ -1,10 +1,9 @@
 import { state } from "@askrjs/askr";
-import { action, ActionForm } from "@askrjs/askr/actions";
+import { action } from "@askrjs/askr/actions";
 import { currentAuth } from "@askrjs/askr/router";
 import { BellIcon } from "@askrjs/lucide";
 import {
   Block,
-  Button,
   Card,
   CardAction,
   CardContent,
@@ -13,25 +12,46 @@ import {
   CardTitle,
   Field,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectPortal,
-  SelectTrigger,
-  SelectValue,
+  Switch,
   Text,
 } from "@askrjs/themes/components";
 import { operatorSettingsData, updateNotificationsAction } from "./settings-model";
+import type { OperatorSettings } from "../../server/contracts";
 
 export function NotificationSettings() {
   const settings = operatorSettingsData(currentAuth().principal?.id ?? "anonymous");
-  const save = action<{ inAppNotifications: "enabled" | "disabled"; version: string }>(
-    updateNotificationsAction,
-  );
+  const save = action<
+    { inAppNotifications: "enabled" | "disabled"; version: string },
+    OperatorSettings
+  >(updateNotificationsAction);
   const [value, setValue] = state<"enabled" | "disabled">(
     settings.data?.inAppNotifications === false ? "disabled" : "enabled",
   );
   const mutationError = state("");
+  let committed = value();
+  let version = settings.data?.version ?? 1;
+  let draining = false;
+  const persistFinalIntent = async () => {
+    if (draining) return;
+    draining = true;
+    mutationError.set("");
+    try {
+      while (committed !== value()) {
+        const intended = value();
+        const result = await save.submit({
+          inAppNotifications: intended,
+          version: String(version),
+        });
+        committed = intended;
+        version = result.version;
+      }
+    } catch (error) {
+      mutationError.set(error instanceof Error ? error.message : "Notification update failed.");
+    } finally {
+      draining = false;
+      if (!mutationError() && committed !== value()) void persistFinalIntent();
+    }
+  };
   return (
     <Card variant="raised">
       <CardHeader>
@@ -42,39 +62,18 @@ export function NotificationSettings() {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <ActionForm
-          action={updateNotificationsAction}
-          onSubmit={(event: Event) => {
-            event.preventDefault();
-            mutationError.set("");
-            void save
-              .submit({ inAppNotifications: value(), version: String(settings.data?.version ?? 1) })
-              .catch((error: unknown) =>
-                mutationError.set(
-                  error instanceof Error ? error.message : "Notification update failed.",
-                ),
-              );
-          }}
-        >
+        <Block gap="md">
           <Field>
             <Label for="settings-notifications">In-app notifications</Label>
-            <Select
+            <Switch
+              id="settings-notifications"
               name="inAppNotifications"
-              value={value()}
-              onValueChange={(nextValue) => {
-                if (nextValue === "enabled" || nextValue === "disabled") setValue(nextValue);
+              checked={value() === "enabled"}
+              onCheckedChange={(checked) => {
+                setValue(checked ? "enabled" : "disabled");
+                void persistFinalIntent();
               }}
-            >
-              <SelectTrigger id="settings-notifications">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectPortal>
-                <SelectContent>
-                  <SelectItem value="enabled">Enabled</SelectItem>
-                  <SelectItem value="disabled">Disabled</SelectItem>
-                </SelectContent>
-              </SelectPortal>
-            </Select>
+            />
           </Field>
           <Block gap="sm">
             <Text tone="muted" size="sm">
@@ -86,10 +85,12 @@ export function NotificationSettings() {
               </Text>
             ) : null}
           </Block>
-          <Button type="submit" variant="primary" disabled={save.state().pending}>
-            Save notifications
-          </Button>
-        </ActionForm>
+          <Text tone="muted" size="sm" role="status">
+            {save.state().pending
+              ? "Saving notification preference…"
+              : "Notification preference saved."}
+          </Text>
+        </Block>
       </CardContent>
     </Card>
   );

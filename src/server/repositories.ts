@@ -15,7 +15,7 @@ export function createRepositories(
   return {
     ...createAccountRepositories(database, now),
     settings: createSettingsRepository(database, now),
-    operations: createOperationsRepository(database),
+    operations: createOperationsRepository(database, now),
     ...createSupportRepositories(database, now),
   };
 }

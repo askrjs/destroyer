@@ -2,6 +2,7 @@ import { createPlot } from "@askrjs/charts";
 import { Link, currentAuth } from "@askrjs/askr/router";
 import {
   ActivityIcon,
+  AlertTriangleIcon,
   ChartBarIcon,
   ChartColumnIncreasingIcon,
   ChartLineIcon,
@@ -9,6 +10,7 @@ import {
 } from "@askrjs/lucide";
 import {
   Badge,
+  Alert,
   Button,
   ButtonGroup,
   Card,
@@ -97,6 +99,10 @@ export function MetricsPage() {
         description="Service telemetry for investigating load, reliability, and request cost across the workspace."
         actions={
           <ButtonGroup attached={false}>
+            <Button type="button" variant="outline" onPress={() => void metrics.refresh()}>
+              <ActivityIcon size={16} aria-hidden="true" />
+              Refresh metrics
+            </Button>
             <Button asChild variant="outline">
               <Link href="/logs">
                 <FileCode2Icon size={16} aria-hidden="true" />
@@ -106,6 +112,20 @@ export function MetricsPage() {
           </ButtonGroup>
         }
       />
+
+      {metrics.error ? (
+        <Alert
+          variant="danger"
+          icon={<AlertTriangleIcon size={18} aria-hidden="true" />}
+          title="Metrics could not be loaded"
+          description="The operational query failed before returning telemetry."
+          actions={
+            <Button type="button" variant="outline" onPress={() => void metrics.refresh()}>
+              Retry metrics
+            </Button>
+          }
+        />
+      ) : null}
 
       <Grid as="section" columns={{ base: 1, md: 3 }} gap="lg">
         {metricHighlights.map(({ badge, detail, label, value, variant }) => (

@@ -14,7 +14,21 @@ export function createQueryRegistry(dependencies: AppDependencies) {
     serveQuery(operatorActivityQuery, ({ input }) =>
       dependencies.settings.activity(input.principalId),
     ),
-    serveQuery(operationsMetricsQuery, () => dependencies.operations.metrics()),
+    serveQuery(operationsMetricsQuery, async ({ input }) => {
+      const mode = await dependencies.scenarios.before(input.principalId, "operations.metrics");
+      if (mode === "empty-next") {
+        return {
+          requests: 0,
+          p95LatencyMs: 0,
+          errorRate: 0,
+          latencyBands: [],
+          routeWorkload: [],
+          serviceMix: [],
+          reliability: [],
+        };
+      }
+      return dependencies.operations.metrics();
+    }),
     serveQuery(liveLogQuery, async () => {
       const page = await dependencies.operations.logs({ limit: 80 });
       return { ...page, entries: page.entries.map(toLogEntry) };

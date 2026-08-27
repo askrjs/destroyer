@@ -44,7 +44,7 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
                 <Text tone="subtle" size="sm">
                   Service
                 </Text>
-                <Text size="sm" font="mono">
+                <Text size="sm" font="mono" wrap="anywhere">
                   {entry.service}
                 </Text>
               </Block>
@@ -60,7 +60,7 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
                 <Text tone="subtle" size="sm">
                   Route
                 </Text>
-                <Text size="sm" font="mono">
+                <Text size="sm" font="mono" wrap="anywhere">
                   {entry.route}
                 </Text>
               </Block>
@@ -68,7 +68,7 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
                 <Text tone="subtle" size="sm">
                   Request
                 </Text>
-                <Text size="sm" font="mono" numeric="tabular">
+                <Text size="sm" font="mono" numeric="tabular" wrap="anywhere">
                   {entry.requestId}
                 </Text>
               </Block>

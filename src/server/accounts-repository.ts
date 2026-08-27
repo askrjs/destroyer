@@ -80,6 +80,18 @@ export function createAccountRepositories(
         const valid = await verify(row?.password_hash ?? (await dummyHash), password);
         return valid && row ? principalFromDatabase(database, row.subject) : null;
       },
+      async delete(principalId, confirmation) {
+        const row = database.prepare("SELECT email FROM principals WHERE id=?").get(principalId) as
+          | { email: string }
+          | undefined;
+        if (!row || row.email !== confirmation.trim().toLowerCase()) return false;
+        return database.transaction(() => {
+          database.prepare("DELETE FROM audit_events WHERE principal_id=?").run(principalId);
+          return (
+            database.prepare("DELETE FROM principals WHERE id=?").run(principalId).changes === 1
+          );
+        })();
+      },
     },
   };
 }

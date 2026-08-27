@@ -5,6 +5,7 @@ import { security } from "@askrjs/server/openapi";
 import type { AppDependencies } from "./contracts";
 import { RepositoryConflictError } from "./contracts";
 import { clientAddress } from "./client-address";
+import type { ScenarioMode, ScenarioOperation } from "./scenario-controller";
 
 export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
   const Summary = api.schema(
@@ -49,6 +50,8 @@ export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
       inAppNotifications: schema.boolean(),
       defaultRole: schema.enum(["viewer", "member"]),
       approvalPolicy: schema.enum(["automatic", "manual"]),
+      approverGroup: schema.string(),
+      timezone: schema.enum(["America/New_York", "America/Los_Angeles", "Europe/Dublin"]),
       inviteLink: schema.string(),
       version: schema.integer({ minimum: 1 }),
     }),
@@ -100,6 +103,19 @@ export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
     requirePermission("operations:read"),
     security.require("cookieSession"),
   ] as const;
+  const Incident = api.schema(
+    "IncidentRecord",
+    schema.object({
+      id: schema.string(),
+      title: schema.string(),
+      status: schema.enum(["investigating", "acknowledged", "resolved"]),
+      severity: schema.enum(["low", "medium", "high"]),
+      service: schema.string(),
+      version: schema.integer(),
+      createdAt: schema.string(),
+      updatedAt: schema.string(),
+    }),
+  );
 
   api
     .get("/health", (ctx) => ctx.ok({ ok: true, requestId: ctx.state.requestId }))
@@ -109,6 +125,10 @@ export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
     .ok(schema.object({ ok: schema.boolean(), requestId: schema.optional(schema.string()) }));
   api
     .get("/settings", async (ctx, deps) => {
+      if (ctx.auth.principal) {
+        const mode = await deps.scenarios.before(ctx.auth.principal.id, "settings.read");
+        if (mode === "empty-next") return ctx.notFound("Operator settings were not found");
+      }
       const value = ctx.auth.principal ? await deps.settings.get(ctx.auth.principal.id) : null;
       return value ? ctx.ok(value) : ctx.notFound("Operator settings were not found");
     })
@@ -128,7 +148,42 @@ export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
     .access(requireUser(), security.require("cookieSession"))
     .ok(schema.array(Activity));
   api
-    .get("/operations/summary", async (ctx, deps) => ctx.ok(await deps.operations.summary()))
+    .delete("/account", {
+      input: {
+        body: {
+          schema: schema.object({ confirmation: schema.email() }),
+          mediaTypes: ["application/json"],
+        },
+      },
+      documentation: { body: { required: true } },
+      async handler(ctx, input, deps) {
+        const deleted = await deps.accounts.delete(
+          ctx.auth.principal?.id ?? "",
+          input.body.confirmation,
+        );
+        if (!deleted) return ctx.unprocessableEntity("Type the account email exactly.");
+        return ctx.clearCookie(ctx.noContent(), "destroyer-session", {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+        });
+      },
+    })
+    .operationId("deleteAccount")
+    .summary("Delete the authenticated account")
+    .tags("Account")
+    .access(requireUser(), security.require("cookieSession"))
+    .noContent()
+    .unprocessableEntity();
+  api
+    .get("/operations/summary", async (ctx, deps) => {
+      const mode = await deps.scenarios.before(ctx.auth.principal?.id ?? "", "operations.summary");
+      return ctx.ok(
+        mode === "empty-next"
+          ? { healthyServices: 0, degradedServices: 0, openIncidents: 0, activeOperators: 0 }
+          : await deps.operations.summary(),
+      );
+    })
     .operationId("getOperationsSummary")
     .summary("Get the operational summary")
     .tags("Operations")
@@ -147,6 +202,8 @@ export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
       documentation: { query: { cursor: {}, limit: {}, route: {} } },
       async handler(ctx, input, deps) {
         try {
+          const mode = await deps.scenarios.before(ctx.auth.principal?.id ?? "", "operations.logs");
+          if (mode === "empty-next") return ctx.ok({ entries: [], nextCursor: null, sequence: 0 });
           return ctx.ok(
             await deps.operations.logs({
               cursor: input.query.cursor,
@@ -168,13 +225,180 @@ export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
     .badRequest()
     .forbidden();
   api
-    .get("/operations/metrics", async (ctx, deps) => ctx.ok(await deps.operations.metrics()))
+    .get("/operations/metrics", async (ctx, deps) => {
+      const mode = await deps.scenarios.before(ctx.auth.principal?.id ?? "", "operations.metrics");
+      return ctx.ok(
+        mode === "empty-next"
+          ? {
+              requests: 0,
+              p95LatencyMs: 0,
+              errorRate: 0,
+              latencyBands: [],
+              routeWorkload: [],
+              serviceMix: [],
+              reliability: [],
+            }
+          : await deps.operations.metrics(),
+      );
+    })
     .operationId("getOperationsMetrics")
     .summary("Get chart-ready operational metrics")
     .tags("Operations")
     .access(...protectedRead)
     .ok(Metrics)
     .forbidden();
+  api
+    .get("/operations/incidents", async (ctx, deps) => {
+      const mode = await deps.scenarios.before(ctx.auth.principal?.id ?? "", "incidents.read");
+      return ctx.ok(mode === "empty-next" ? [] : await deps.operations.incidents());
+    })
+    .operationId("listIncidents")
+    .summary("List operational incidents")
+    .tags("Operations")
+    .access(...protectedRead)
+    .ok(schema.array(Incident))
+    .forbidden();
+  api
+    .post("/operations/incidents/{id}", {
+      input: {
+        params: schema.object({ id: schema.string() }),
+        body: {
+          schema: schema.object({
+            status: schema.enum(["acknowledged", "resolved"]),
+            version: schema.integer({ minimum: 1 }),
+          }),
+          mediaTypes: ["application/json"],
+        },
+      },
+      documentation: { params: { id: {} }, body: { required: true } },
+      async handler(ctx, input, deps) {
+        await deps.scenarios.before(ctx.auth.principal?.id ?? "", "incidents.mutate");
+        const result = await deps.operations.updateIncident(
+          input.params.id,
+          input.body.status,
+          input.body.version,
+        );
+        return result.kind === "conflict"
+          ? ctx.conflict("Incident changed in another session.")
+          : ctx.ok(result.value);
+      },
+    })
+    .operationId("updateIncident")
+    .summary("Acknowledge or resolve an incident")
+    .tags("Operations")
+    .access(requirePermission("operations:write"), security.require("cookieSession"))
+    .ok(Incident)
+    .conflict()
+    .forbidden();
+
+  if (process.env.NODE_ENV === "test") {
+    const operations = schema.enum([
+      "settings.read",
+      "settings.update",
+      "settings.reset-invite",
+      "operations.summary",
+      "operations.logs",
+      "operations.metrics",
+      "incidents.read",
+      "incidents.mutate",
+    ]);
+    api
+      .post("/__test/control/arm", {
+        input: {
+          body: {
+            schema: schema.object({
+              operation: operations,
+              mode: schema.enum(["fail-next", "hold-next", "empty-next"]),
+            }),
+            mediaTypes: ["application/json"],
+          },
+        },
+        documentation: { body: { required: true } },
+        handler(ctx, input, deps) {
+          deps.scenarios.arm(
+            ctx.auth.principal?.id ?? "",
+            input.body.operation as ScenarioOperation,
+            input.body.mode as ScenarioMode,
+          );
+          return ctx.ok({ armed: true });
+        },
+      })
+      .access(requireUser(), security.require("cookieSession"))
+      .ok(schema.object({ armed: schema.boolean() }));
+    api
+      .get("/__test/control/state", (ctx, deps) =>
+        ctx.ok({ controls: deps.scenarios.state(ctx.auth.principal?.id ?? "") }),
+      )
+      .access(requireUser(), security.require("cookieSession"))
+      .ok(
+        schema.object({
+          controls: schema.array(
+            schema.object({
+              operation: schema.string(),
+              mode: schema.string(),
+              blocked: schema.boolean(),
+            }),
+          ),
+        }),
+      );
+    api
+      .post("/__test/control/release", {
+        input: {
+          body: {
+            schema: schema.object({ operation: operations }),
+            mediaTypes: ["application/json"],
+          },
+        },
+        documentation: { body: { required: true } },
+        handler(ctx, input, deps) {
+          return ctx.ok({
+            released: deps.scenarios.release(
+              ctx.auth.principal?.id ?? "",
+              input.body.operation as ScenarioOperation,
+            ),
+          });
+        },
+      })
+      .access(requireUser(), security.require("cookieSession"))
+      .ok(schema.object({ released: schema.boolean() }));
+    api
+      .post("/__test/control/reset", (ctx, deps) => {
+        deps.scenarios.reset(ctx.auth.principal?.id ?? "");
+        return ctx.ok({ reset: true });
+      })
+      .access(requireUser(), security.require("cookieSession"))
+      .ok(schema.object({ reset: schema.boolean() }));
+    api
+      .post("/__test/logs/insert", {
+        input: {
+          body: {
+            schema: schema.object({
+              id: schema.string(),
+              message: schema.string(),
+              route: schema.string(),
+              requestId: schema.string(),
+            }),
+            mediaTypes: ["application/json"],
+          },
+        },
+        documentation: { body: { required: true } },
+        async handler(ctx, input, deps) {
+          return ctx.ok(await deps.operations.insertLogFixture(input.body));
+        },
+      })
+      .access(requireUser(), security.require("cookieSession"))
+      .ok(LogEntry);
+    api
+      .post("/__test/session/expire", (ctx) =>
+        ctx.clearCookie(ctx.noContent(), "destroyer-session", {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+        }),
+      )
+      .access(requireUser(), security.require("cookieSession"))
+      .noContent();
+  }
   api
     .get(
       "/invoices/sample",

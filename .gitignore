@@ -7,3 +7,4 @@ dist-types/
 coverage/
 .data/
 test-results/
+artifacts/

@@ -1,7 +1,7 @@
 import { state } from "@askrjs/askr";
 import { action, ActionForm } from "@askrjs/askr/actions";
 import { currentAuth } from "@askrjs/askr/router";
-import { Building2Icon, Link2OffIcon, Trash2Icon } from "@askrjs/lucide";
+import { Building2Icon, Link2OffIcon, MoreHorizontalIcon, Trash2Icon } from "@askrjs/lucide";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +11,6 @@ import {
   AlertDialogOverlay,
   AlertDialogPortal,
   AlertDialogTitle,
-  AlertDialogTrigger,
   Block,
   Button,
   Card,
@@ -20,6 +19,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Field,
   Grid,
   Input,
@@ -36,11 +39,15 @@ import { operatorSettingsData, resetInviteAction, updateWorkspaceAction } from "
 
 export function WorkspaceSettings() {
   const settings = operatorSettingsData(currentAuth().principal?.id ?? "anonymous");
-  const save = action<{
-    defaultRole: "viewer" | "member";
-    approvalPolicy: "automatic" | "manual";
-    version: string;
-  }>(updateWorkspaceAction);
+  const save = action<
+    {
+      defaultRole: "viewer" | "member";
+      approvalPolicy: "automatic" | "manual";
+      approverGroup: string;
+      version: string;
+    },
+    { kind: "updated" } | { kind: "conflict" }
+  >(updateWorkspaceAction);
   const reset = action<{ version: string }>(resetInviteAction);
   const [defaultRole, setDefaultRole] = state<"viewer" | "member">(
     settings.data?.defaultRole ?? "viewer",
@@ -48,7 +55,9 @@ export function WorkspaceSettings() {
   const [approvalPolicy, setApprovalPolicy] = state<"automatic" | "manual">(
     settings.data?.approvalPolicy ?? "manual",
   );
+  const approverGroup = state(settings.data?.approverGroup ?? "Operations leads");
   const mutationError = state("");
+  const inviteDialogOpen = state(false);
   return (
     <Block gap="lg">
       <Card variant="raised">
@@ -69,7 +78,12 @@ export function WorkspaceSettings() {
                 .submit({
                   defaultRole: defaultRole(),
                   approvalPolicy: approvalPolicy(),
+                  approverGroup: approverGroup(),
                   version: String(settings.data?.version ?? 1),
+                })
+                .then((result) => {
+                  if (result.kind === "conflict")
+                    mutationError.set("Settings changed in another session; reload and retry.");
                 })
                 .catch((error: unknown) =>
                   mutationError.set(
@@ -120,6 +134,20 @@ export function WorkspaceSettings() {
                 </Select>
               </Field>
             </Grid>
+            {approvalPolicy() === "manual" ? (
+              <Field>
+                <Label for="settings-approver-group">Approver group</Label>
+                <Input
+                  id="settings-approver-group"
+                  name="approverGroup"
+                  value={approverGroup()}
+                  onInput={(event: Event) =>
+                    approverGroup.set((event.currentTarget as HTMLInputElement).value)
+                  }
+                  required
+                />
+              </Field>
+            ) : null}
             {mutationError() ? (
               <Text tone="danger" role="alert">
                 {mutationError()}
@@ -149,13 +177,21 @@ export function WorkspaceSettings() {
                 readonly
               />
             </Field>
-            <AlertDialog>
-              <Button asChild variant="destructive">
-                <AlertDialogTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger aria-label="Open invite actions" variant="ghost" size="icon">
+                <MoreHorizontalIcon size={18} aria-hidden="true" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem variant="destructive" onSelect={() => inviteDialogOpen.set(true)}>
                   <Trash2Icon size={16} aria-hidden="true" />
-                  Reset links
-                </AlertDialogTrigger>
-              </Button>
+                  Reset active link
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialog
+              open={inviteDialogOpen()}
+              onOpenChange={(open) => inviteDialogOpen.set(open)}
+            >
               <AlertDialogPortal>
                 <AlertDialogOverlay />
                 <AlertDialogContent>
@@ -180,7 +216,7 @@ export function WorkspaceSettings() {
                             );
                         }}
                       >
-                        Reset links
+                        Reset active link
                       </AlertDialogAction>
                     </Button>
                   </Block>

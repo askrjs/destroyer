@@ -43,10 +43,12 @@ export interface OperatorSettings {
   readonly sessionTimeoutMinutes: number;
   readonly density: "comfortable" | "compact";
   readonly region: "us-east" | "us-west" | "eu-west";
+  readonly timezone: "America/New_York" | "America/Los_Angeles" | "Europe/Dublin";
   readonly theme: "system" | "light" | "dark";
   readonly inAppNotifications: boolean;
   readonly defaultRole: "viewer" | "member";
   readonly approvalPolicy: "automatic" | "manual";
+  readonly approverGroup: string;
   readonly inviteLink: string;
   readonly version: number;
 }
@@ -64,10 +66,23 @@ export interface SettingsUpdate {
   readonly sessionTimeoutMinutes?: number;
   readonly density?: OperatorSettings["density"];
   readonly region?: OperatorSettings["region"];
+  readonly timezone?: OperatorSettings["timezone"];
   readonly theme?: OperatorSettings["theme"];
   readonly inAppNotifications?: boolean;
   readonly defaultRole?: OperatorSettings["defaultRole"];
   readonly approvalPolicy?: OperatorSettings["approvalPolicy"];
+  readonly approverGroup?: string;
+}
+
+export interface IncidentRecord {
+  readonly id: string;
+  readonly title: string;
+  readonly status: "investigating" | "acknowledged" | "resolved";
+  readonly severity: "low" | "medium" | "high";
+  readonly service: string;
+  readonly version: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
 }
 
 export type VersionedResult<T> =
@@ -79,6 +94,7 @@ export interface AppDependencies {
   readonly accounts: {
     register(email: string, password: string): Promise<Principal>;
     authenticate(email: string, password: string): Promise<Principal | null>;
+    delete(principalId: string, confirmation: string): Promise<boolean>;
   };
   readonly settings: {
     get(principalId: string): Promise<OperatorSettings | null>;
@@ -96,8 +112,21 @@ export interface AppDependencies {
   readonly operations: {
     summary(): Promise<OperationsSummary>;
     logs(input: { cursor?: string; limit: number; route?: string }): Promise<OperationsLogPage>;
+    insertLogFixture(input: {
+      id: string;
+      message: string;
+      route: string;
+      requestId: string;
+    }): Promise<OperationsLogEntry>;
     metrics(): Promise<OperationsMetrics>;
+    incidents(): Promise<readonly IncidentRecord[]>;
+    updateIncident(
+      id: string,
+      status: "acknowledged" | "resolved",
+      expectedVersion: number,
+    ): Promise<VersionedResult<IncidentRecord>>;
   };
+  readonly scenarios: import("./scenario-controller").ScenarioController;
   readonly contacts: {
     create(input: {
       email: string;

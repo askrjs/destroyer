@@ -31,8 +31,9 @@ test("should complete persisted product workflows given an authenticated operato
   await expect(page.getByLabel("Approval policy")).toHaveText("Automatic approval");
 
   const invite = await page.getByLabel("Active invite link").inputValue();
-  await page.getByRole("button", { name: "Reset links" }).click();
-  await page.locator("button").filter({ hasText: "Reset links" }).last().click();
+  await page.getByRole("button", { name: "Open invite actions" }).click();
+  await page.getByRole("menuitem", { name: "Reset active link" }).click();
+  await page.getByRole("button", { name: "Reset active link" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByLabel("Active invite link")).not.toHaveValue(invite);
 
@@ -89,5 +90,56 @@ test("should poll live operations without runtime errors given an active logs ro
   await expect(resume).toBeVisible();
   await resume.click();
   await expect.poll(() => logResponses, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
+  expect(errors).toEqual([]);
+});
+
+test("S06 @finding ASKR-DESTROYER-002 should keep extreme log details operable at a 320px mobile viewport", async ({
+  page,
+}) => {
+  test.info().annotations.push({
+    type: "finding",
+    description:
+      "Input: a deterministic multiline log with long service, route, and request identifiers at 320x568. Expected: the virtual row and detail popover remain within the viewport. Observed: Block flex ancestors retain min-inline-size:auto and the virtual row reaches 2312px scroll width, producing document overflow. Owning package: @askrjs/themes Block layout, tracked by askrjs/askr-themes#133. Artifacts: Playwright HTML report, trace, and error-context snapshot.",
+  });
+  await page.setViewportSize({ width: 320, height: 568 });
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+  await createOperator(page, "mobile.logs@example.test");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    ),
+  ).toBe(false);
+
+  await page.getByRole("button", { name: "View details for evt-10000" }).click();
+  const details = page.getByRole("dialog", { name: "Log event details" });
+  await expect(details).toBeVisible();
+  await expect(details).toContainText("webhook-delivery-gateway-us-east-1");
+  await expect(details).toContainText("req_01JHPA5TG00000000000000000_delivery_attempt_0000042");
+  await expect(details).toContainText("retry-pending");
+
+  const geometry = await details.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+      viewportWidth: innerWidth,
+      viewportHeight: innerHeight,
+      documentOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  expect(geometry.documentOverflow).toBe(false);
+  expect(geometry.left).toBeGreaterThanOrEqual(0);
+  expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth);
+  expect(geometry.top).toBeGreaterThanOrEqual(0);
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.viewportHeight);
+  await page.keyboard.press("Escape");
+  await expect(details).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "View details for evt-10000" })).toBeFocused();
   expect(errors).toEqual([]);
 });

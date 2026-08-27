@@ -60,9 +60,14 @@ test("should keep five workspace journeys responsive without forced collection",
 });
 
 test.describe("workspace route heap retention", () => {
-  test("should return workspace route generations to a stable heap plateau", async ({
+  test("@finding ASKR-DESTROYER-001 should return workspace route generations to a stable heap plateau", async ({
     page,
   }, testInfo) => {
+    test.info().annotations.push({
+      type: "finding",
+      description:
+        "Input: repeated Logs/Metrics/Settings/Workspace/Docs transitions. Expected: the active Workspace heading has visible geometry. Observed: the Workspace subtree remains in the accessibility snapshot but its heading has zero horizontal geometry. Owning package: @askrjs/themes Page composition, tracked by askrjs/askr-themes#132. Artifacts: Playwright HTML report, trace, and error-context snapshot.",
+    });
     test.setTimeout(90_000);
     const measuredCycles = Number(process.env.DESTROYER_JOURNEY_CYCLES ?? 10);
     const warmupCycles = 2;
@@ -163,7 +168,8 @@ test.describe("workspace route heap retention", () => {
       );
       await expect(page.getByRole("heading", { name: "Workspace", exact: true })).toBeVisible();
       stage = `cycle ${cycle + 1} workspace dialog`;
-      await page.getByRole("button", { name: "Reset links" }).click();
+      await page.getByRole("button", { name: "Open invite actions" }).click();
+      await page.getByRole("menuitem", { name: "Reset active link" }).click();
       await expect(page.getByRole("dialog")).toBeVisible();
       await page.getByRole("button", { name: "Cancel" }).click();
       await expect(page.getByRole("dialog")).toHaveCount(0);

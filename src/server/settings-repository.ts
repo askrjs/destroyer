@@ -44,11 +44,17 @@ function settingsFromRow(
       preferences.region === "us-west" || preferences.region === "eu-west"
         ? preferences.region
         : "us-east",
+    timezone:
+      preferences.timezone === "America/Los_Angeles" || preferences.timezone === "Europe/Dublin"
+        ? preferences.timezone
+        : "America/New_York",
     theme:
       preferences.theme === "light" || preferences.theme === "dark" ? preferences.theme : "system",
     inAppNotifications: notifications.inApp !== false,
     defaultRole: workspace.defaultRole === "member" ? "member" : "viewer",
     approvalPolicy: workspace.approvalPolicy === "automatic" ? "automatic" : "manual",
+    approverGroup:
+      typeof workspace.approverGroup === "string" ? workspace.approverGroup : "Operations leads",
     inviteLink: `/invite/${ensureInvite(database, principalId, now)}`,
     version: row.version,
   };
@@ -85,11 +91,17 @@ export function createSettingsRepository(
           .run(
             JSON.stringify({ displayName: next.displayName, visibility: next.profileVisibility }),
             JSON.stringify({ sessionTimeout: next.sessionTimeoutMinutes }),
-            JSON.stringify({ density: next.density, region: next.region, theme: next.theme }),
+            JSON.stringify({
+              density: next.density,
+              region: next.region,
+              timezone: next.timezone,
+              theme: next.theme,
+            }),
             JSON.stringify({ inApp: next.inAppNotifications }),
             JSON.stringify({
               defaultRole: next.defaultRole,
               approvalPolicy: next.approvalPolicy,
+              approverGroup: next.approverGroup,
             }),
             principalId,
             expectedVersion,

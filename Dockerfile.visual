@@ -1,0 +1,21 @@
+FROM node:24-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+
+ENV CI=1 \
+    TZ=UTC \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    DESTROYER_CANONICAL_VISUAL=1
+
+WORKDIR /workspace
+COPY package.json package-lock.json ./
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 make g++ locales \
+    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen \
+    && npm install --global npm@12.0.1 \
+    && npm ci \
+    && npx playwright install --with-deps chromium \
+    && rm -rf /var/lib/apt/lists/*
+COPY . .
+RUN npm run build
+CMD ["npm", "run", "test:visual"]
