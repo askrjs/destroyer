@@ -1,4 +1,4 @@
-import { derive, state } from "@askrjs/askr";
+import { state } from "@askrjs/askr";
 import { createQuery } from "@askrjs/askr/data";
 import { documentVisible, routeActive, timer } from "@askrjs/askr/resources";
 import { Link, currentAuth, currentRoute, updateRouteQuery } from "@askrjs/askr/router";
@@ -96,9 +96,8 @@ export function LogsPage() {
   const historyPending = state(false);
   const historyError = state("");
   const currentEntries = () => [...(liveLogs.data?.entries ?? []), ...olderEntries()];
-  const filteredLogEntries = derive(() =>
-    currentEntries().filter((entry) => matchesLogFilter(entry, tableFilter())),
-  );
+  const filteredLogEntries = () =>
+    currentEntries().filter((entry) => matchesLogFilter(entry, tableFilter()));
 
   timer(
     1600,
@@ -117,6 +116,13 @@ export function LogsPage() {
   const liveSnapshot = frozenLiveSnapshot() ?? activeLiveSnapshot;
   const currentTableFilter = tableFilter();
   const currentFilteredLogEntries = filteredLogEntries();
+  const selectedLogRowKey = state<string | null>(currentFilteredLogEntries[0]?.id ?? null);
+  if (
+    selectedLogRowKey() !== null &&
+    !currentFilteredLogEntries.some((entry) => entry.id === selectedLogRowKey())
+  ) {
+    selectedLogRowKey.set(currentFilteredLogEntries[0]?.id ?? null);
+  }
   const pauseLiveMode = (event: Event) => {
     const viewport = event.currentTarget as HTMLElement | null;
     const hasScrolled = Boolean(viewport && (viewport.scrollTop > 0 || viewport.scrollLeft > 0));
@@ -147,8 +153,8 @@ export function LogsPage() {
       return;
     }
 
-    tableFilter.set(nextFilter);
     syncLogSearchQuery(nextFilter);
+    tableFilter.set(nextFilter);
   };
   const clearTableFilter = () => {
     setTableFilter("");
@@ -329,7 +335,8 @@ export function LogsPage() {
                   overscan={4}
                   getKey={(entry) => entry.id}
                   columns={logColumns}
-                  defaultSelectedRowKey={currentFilteredLogEntries[0]?.id}
+                  selectedRowKey={selectedLogRowKey()}
+                  onSelectedRowKeyChange={(key) => selectedLogRowKey.set(key)}
                   onScroll={pauseLiveMode}
                 />
               ) : (

@@ -85,7 +85,7 @@ test("S26 should autosave rapid notification changes to the final intent", async
     .toBe(true);
 });
 
-test("S27 CB04 @finding ASKR-DESTROYER-006 should preserve valid profile input through validation, failure, retry, and optimistic conflict", async ({
+test("S27 CB04 should preserve valid profile input through validation, failure, retry, and optimistic conflict", async ({
   page,
   principalEmail,
 }) => {
@@ -109,6 +109,14 @@ test("S27 CB04 @finding ASKR-DESTROYER-006 should preserve valid profile input t
   await expect(stale.getByLabel("Display name")).toHaveValue("Local recovery name");
   await page.getByLabel("Display name").fill("Committed elsewhere");
   await page.getByRole("button", { name: "Save profile" }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const response = await fetch("/api/settings");
+        return ((await response.json()) as { displayName: string }).displayName;
+      }),
+    )
+    .toBe("Committed elsewhere");
   await stale.getByRole("button", { name: "Save profile" }).click();
   await expect(stale.getByRole("alert")).toContainText("another session");
   await expect(stale.getByLabel("Display name")).toHaveValue("Local recovery name");

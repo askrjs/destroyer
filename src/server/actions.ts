@@ -26,16 +26,18 @@ async function update(
 export const settingsActionHandlers = [
   handleAction<
     AppDependencies,
-    { displayName: string; profileVisibility: "workspace" | "private"; version: string }
+    { displayName: string; profileVisibility: "workspace" | "private"; version: string },
+    | { kind: "updated"; value: Awaited<ReturnType<AppDependencies["settings"]["get"]>> }
+    | { kind: "conflict" }
   >(updateProfileAction, async (context, input, dependencies) => {
     if (!context.auth.principal) return { redirect: "/login" };
-    const value = await update(
-      dependencies,
+    await dependencies.scenarios.before(context.auth.principal.id, "settings.update");
+    const result = await dependencies.settings.update(
       context.auth.principal.id,
       { displayName: input.displayName.trim(), profileVisibility: input.profileVisibility },
-      input.version,
+      Number(input.version),
     );
-    return { result: value };
+    return { result };
   }),
   handleAction<AppDependencies, { sessionTimeoutMinutes: string; version: string }>(
     updateSecurityAction,

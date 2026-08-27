@@ -127,7 +127,7 @@ export function PageLayout({ children }: { children?: unknown }) {
 
   return (
     <ThemeScope defaultTheme="light" storageKey="destroyer-theme">
-      <Block minHeight="screen">
+      <Block minHeight="screen" direction="column">
         {!isAuthRoute && !isDocsRoute && (
           <Header sticky>
             <Container paddingY="sm">
@@ -138,17 +138,25 @@ export function PageLayout({ children }: { children?: unknown }) {
                       <BrandMark aria-hidden="true">
                         <BoxIcon size={16} />
                       </BrandMark>
-                      <BrandLabel>Destroyer</BrandLabel>
+                      <Block hide={{ base: true, sm: false }}>
+                        <BrandLabel>Destroyer</BrandLabel>
+                      </Block>
                     </Link>
                   </Brand>
                 </NavBrand>
                 <NavGroup>
-                  <NavLink href="/docs">Docs</NavLink>
+                  <Block hide={{ base: true, sm: false }}>
+                    <NavLink href="/docs">Docs</NavLink>
+                  </Block>
                   <NavLink href="/logs">Logs</NavLink>
                   {currentAuth().authenticated ? (
-                    <NavLink href="/incidents">Incidents</NavLink>
+                    <Block hide={{ base: true, sm: false }}>
+                      <NavLink href="/incidents">Incidents</NavLink>
+                    </Block>
                   ) : null}
-                  <NavLink href="/metrics">Metrics</NavLink>
+                  <Block hide={{ base: true, sm: false }}>
+                    <NavLink href="/metrics">Metrics</NavLink>
+                  </Block>
                   {currentAuth().authenticated ? (
                     <NavLink href="/settings">Settings</NavLink>
                   ) : null}

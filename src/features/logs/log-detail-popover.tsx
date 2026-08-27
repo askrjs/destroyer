@@ -40,7 +40,7 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
             </Text>
             <Separator decorative />
             <Block gap="xs">
-              <Block direction="row" align="center" justify="between" gap="md">
+              <Block rowFrom="sm" align="center" justify="between" gap="md">
                 <Text tone="subtle" size="sm">
                   Service
                 </Text>
@@ -48,7 +48,7 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
                   {entry.service}
                 </Text>
               </Block>
-              <Block direction="row" align="center" justify="between" gap="md">
+              <Block rowFrom="sm" align="center" justify="between" gap="md">
                 <Text tone="subtle" size="sm">
                   Latency
                 </Text>
@@ -56,7 +56,7 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
                   {entry.latency}ms
                 </Text>
               </Block>
-              <Block direction="row" align="center" justify="between" gap="md">
+              <Block rowFrom="sm" align="center" justify="between" gap="md">
                 <Text tone="subtle" size="sm">
                   Route
                 </Text>
@@ -64,7 +64,7 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
                   {entry.route}
                 </Text>
               </Block>
-              <Block direction="row" align="center" justify="between" gap="md">
+              <Block rowFrom="sm" align="center" justify="between" gap="md">
                 <Text tone="subtle" size="sm">
                   Request
                 </Text>

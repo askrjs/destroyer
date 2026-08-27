@@ -96,6 +96,7 @@ test("should poll live operations without runtime errors given an active logs ro
 
 test("S06 @finding ASKR-DESTROYER-002 should keep extreme log details operable at a 320px mobile viewport", async ({
   page,
+  principalEmail,
 }) => {
   test.info().annotations.push({
     type: "finding",
@@ -108,7 +109,7 @@ test("S06 @finding ASKR-DESTROYER-002 should keep extreme log details operable a
     if (message.type() === "error") errors.push(message.text());
   });
   page.on("pageerror", (error) => errors.push(error.message));
-  await createOperator(page, "mobile.logs@example.test");
+  await createOperator(page, principalEmail);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

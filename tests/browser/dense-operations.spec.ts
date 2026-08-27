@@ -70,7 +70,7 @@ test("S20 should retry cursor-backed log history after a pre-read failure", asyn
   await expect(page.getByRole("alert")).toHaveCount(0);
 });
 
-test("S21 @finding ASKR-DESTROYER-007 should retain virtual-table selection while a deterministic live event is inserted", async ({
+test("S21 should retain virtual-table selection while a deterministic live event is inserted", async ({
   page,
   principalEmail,
 }) => {
@@ -97,16 +97,16 @@ test("S21 @finding ASKR-DESTROYER-007 should retain virtual-table selection whil
   if (await pause.isVisible()) await pause.click();
   await page.getByRole("button", { name: "Resume live stream" }).click();
   await expect(page.getByText("Deterministic live selection probe").first()).toBeVisible();
-  const restoredSelection = page
-    .getByRole("button", { name: selectedAction ?? "" })
-    .locator('xpath=ancestor::*[@role="row"]');
+  const restoredSelection = page.getByRole("row", {
+    name: new RegExp(selectedAction?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") ?? ""),
+  });
   await expect(restoredSelection).toHaveAttribute("aria-selected", "true");
   await expect(
     page.getByRole("grid", { name: "Log event details" }).locator('[aria-selected="true"]'),
   ).toHaveCount(1);
 });
 
-test("S22 should preserve zero, one, and complete-history filter cardinalities and selection", async ({
+test("S22 @finding ASKR-DESTROYER-012 should preserve zero, one, and complete-history filter cardinalities and selection", async ({
   page,
   principalEmail,
 }) => {

@@ -56,6 +56,33 @@ test("CC05 should load a lazy production route and preserve hydrated navigation"
   expect([...scripts].some((path) => /docs-/i.test(path))).toBe(true);
 });
 
+test("CC05 should preserve Block layout through production SSR and hydration", async ({
+  page,
+}) => {
+  test.info().annotations.push({
+    type: "expected-observed",
+    description:
+      "Expected the SSR document to contain generated Block rules and the hydrated Page to remain a column; observed ak-style classes without a style registry and browser-default row layout.",
+  });
+  await page.goto("/");
+  const layout = await page
+    .locator('main > [data-slot="container"] > [data-slot="block"]')
+    .evaluate((block) => {
+      const generatedClass = [...block.classList].find((name) => name.startsWith("ak-style-"));
+      const registry = document.querySelector("style[data-askr-style-registry]");
+      return {
+        direction: getComputedStyle(block).flexDirection,
+        generatedClass: Boolean(generatedClass),
+        hasGeneratedRule: Boolean(
+          generatedClass && registry?.textContent?.includes(`.${generatedClass}{`),
+        ),
+      };
+    });
+  expect(layout.generatedClass).toBe(true);
+  expect(layout.hasGeneratedRule).toBe(true);
+  expect(layout.direction).toBe("column");
+});
+
 test.fixme("CC04 CSP nonce propagation is excluded from the current non-security scope", async () => {
   // Deliberately not investigated or filed while security work is out of scope.
 });

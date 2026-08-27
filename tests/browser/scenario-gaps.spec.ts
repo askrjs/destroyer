@@ -25,15 +25,10 @@ test.fixme(
   },
 );
 
-test("S23 @finding ASKR-DESTROYER-010 should keep independent Metrics sections alive through held, failed, and empty reads", async ({
+test("S23 should keep independent Metrics sections alive through held, failed, and empty reads", async ({
   page,
   principalEmail,
 }, testInfo) => {
-  testInfo.annotations.push({
-    type: "finding",
-    description:
-      "Input: hold summary refresh, fail logs refresh, then return an empty successful metrics refresh. Expected: each independent query publishes its own result without collapsing siblings. Observed: isolation works, and the metrics API returns the armed empty 200, but the mounted query retains its prior value. Owning package: @askrjs/askr@0.2.3, tracked by askrjs/askr#364.",
-  });
   await createOperator(page, principalEmail);
   await page.goto("/metrics");
   const summary = page

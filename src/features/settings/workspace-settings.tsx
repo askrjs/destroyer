@@ -58,6 +58,7 @@ export function WorkspaceSettings() {
   const approverGroup = state(settings.data?.approverGroup ?? "Operations leads");
   const mutationError = state("");
   const inviteDialogOpen = state(false);
+  const inviteActionsTrigger = state({ current: null as HTMLElement | null })();
   return (
     <Block gap="lg">
       <Card variant="raised">
@@ -178,7 +179,12 @@ export function WorkspaceSettings() {
               />
             </Field>
             <DropdownMenu>
-              <DropdownMenuTrigger aria-label="Open invite actions" variant="ghost" size="icon">
+              <DropdownMenuTrigger
+                ref={(node) => (inviteActionsTrigger.current = node as HTMLElement | null)}
+                aria-label="Open invite actions"
+                variant="ghost"
+                size="icon"
+              >
                 <MoreHorizontalIcon size={18} aria-hidden="true" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
@@ -194,7 +200,7 @@ export function WorkspaceSettings() {
             >
               <AlertDialogPortal>
                 <AlertDialogOverlay />
-                <AlertDialogContent>
+                <AlertDialogContent restoreFocus={() => inviteActionsTrigger.current}>
                   <AlertDialogTitle>Reset workspace invite links?</AlertDialogTitle>
                   <AlertDialogDescription>
                     Existing tokens will be revoked and one replacement token will be persisted.

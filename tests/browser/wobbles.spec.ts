@@ -47,7 +47,7 @@ async function testControl(page: Page, operation: string, mode: string): Promise
   expect(status).toBe(200);
 }
 
-test("S10 @finding ASKR-DESTROYER-005 should restore Logs filter focus and state through Back and Forward", async ({
+test("S10 should restore Logs filter focus and state through Back and Forward", async ({
   page,
 }, testInfo) => {
   // Input: focus a route-owned Logs filter, navigate away, then return with browser Back.
@@ -103,15 +103,10 @@ test("S16 should keep independent route and mounted failures recoverable", async
   await expect(page.getByText("Persisted operational events.")).toBeVisible();
 });
 
-test("S15 @finding ASKR-DESTROYER-009 should tolerate an immediate interaction before hydration completes", async ({
+test("S15 should tolerate an immediate interaction before hydration completes", async ({
   page,
   context,
 }, testInfo) => {
-  testInfo.annotations.push({
-    type: "finding",
-    description:
-      "Input: repeatedly activate a server-rendered link before hydration completes, abandoning in-flight static assets. Expected: @askrjs/node releases disconnected streams and remains live. Observed: static-asset pipeline setup can throw ERR_STREAM_UNABLE_TO_PIPE and terminate the server. Owning package: @askrjs/node@0.2.1, tracked by askrjs/askr-node#38.",
-  });
   const interactionPages = [page];
   for (let index = 1; index < 12; index += 1) interactionPages.push(await context.newPage());
   for (const interactionPage of interactionPages) {
@@ -179,14 +174,9 @@ test("S31 should preserve dirty Workspace input offline and commit after reconne
     .toBe("member");
 });
 
-test("@finding ASKR-DESTROYER-008 should expose a native article heading on Docs", async ({
+test("should expose a native article heading on Docs", async ({
   page,
 }, testInfo) => {
-  testInfo.annotations.push({
-    type: "finding",
-    description:
-      "Input: render the route-backed Docs article through published @askrjs/themes components. Expected: its article title is a native h1 with strongly typed theme styling. Observed: Text cannot render headings, while TypographyH1 uses weak catalog props, so the natural title remains strong text. Owning package: @askrjs/themes, tracked by askrjs/askr-themes#134.",
-  });
   await page.goto("/docs");
   await expect(page.locator("h1", { hasText: "Askr documentation" })).toBeVisible();
 });

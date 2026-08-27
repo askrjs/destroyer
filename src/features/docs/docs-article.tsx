@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
   Badge,
   Block,
+  Heading,
   Separator,
   Text,
 } from "@askrjs/themes/components";
@@ -31,9 +32,9 @@ export function DocsArticle({ activePath }: { activePath: DocsPath }) {
             {content.eyebrow}
           </Text>
           <Block rowFrom="md" align={{ base: "start", md: "center" }} justify="between" gap="md">
-            <Text as="strong" weight="bold" size="lg">
+            <Heading level={1} size="xl">
               {content.title}
-            </Text>
+            </Heading>
             <DocsArticleTools activePath={activePath} />
           </Block>
           <Text tone="muted">{content.description}</Text>
@@ -45,9 +46,9 @@ export function DocsArticle({ activePath }: { activePath: DocsPath }) {
       <Block gap="2xl">
         {content.sections.map((section) => (
           <Block key={section.title} gap="sm">
-            <Text as="strong" weight="semibold">
+            <Heading level={2} size="md">
               {section.title}
-            </Text>
+            </Heading>
             <Text tone="muted">{section.body}</Text>
           </Block>
         ))}
@@ -56,9 +57,9 @@ export function DocsArticle({ activePath }: { activePath: DocsPath }) {
       <Block gap="md" padding="lg" background="muted" radius="md">
         <Block direction="row" align="center" gap="sm">
           <LayersIcon size={16} aria-hidden="true" />
-          <Text as="strong" weight="semibold">
+          <Heading level={2} size="md">
             Verification notes
-          </Text>
+          </Heading>
         </Block>
         <Accordion defaultValue="route-checks" collapsible>
           <AccordionItem value="route-checks">

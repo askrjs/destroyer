@@ -56,14 +56,9 @@ test("S07 should tear down an open overlay when the authenticated session expire
   expect(errors).toEqual([]);
 });
 
-test("S08 @finding ASKR-DESTROYER-004 should keep a Select portal inside the viewport while crossing breakpoints", async ({
+test("S08 should keep a Select portal inside the viewport while crossing breakpoints", async ({
   page,
 }, testInfo) => {
-  testInfo.annotations.push({
-    type: "finding",
-    description:
-      "Input: open Select at 1280x800, resize to 320x568, then close with Escape. Expected: content remains in viewport and focus returns to the Region trigger. Observed: geometry remains valid but focus becomes inactive. Owning package: @askrjs/ui Select focus restoration across viewport changes, tracked by askrjs/askr-ui#114. Artifacts: Playwright HTML report, trace, and error-context snapshot.",
-  });
   await createOperator(page, `responsive.portal.${testInfo.repeatEachIndex}@example.test`);
   await page.goto("/settings/preferences");
   await page.setViewportSize({ width: 1280, height: 800 });

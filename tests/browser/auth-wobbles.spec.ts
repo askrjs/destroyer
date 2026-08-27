@@ -75,6 +75,19 @@ test("should preserve a protected destination through failed-login recovery", as
   await expect(page).toHaveURL(/\/incidents$/);
 });
 
+test("should redirect an authenticated visitor through the real routed commit path", async ({
+  page,
+  principalEmail,
+}) => {
+  await createOperator(page, principalEmail);
+
+  await page.goto("/login");
+
+  await expect(page).toHaveURL(/\/logs$/);
+  await expect(page.getByRole("heading", { name: "Logs", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in to your workspace" })).toHaveCount(0);
+});
+
 test("should preserve login input offline and retry after reconnect", async ({ page, context }) => {
   const email = "login.offline@example.test";
   await createOperator(page, email);

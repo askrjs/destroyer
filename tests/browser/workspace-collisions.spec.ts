@@ -144,14 +144,9 @@ test("S04 should commit a held Workspace save after route teardown without stale
   expect(errors).toEqual([]);
 });
 
-test("S05 @finding ASKR-DESTROYER-003 should unwind invite actions through Escape, cancel, and confirm with trigger focus", async ({
+test("S05 should unwind invite actions through Escape, cancel, and confirm with trigger focus", async ({
   page,
 }, testInfo) => {
-  testInfo.annotations.push({
-    type: "finding",
-    description:
-      "Input: transition from a DropdownMenu item to a controlled AlertDialog without a persistent dialog trigger. Expected: Escape, cancel, and confirm restore focus to the actions trigger. Observed: the dialog closes but focus becomes inactive, and the public DialogContent contract has no close-auto-focus hook. Owning package: @askrjs/ui dialog focus restoration API, tracked by askrjs/askr-ui#113. Artifacts: Playwright HTML report, trace, and error-context snapshot.",
-  });
   await createOperator(page, `workspace.overlays.${testInfo.repeatEachIndex}@example.test`);
   await page.goto("/settings/workspace");
   const trigger = page.getByRole("button", { name: "Open invite actions" });
