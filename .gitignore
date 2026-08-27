@@ -8,3 +8,4 @@ coverage/
 .data/
 test-results/
 artifacts/
+tests/visual/*-snapshots/*-darwin.png

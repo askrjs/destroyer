@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixture";
 
 async function createOperator(page: Page, email: string): Promise<void> {
   await page.goto("/signup");
@@ -31,15 +32,15 @@ async function testControl(page: Page, operation: string, mode: string): Promise
 
 test("S10 @finding ASKR-DESTROYER-005 should restore Logs filter focus and state through Back and Forward", async ({
   page,
-}) => {
+}, testInfo) => {
   // Input: focus a route-owned Logs filter, navigate away, then return with browser Back.
   // Expected: the restored Logs state returns focus to the filter that owned it.
   // Observed: the URL and value restore, but focus falls back to the document body.
   // Package hypothesis: @askrjs/askr router only preserves focus for nodes that survive navigation;
   // its public router surface has no history focus-restoration contract for remounted route content.
-  // Uncertainty: this is currently classified as a limitation, not a confirmed package defect.
-  // Artifacts: test-results/**/trace.zip and test-results/**/error-context.md.
-  await createOperator(page, "history.focus@example.test");
+  // Confirmed upstream: https://github.com/askrjs/askr/issues/365.
+  // Artifacts: artifacts/findings-results/**/trace.zip and error-context.md.
+  await createOperator(page, `history.focus.${testInfo.repeatEachIndex}@example.test`);
   const filter = page.getByLabel("Filter log events");
   await filter.fill("webhook");
   await expect(page).toHaveURL(/\/logs\?search=webhook$/);
@@ -143,4 +144,16 @@ test("S31 should preserve dirty Workspace input offline and commit after reconne
       }),
     )
     .toBe("member");
+});
+
+test("@finding ASKR-DESTROYER-008 should expose a native article heading on Docs", async ({
+  page,
+}, testInfo) => {
+  testInfo.annotations.push({
+    type: "finding",
+    description:
+      "Input: render the route-backed Docs article through published @askrjs/themes components. Expected: its article title is a native h1 with strongly typed theme styling. Observed: Text cannot render headings, while TypographyH1 uses weak catalog props, so the natural title remains strong text. Owning package: @askrjs/themes, tracked by askrjs/askr-themes#134.",
+  });
+  await page.goto("/docs");
+  await expect(page.locator("h1", { hasText: "Askr documentation" })).toBeVisible();
 });

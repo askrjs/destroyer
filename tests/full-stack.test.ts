@@ -349,6 +349,19 @@ describe("Destroyer full stack", () => {
     expect(((await consumed.json()) as { entries: unknown[] }).entries).toHaveLength(5);
   });
 
+  it("should not register scenario-control routes outside the test environment", async () => {
+    const original = process.env.NODE_ENV;
+    process.env.NODE_ENV = "production";
+    try {
+      const app = testApp(dependencies());
+      expect(
+        (await app.fetch(new Request("http://destroyer.test/api/__test/control/state"))).status,
+      ).toBe(404);
+    } finally {
+      process.env.NODE_ENV = original;
+    }
+  });
+
   it("should expose versioned incident mutations and exact-confirmation account deletion", async () => {
     const app = testApp(dependencies());
     const cookie = await authenticated(app, "delete.me@example.test");

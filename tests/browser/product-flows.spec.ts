@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixture";
 
 async function createOperator(page: Page, email: string): Promise<void> {
   await page.goto("/signup");

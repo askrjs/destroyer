@@ -50,11 +50,23 @@ for (const route of [...routeExpectations, { ...unknownRouteExpectation, authent
           document.documentElement.style.width = "50%";
         });
       await expect(page.getByRole("heading", { name: route.heading }).first()).toBeVisible();
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
-        ),
-      ).toBe(true);
+      const overflow = await page.evaluate(() => ({
+        delta: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        offenders: [...document.querySelectorAll<HTMLElement>("body *")]
+          .filter((element) => {
+            const rect = element.getBoundingClientRect();
+            return rect.right > document.documentElement.clientWidth + 0.5 || rect.left < -0.5;
+          })
+          .slice(0, 12)
+          .map((element) => ({
+            tag: element.tagName.toLowerCase(),
+            slot: element.dataset.slot ?? "",
+            className: element.className,
+            text: element.textContent?.trim().slice(0, 60) ?? "",
+            rect: element.getBoundingClientRect().toJSON(),
+          })),
+      }));
+      expect(overflow).toMatchObject({ delta: 0, offenders: [] });
       if (visualCase.mode === "zoom-200") {
         expect(await page.evaluate(() => getComputedStyle(document.documentElement).zoom)).toBe(
           "2",

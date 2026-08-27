@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixture";
 
 test("should complete self-service authentication given a new operator", async ({ page }) => {
   const errors: string[] = [];

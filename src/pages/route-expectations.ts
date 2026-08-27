@@ -5,7 +5,7 @@ export interface RouteExpectation {
 }
 
 export const routeExpectations: readonly RouteExpectation[] = [
-  { path: "/", authenticated: false, heading: "Design system baseline" },
+  { path: "/", authenticated: false, heading: "Destroyer" },
   { path: "/about", authenticated: false, heading: "About" },
   { path: "/contact", authenticated: false, heading: "Contact" },
   { path: "/docs", authenticated: false, heading: "Askr documentation" },
