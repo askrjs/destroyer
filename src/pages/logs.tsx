@@ -1,4 +1,4 @@
-import { state } from "@askrjs/askr";
+import { derive, state } from "@askrjs/askr";
 import { createQuery } from "@askrjs/askr/data";
 import { documentVisible, routeActive, timer } from "@askrjs/askr/resources";
 import { Link, currentAuth, currentRoute, updateRouteQuery } from "@askrjs/askr/router";
@@ -96,8 +96,9 @@ export function LogsPage() {
   const historyPending = state(false);
   const historyError = state("");
   const currentEntries = () => [...(liveLogs.data?.entries ?? []), ...olderEntries()];
-  const filteredLogEntries = () =>
-    currentEntries().filter((entry) => matchesLogFilter(entry, tableFilter()));
+  const filteredLogEntries = derive(() =>
+    currentEntries().filter((entry) => matchesLogFilter(entry, tableFilter())),
+  );
 
   timer(
     1600,
@@ -114,15 +115,14 @@ export function LogsPage() {
   const liveModePaused = livePaused();
   const activeLiveSnapshot = liveLogs.data ?? { entries: [], nextCursor: null, sequence: 0 };
   const liveSnapshot = frozenLiveSnapshot() ?? activeLiveSnapshot;
-  const currentTableFilter = tableFilter();
-  const currentFilteredLogEntries = filteredLogEntries();
-  const selectedLogRowKey = state<string | null>(currentFilteredLogEntries[0]?.id ?? null);
-  if (
-    selectedLogRowKey() !== null &&
-    !currentFilteredLogEntries.some((entry) => entry.id === selectedLogRowKey())
-  ) {
-    selectedLogRowKey.set(currentFilteredLogEntries[0]?.id ?? null);
-  }
+  const selectedLogRowKey = state<string | null>(filteredLogEntries()[0]?.id ?? null);
+  const effectiveSelectedLogRowKey = derive(() => {
+    const selected = selectedLogRowKey();
+    const rows = filteredLogEntries();
+    return selected !== null && rows.some((entry) => entry.id === selected)
+      ? selected
+      : (rows[0]?.id ?? null);
+  });
   const pauseLiveMode = (event: Event) => {
     const viewport = event.currentTarget as HTMLElement | null;
     const hasScrolled = Boolean(viewport && (viewport.scrollTop > 0 || viewport.scrollLeft > 0));
@@ -153,8 +153,8 @@ export function LogsPage() {
       return;
     }
 
-    syncLogSearchQuery(nextFilter);
     tableFilter.set(nextFilter);
+    syncLogSearchQuery(nextFilter);
   };
   const clearTableFilter = () => {
     setTableFilter("");
@@ -318,24 +318,24 @@ export function LogsPage() {
                       aria-label="Filter log events"
                       debounceMs={0}
                       placeholder="Filter events"
-                      value={currentTableFilter}
+                      value={tableFilter()}
                       onDebouncedInput={setTableFilter}
                     />
                   </InputGroup>
                 }
               />
-              {currentFilteredLogEntries.length > 0 ? (
+              {filteredLogEntries().length > 0 ? (
                 <VirtualTable
                   aria-label="Log event details"
                   viewport="lg"
                   tableWidth="compact"
-                  rows={currentFilteredLogEntries}
+                  rows={filteredLogEntries()}
                   rowHeight={44}
                   headerHeight={40}
                   overscan={4}
                   getKey={(entry) => entry.id}
                   columns={logColumns}
-                  selectedRowKey={selectedLogRowKey()}
+                  selectedRowKey={effectiveSelectedLogRowKey()}
                   onSelectedRowKeyChange={(key) => selectedLogRowKey.set(key)}
                   onScroll={pauseLiveMode}
                 />

@@ -106,7 +106,7 @@ test("S21 should retain virtual-table selection while a deterministic live event
   ).toHaveCount(1);
 });
 
-test("S22 @finding ASKR-DESTROYER-012 should preserve zero, one, and complete-history filter cardinalities and selection", async ({
+test("S22 should preserve zero, one, and complete-history filter cardinalities and selection", async ({
   page,
   principalEmail,
 }) => {
