@@ -22,13 +22,14 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
       </Button>
       <PopoverPortal>
         <PopoverContent
+          class="log-detail-popover"
           aria-label="Log event details"
           side="left"
           align="start"
           sideOffset={8}
           width="md"
         >
-          <Block gap="sm">
+          <Block direction="column" gap="sm">
             <Block direction="row" align="center" justify="between" gap="md">
               <Badge variant={getBadgeVariant(entry.severity)}>{entry.severity}</Badge>
               <Text as="span" tone="muted" size="sm" font="mono" numeric="tabular">
@@ -39,7 +40,7 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
               {entry.message}
             </Text>
             <Separator decorative />
-            <Block gap="xs">
+            <Block direction="column" gap="xs">
               <Block rowFrom="sm" align="center" justify="between" gap="md">
                 <Text tone="subtle" size="sm">
                   Service

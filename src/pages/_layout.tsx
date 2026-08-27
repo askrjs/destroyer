@@ -39,6 +39,7 @@ import {
   Text,
 } from "@askrjs/themes/components";
 import { ThemeScope, ThemeToggle } from "@askrjs/themes/theme";
+import { OverlayHost } from "@askrjs/ui";
 
 function ProfileMenu() {
   const principal = currentAuth().principal;
@@ -127,7 +128,8 @@ export function PageLayout({ children }: { children?: unknown }) {
 
   return (
     <ThemeScope defaultTheme="light" storageKey="destroyer-theme">
-      <Block minHeight="screen" direction="column">
+      <OverlayHost>
+        <Block minHeight="screen" direction="column">
         {!isAuthRoute && !isDocsRoute && (
           <Header sticky>
             <Container paddingY="sm">
@@ -222,7 +224,8 @@ export function PageLayout({ children }: { children?: unknown }) {
             </Container>
           </Footer>
         )}
-      </Block>
+        </Block>
+      </OverlayHost>
     </ThemeScope>
   );
 }
