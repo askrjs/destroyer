@@ -85,8 +85,9 @@ test("S26 should autosave rapid notification changes to the final intent", async
     .toBe(true);
 });
 
-test("S27 @finding ASKR-DESTROYER-006 should preserve valid profile input through validation, failure, and optimistic conflict", async ({
+test("S27 CB04 @finding ASKR-DESTROYER-006 should preserve valid profile input through validation, failure, retry, and optimistic conflict", async ({
   page,
+  principalEmail,
 }) => {
   // Input: submit invalid profile data, correct it, then receive a completed pre-mutation 500.
   // Expected: the second promise rejects, pending clears, valid input survives, and conflict remains testable.
@@ -94,7 +95,7 @@ test("S27 @finding ASKR-DESTROYER-006 should preserve valid profile input throug
   // Package hypothesis: action submission generation ownership is lost across the validation rerender.
   // Uncertainty: low; reproduced three times with the response completion verified in the trace.
   // Artifacts: test-results/recovery-forms-*/trace.zip and error-context.md.
-  await createOperator(page, "profile.recovery@example.test");
+  await createOperator(page, principalEmail);
   const stale = await page.context().newPage();
   await page.goto("/settings");
   await stale.goto("/settings");

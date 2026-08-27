@@ -16,7 +16,7 @@
     "test:production": "vp test run --config vitest.production.config.ts",
     "test:browser": "playwright test --grep-invert @finding",
     "test:scenarios": "playwright test --grep-invert @finding",
-    "test:findings": "playwright test --config playwright.findings.config.ts --grep @finding",
+    "test:findings": "node scripts/run-findings.mjs",
     "test:visual": "playwright test --config playwright.visual.config.ts",
     "test:visual:update": "node scripts/visual-update.mjs",
     "test:visual:canonical": "docker build -f Dockerfile.visual -t destroyer-visual . && docker run --rm destroyer-visual",

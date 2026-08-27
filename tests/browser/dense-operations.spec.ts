@@ -24,8 +24,8 @@ async function post(page: Page, path: string, body: unknown): Promise<number> {
   );
 }
 
-test("S17 should select and bulk acknowledge eligible incidents", async ({ page }) => {
-  await createOperator(page, "incident.bulk@example.test");
+test("S17 should select and bulk acknowledge eligible incidents", async ({ page, principalEmail }) => {
+  await createOperator(page, principalEmail);
   await page.goto("/incidents");
   await page.getByRole("checkbox", { name: "Select Webhook delivery delays" }).click();
   await page.getByRole("checkbox", { name: "Select Search indexing lag" }).click();
@@ -34,8 +34,11 @@ test("S17 should select and bulk acknowledge eligible incidents", async ({ page 
   await expect(page.getByText("Status: resolved")).toBeVisible();
 });
 
-test("S18 should expose timeline detail and reject a stale incident resolution", async ({ page }) => {
-  await createOperator(page, "incident.conflict@example.test");
+test("S18 should expose timeline detail and reject a stale incident resolution", async ({
+  page,
+  principalEmail,
+}) => {
+  await createOperator(page, principalEmail);
   const stale = await page.context().newPage();
   await page.goto("/incidents");
   await stale.goto("/incidents");
@@ -51,10 +54,11 @@ test("S18 should expose timeline detail and reject a stale incident resolution",
   await expect(incidentCard(stale).getByText("Status: acknowledged")).toBeVisible();
 });
 
-test("S20 should retry cursor-backed log history after a pre-read failure", async ({ page }) => {
-  await createOperator(page, "logs.retry@example.test");
-  const pause = page.getByRole("button", { name: "Pause live stream" });
-  if (await pause.isVisible()) await pause.click();
+test("S20 should retry cursor-backed log history after a pre-read failure", async ({
+  page,
+  principalEmail,
+}) => {
+  await createOperator(page, principalEmail);
   await post(page, "/api/__test/control/arm", {
     operation: "operations.logs",
     mode: "fail-next",
@@ -68,6 +72,7 @@ test("S20 should retry cursor-backed log history after a pre-read failure", asyn
 
 test("S21 @finding ASKR-DESTROYER-007 should retain virtual-table selection while a deterministic live event is inserted", async ({
   page,
+  principalEmail,
 }) => {
   // Input: select a stable row, insert a deterministic newer event, then resume the live query.
   // Expected: the 200 response publishes its first entry and the prior keyed selection survives.
@@ -75,7 +80,7 @@ test("S21 @finding ASKR-DESTROYER-007 should retain virtual-table selection whil
   // Package hypothesis: @askrjs/askr QueryCell loses publication/notification across invalidation and refresh generations.
   // Uncertainty: low; reproduced three times and the exact successful response body was inspected.
   // Artifacts: test-results/dense-operations-*/trace.zip and error-context.md.
-  await createOperator(page, "logs.selection@example.test");
+  await createOperator(page, principalEmail);
   const rows = page.getByRole("grid", { name: "Log event details" }).getByRole("row");
   const selected = rows.nth(2);
   await selected.click();
@@ -101,8 +106,11 @@ test("S21 @finding ASKR-DESTROYER-007 should retain virtual-table selection whil
   ).toHaveCount(1);
 });
 
-test("S22 should preserve zero, one, and complete-history filter cardinalities and selection", async ({ page }) => {
-  await createOperator(page, "logs.filter@example.test");
+test("S22 should preserve zero, one, and complete-history filter cardinalities and selection", async ({
+  page,
+  principalEmail,
+}) => {
+  await createOperator(page, principalEmail);
   const pause = page.getByRole("button", { name: "Pause live stream" });
   if (await pause.isVisible()) await pause.click();
   const filter = page.getByLabel("Filter log events");

@@ -1,4 +1,5 @@
 import { createPlot } from "@askrjs/charts";
+import { createQuery } from "@askrjs/askr/data";
 import { Link, currentAuth } from "@askrjs/askr/router";
 import {
   ActivityIcon,
@@ -10,6 +11,7 @@ import {
 } from "@askrjs/lucide";
 import {
   Badge,
+  Block,
   Alert,
   Button,
   ButtonGroup,
@@ -35,15 +37,31 @@ import {
   type RouteWorkloadRow,
   type SubsystemMixRow,
 } from "../features/metrics/metrics-data";
-import { operationsMetricsData } from "../features/metrics/metrics-model";
+import { liveLogQuery } from "../features/logs/live-logs-resource";
+import {
+  operationsMetricsData,
+  operationsSummaryData,
+} from "../features/metrics/metrics-model";
 
 const ResponseDistributionPlot = createPlot<ResponseDistributionRow>();
 const RouteWorkloadPlot = createPlot<RouteWorkloadRow>();
 const SubsystemMixPlot = createPlot<SubsystemMixRow>();
 const ReliabilityPlot = createPlot<ReliabilityRow>();
 
+function OperationsHealthBadge({ principalId }: { principalId: string }) {
+  const summary = operationsSummaryData(principalId);
+  return (
+    <Badge aria-label="Healthy service count" variant="success">
+      {summary.data?.healthyServices ?? 0} healthy
+    </Badge>
+  );
+}
+
 export function MetricsPage() {
-  const metrics = operationsMetricsData(currentAuth().principal?.id ?? "anonymous");
+  const principalId = currentAuth().principal?.id ?? "anonymous";
+  const summary = operationsSummaryData(principalId);
+  const metrics = operationsMetricsData(principalId);
+  const logs = createQuery(liveLogQuery, { principalId });
   const responseDistribution: readonly ResponseDistributionRow[] = (
     metrics.data?.latencyBands ?? []
   ).map((row) => ({
@@ -98,18 +116,21 @@ export function MetricsPage() {
         title="Metrics"
         description="Service telemetry for investigating load, reliability, and request cost across the workspace."
         actions={
-          <ButtonGroup attached={false}>
-            <Button type="button" variant="outline" onPress={() => void metrics.refresh()}>
-              <ActivityIcon size={16} aria-hidden="true" />
-              Refresh metrics
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/logs">
-                <FileCode2Icon size={16} aria-hidden="true" />
-                Review logs
-              </Link>
-            </Button>
-          </ButtonGroup>
+          <Block direction="row" align="center" gap="sm">
+            <OperationsHealthBadge principalId={principalId} />
+            <ButtonGroup attached={false}>
+              <Button type="button" variant="outline" onPress={() => void metrics.refresh()}>
+                <ActivityIcon size={16} aria-hidden="true" />
+                Refresh metrics
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/logs">
+                  <FileCode2Icon size={16} aria-hidden="true" />
+                  Review logs
+                </Link>
+              </Button>
+            </ButtonGroup>
+          </Block>
         }
       />
 
@@ -126,6 +147,56 @@ export function MetricsPage() {
           }
         />
       ) : null}
+
+      <Grid as="section" columns={{ base: 1, xl: 2 }} gap="lg">
+        <Card variant="raised" aria-busy={summary.loading || summary.refreshing}>
+          <CardHeader>
+            <CardTitle>Service summary</CardTitle>
+            <CardDescription>Current service and incident health from the summary API.</CardDescription>
+            <CardAction>
+              <Button type="button" variant="outline" onPress={() => void summary.refresh()}>
+                Refresh summary
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            {summary.error ? (
+              <Alert
+                variant="danger"
+                title="Summary could not be loaded"
+                description="The summary query failed without collapsing metrics or logs."
+              />
+            ) : (
+              <StatDescription>
+                {summary.data?.healthyServices ?? 0} healthy services; {summary.data?.openIncidents ?? 0} open incidents.
+              </StatDescription>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card variant="raised" aria-busy={logs.loading || logs.refreshing}>
+          <CardHeader>
+            <CardTitle>Recent log evidence</CardTitle>
+            <CardDescription>Latest persisted events from the logs API.</CardDescription>
+            <CardAction>
+              <Button type="button" variant="outline" onPress={() => void logs.refresh()}>
+                Refresh logs
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            {logs.error ? (
+              <Alert
+                variant="danger"
+                title="Logs could not be loaded"
+                description="The logs query failed without collapsing summary or metrics."
+              />
+            ) : (
+              <StatDescription>{logs.data?.entries.length ?? 0} recent persisted events.</StatDescription>
+            )}
+          </CardContent>
+        </Card>
+      </Grid>
 
       <Grid as="section" columns={{ base: 1, md: 3 }} gap="lg">
         {metricHighlights.map(({ badge, detail, label, value, variant }) => (

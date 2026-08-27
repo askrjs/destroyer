@@ -1,5 +1,22 @@
 import type { Page } from "@playwright/test";
+import { readdirSync, statSync } from "node:fs";
+import { connect } from "node:net";
+import { resolve } from "node:path";
 import { expect, test } from "./fixture";
+
+function abandonStaticAsset(pathname: string): Promise<void> {
+  return new Promise((resolveDisconnect, reject) => {
+    const socket = connect({ host: "127.0.0.1", port: 4179 });
+    socket.once("error", reject);
+    socket.once("connect", () => {
+      socket.write(`GET ${pathname} HTTP/1.1\r\nHost: 127.0.0.1:4179\r\nConnection: close\r\n\r\n`);
+      setImmediate(() => {
+        socket.destroy();
+        resolveDisconnect();
+      });
+    });
+  });
+}
 
 async function createOperator(page: Page, email: string): Promise<void> {
   await page.goto("/signup");
@@ -86,40 +103,56 @@ test("S16 should keep independent route and mounted failures recoverable", async
   await expect(page.getByText("Persisted operational events.")).toBeVisible();
 });
 
-test("S15 should tolerate an immediate interaction before hydration completes", async ({
+test("S15 @finding ASKR-DESTROYER-009 should tolerate an immediate interaction before hydration completes", async ({
   page,
   context,
-}) => {
-  await page.addInitScript(() => {
-    const observer = new MutationObserver(() => {
-      if (location.pathname !== "/" || sessionStorage.getItem("destroyer-prehydration-click")) {
-        return;
-      }
-      const link = document.querySelector<HTMLAnchorElement>('a[href="/about"]');
-      if (!link) return;
-      observer.disconnect();
-      sessionStorage.setItem("destroyer-prehydration-click", "true");
-      (
-        globalThis as typeof globalThis & { __destroyerPreHydrationClick?: boolean }
-      ).__destroyerPreHydrationClick = true;
-      link.click();
-    });
-    observer.observe(document, { childList: true, subtree: true });
+}, testInfo) => {
+  testInfo.annotations.push({
+    type: "finding",
+    description:
+      "Input: repeatedly activate a server-rendered link before hydration completes, abandoning in-flight static assets. Expected: @askrjs/node releases disconnected streams and remains live. Observed: static-asset pipeline setup can throw ERR_STREAM_UNABLE_TO_PIPE and terminate the server. Owning package: @askrjs/node@0.2.1, tracked by askrjs/askr-node#38.",
   });
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(page).toHaveURL(/\/about$/);
-  await expect(page.getByRole("heading", { name: "About Destroyer" })).toBeVisible();
-  expect(await page.evaluate(() => sessionStorage.getItem("destroyer-prehydration-click"))).toBe(
-    "true",
+  const interactionPages = [page];
+  for (let index = 1; index < 12; index += 1) interactionPages.push(await context.newPage());
+  for (const interactionPage of interactionPages) {
+    await interactionPage.addInitScript(() => {
+      const observer = new MutationObserver(() => {
+        if (location.pathname !== "/" || sessionStorage.getItem("destroyer-prehydration-click")) {
+          return;
+        }
+        const link = document.querySelector<HTMLAnchorElement>('a[href="/about"]');
+        if (!link) return;
+        observer.disconnect();
+        sessionStorage.setItem("destroyer-prehydration-click", "true");
+        link.click();
+      });
+      observer.observe(document, { childList: true, subtree: true });
+    });
+  }
+  await Promise.all(
+    interactionPages.map((interactionPage) =>
+      interactionPage.goto("/", { waitUntil: "domcontentloaded" }),
+    ),
   );
-  await page.close();
-  const livenessProbe = await context.newPage();
-  const response = await livenessProbe.goto("/livez");
-  expect(response?.status()).toBe(200);
-  await livenessProbe.goto("/signup");
-  await expect(
-    livenessProbe.getByRole("heading", { name: "Create your operator account" }),
-  ).toBeVisible();
+  for (const interactionPage of interactionPages) {
+    await expect(interactionPage).toHaveURL(/\/about$/);
+    await expect(
+      interactionPage.getByRole("heading", { name: "About Destroyer" }),
+    ).toBeVisible();
+    expect(
+      await interactionPage.evaluate(() => sessionStorage.getItem("destroyer-prehydration-click")),
+    ).toBe("true");
+    await interactionPage.close();
+  }
+  const assetsRoot = resolve(process.cwd(), "dist/assets");
+  const asset = readdirSync(assetsRoot)
+    .filter((name) => name.endsWith(".js"))
+    .sort((left, right) => statSync(resolve(assetsRoot, right)).size - statSync(resolve(assetsRoot, left)).size)[0];
+  expect(asset).toBeTruthy();
+  await Promise.all(
+    Array.from({ length: 24 }, () => abandonStaticAsset(`/assets/${asset ?? ""}`)),
+  );
+  expect((await context.request.get("/livez")).status()).toBe(200);
 });
 
 test("S31 should preserve dirty Workspace input offline and commit after reconnect", async ({

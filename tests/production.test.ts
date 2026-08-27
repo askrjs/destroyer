@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { spawn, type ChildProcess } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { generateKeyPairSync } from "node:crypto";
 
 const port = 43_128;
@@ -62,5 +62,18 @@ describe("Destroyer production artifact", () => {
     const response = await fetch(`http://127.0.0.1:${port}/`);
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("Design system baseline");
+  });
+
+  it("should map lazy route chunks to files in the production manifest", () => {
+    const manifest = JSON.parse(readFileSync("dist/.vite/manifest.json", "utf8")) as Record<
+      string,
+      { file: string; isEntry?: boolean; src?: string }
+    >;
+    const docs = manifest["src/pages/docs.tsx"];
+    expect(docs?.file).toMatch(/^assets\/docs-[\w-]+\.js$/);
+    expect(existsSync(`dist/${docs.file}`)).toBe(true);
+    for (const entry of Object.values(manifest)) {
+      expect(existsSync(`dist/${entry.file}`), entry.file).toBe(true);
+    }
   });
 });

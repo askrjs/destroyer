@@ -1,7 +1,10 @@
 import { defineServerQueries, serveQuery } from "@askrjs/askr/data";
 import { operatorActivityQuery, operatorSettingsQuery } from "../features/settings/settings-model";
 import type { AppDependencies } from "./dependencies";
-import { operationsMetricsQuery } from "../features/metrics/metrics-model";
+import {
+  operationsMetricsQuery,
+  operationsSummaryQuery,
+} from "../features/metrics/metrics-model";
 import { liveLogQuery, toLogEntry } from "../features/logs/live-logs-resource";
 
 export function createQueryRegistry(dependencies: AppDependencies) {
@@ -14,8 +17,23 @@ export function createQueryRegistry(dependencies: AppDependencies) {
     serveQuery(operatorActivityQuery, ({ input }) =>
       dependencies.settings.activity(input.principalId),
     ),
-    serveQuery(operationsMetricsQuery, async ({ input }) => {
-      const mode = await dependencies.scenarios.before(input.principalId, "operations.metrics");
+    serveQuery(operationsSummaryQuery, async ({ input, signal }) => {
+      const mode = await dependencies.scenarios.before(
+        input.principalId,
+        "operations.summary",
+        signal,
+      );
+      if (mode === "empty-next") {
+        return { healthyServices: 0, degradedServices: 0, openIncidents: 0, activeOperators: 0 };
+      }
+      return dependencies.operations.summary();
+    }),
+    serveQuery(operationsMetricsQuery, async ({ input, signal }) => {
+      const mode = await dependencies.scenarios.before(
+        input.principalId,
+        "operations.metrics",
+        signal,
+      );
       if (mode === "empty-next") {
         return {
           requests: 0,

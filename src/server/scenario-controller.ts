@@ -47,7 +47,11 @@ export function createScenarioController() {
       for (const control of principalControls(principalId).values()) control.release?.();
       controls.delete(principalId);
     },
-    async before(principalId: string, operation: ScenarioOperation): Promise<ScenarioMode | null> {
+    async before(
+      principalId: string,
+      operation: ScenarioOperation,
+      signal?: AbortSignal,
+    ): Promise<ScenarioMode | null> {
       const scoped = principalControls(principalId);
       const control = scoped.get(operation);
       if (!control) return null;
@@ -60,10 +64,20 @@ export function createScenarioController() {
         return control.mode;
       }
       control.blocked = true;
-      await new Promise<void>((resolve) => {
-        control.release = resolve;
-      });
-      scoped.delete(operation);
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const aborted = () => reject(signal?.reason ?? new DOMException("Aborted", "AbortError"));
+          const released = () => {
+            signal?.removeEventListener("abort", aborted);
+            resolve();
+          };
+          control.release = released;
+          if (signal?.aborted) aborted();
+          else signal?.addEventListener("abort", aborted, { once: true });
+        });
+      } finally {
+        scoped.delete(operation);
+      }
       return control.mode;
     },
   };

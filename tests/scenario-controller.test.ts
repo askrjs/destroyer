@@ -47,4 +47,15 @@ describe("scenario controller", () => {
       { operation: "operations.logs", mode: "empty-next", blocked: false },
     ]);
   });
+
+  it("cancels an observable hold when its request signal aborts", async () => {
+    const controller = createScenarioController();
+    const request = new AbortController();
+    controller.arm("first", "operations.metrics", "hold-next");
+    const held = controller.before("first", "operations.metrics", request.signal);
+    await expect.poll(() => controller.state("first")[0]?.blocked).toBe(true);
+    request.abort();
+    await expect(held).rejects.toMatchObject({ name: "AbortError" });
+    expect(controller.state("first")).toEqual([]);
+  });
 });
