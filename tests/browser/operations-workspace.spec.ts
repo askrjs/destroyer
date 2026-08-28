@@ -1,4 +1,4 @@
-import { expect, test } from "./fixture";
+import { expect, test, waitForHydration } from "./fixture";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import {
@@ -32,6 +32,7 @@ test("should keep five workspace journeys responsive without forced collection",
   });
 
   await page.goto("/signup");
+  await waitForHydration(page);
   await page.getByLabel("Email").fill("workspace.responsiveness@example.test");
   await page.getByLabel("Password").fill("correct horse battery staple");
   await page.getByRole("button", { name: "Create account" }).click();

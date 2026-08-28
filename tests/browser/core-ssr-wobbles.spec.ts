@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "./fixture";
+import { expect, test, waitForHydration } from "./fixture";
 
 const password = "correct horse battery staple";
 
@@ -59,6 +59,7 @@ test("CC05 should preserve Block layout through production SSR and hydration", a
       "Expected the SSR document to contain generated Block rules and the hydrated Page to remain a column; observed ak-style classes without a style registry and browser-default row layout.",
   });
   await page.goto("/");
+  await waitForHydration(page);
   const layout = await page
     .locator('main > [data-slot="container"] > [data-slot="block"]')
     .evaluate((block) => {

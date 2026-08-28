@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "./fixture";
+import { expect, test, waitForHydration } from "./fixture";
 
 const password = "correct horse battery staple";
 
@@ -22,6 +22,7 @@ test("S29 should complete account setup using only the keyboard", async ({
   principalEmail,
 }) => {
   await page.goto("/signup");
+  await waitForHydration(page);
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("Email")).toBeFocused();
   await page.keyboard.type(principalEmail);

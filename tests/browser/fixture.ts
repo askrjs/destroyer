@@ -34,6 +34,10 @@ function stableSlug(testInfo: TestInfo): string {
     .slice(0, 48);
 }
 
+export async function waitForHydration(page: Page): Promise<void> {
+  await expect(page.locator("html")).toHaveAttribute("data-theme-choice", /^(dark|light|system)$/);
+}
+
 async function resetControls(context: BrowserContext): Promise<void> {
   const response = await context.request.post("/api/__test/control/reset");
   if (response.status() !== 200 && response.status() !== 204 && response.status() !== 401)
