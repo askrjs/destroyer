@@ -11,7 +11,7 @@ async function createOperator(page: Page, email: string): Promise<void> {
   await expect(page).toHaveURL(/\/logs$/);
 }
 
-test("CC01 should cancel held SSR query work when its client disconnects", async ({
+test("CC01 @regression should cancel held SSR query work when its client disconnects", async ({
   page,
   context,
   principalEmail,
@@ -35,12 +35,6 @@ test("CC01 should cancel held SSR query work when its client disconnects", async
     .poll(() => page.evaluate(async () => (await fetch("/api/__test/control/state")).text()))
     .not.toContain("operations.metrics");
   await expect(page.getByRole("heading", { name: "Logs", exact: true })).toBeVisible();
-});
-
-test.fixme("CC02 hydration mismatch diagnostics need an independently recoverable public policy", async () => {
-  // Production verification is disabled by default. Enabling it globally currently rejects pristine
-  // Destroyer markup and prevents enhanced form and navigation behavior, so it cannot be exercised
-  // as a healthy product workflow without first resolving the framework capability.
 });
 
 test("CC05 should load a lazy production route and preserve hydrated navigation", async ({
@@ -85,8 +79,4 @@ test("CC05 should preserve Block layout through production SSR and hydration", a
 
 test.fixme("CC04 CSP nonce propagation is excluded from the current non-security scope", async () => {
   // Deliberately not investigated or filed while security work is out of scope.
-});
-
-test.fixme("CC05 SSG and base-path agreement needs a real static deployment target", async () => {
-  // Destroyer is currently an SSR product; a synthetic SSG-only surface would not be honest coverage.
 });

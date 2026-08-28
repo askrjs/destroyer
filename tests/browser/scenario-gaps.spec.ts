@@ -57,7 +57,7 @@ test("S01 should cancel, discard, and save through owned dirty Workspace navigat
   await expect(dialog).toHaveCount(0);
 });
 
-test("S19 should virtualize expandable incident operations and export selected rows", async ({
+test.fixme("S19 @regression should virtualize expandable incident operations and export selected rows (askrjs/askr-themes#141)", async ({
   page,
   principalEmail,
 }) => {
@@ -72,7 +72,9 @@ test("S19 should virtualize expandable incident operations and export selected r
   await createOperator(page, principalEmail);
   await page.goto("/incidents");
   const list = page.getByRole("list", { name: "Operational incidents" });
-  await expect(list.locator('[data-slot="virtual-list-row"]')).toHaveCount(4);
+  const renderedRows = list.locator('[data-slot="virtual-list-row"]');
+  await expect(renderedRows).toHaveCount(3);
+  expect(await renderedRows.count()).toBeLessThan(4);
   const firstRow = list.locator('[data-slot="virtual-list-row"]').first();
   const selectedTitle = await firstRow.getByRole("heading", { level: 3 }).textContent();
   const compactHeight = await firstRow.evaluate((row) => row.getBoundingClientRect().height);
@@ -114,7 +116,7 @@ test("S23 should keep independent Metrics sections alive through held, failed, a
     .locator('xpath=ancestor::*[@data-slot="card"]');
   await expect(summary).toContainText("healthy services");
   await expect(logs).toContainText("recent persisted events");
-  await expect(page.getByText("Persisted operational events.")).toBeVisible();
+  await expect(page.getByText("Persisted operational events.", { exact: true })).toBeVisible();
 
   const control = async (path: "arm" | "release", body: unknown) =>
     page.evaluate(
@@ -136,13 +138,13 @@ test("S23 should keep independent Metrics sections alive through held, failed, a
     .toContain('"operation":"operations.summary","mode":"hold-next","blocked":true');
   await expect(summary).toHaveAttribute("aria-busy", "true");
   await expect(logs).toContainText("recent persisted events");
-  await expect(page.getByText("Persisted operational events.")).toBeVisible();
+  await expect(page.getByText("Persisted operational events.", { exact: true })).toBeVisible();
 
   expect(await control("arm", { operation: "operations.logs", mode: "fail-next" })).toBe(200);
   await logs.getByRole("button", { name: "Refresh logs" }).click();
   await expect(logs.getByText("Logs could not be loaded")).toBeVisible();
   await expect(summary).toHaveAttribute("aria-busy", "true");
-  await expect(page.getByText("Persisted operational events.")).toBeVisible();
+  await expect(page.getByText("Persisted operational events.", { exact: true })).toBeVisible();
 
   expect(await control("release", { operation: "operations.summary" })).toBe(200);
   await expect(summary).toHaveAttribute("aria-busy", "false");

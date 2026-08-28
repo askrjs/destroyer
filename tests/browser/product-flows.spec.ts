@@ -94,14 +94,13 @@ test("should poll live operations without runtime errors given an active logs ro
   expect(errors).toEqual([]);
 });
 
-test("S06 @finding ASKR-DESTROYER-002 should keep extreme log details operable at a 320px mobile viewport", async ({
+test("S06 @regression should keep extreme log details operable at a 320px mobile viewport", async ({
   page,
   principalEmail,
 }) => {
   test.info().annotations.push({
-    type: "finding",
-    description:
-      "Input: a deterministic multiline log with long service, route, and request identifiers at 320x568. Expected: the virtual row and detail popover remain within the viewport. Observed: Block flex ancestors retain min-inline-size:auto and the virtual row reaches 2312px scroll width, producing document overflow. Owning package: @askrjs/themes Block layout, tracked by askrjs/askr-themes#133. Artifacts: Playwright HTML report, trace, and error-context snapshot.",
+    type: "regression",
+    description: "Released in @askrjs/themes 0.2.5 from askrjs/askr-themes#133.",
   });
   await page.setViewportSize({ width: 320, height: 568 });
   const errors: string[] = [];

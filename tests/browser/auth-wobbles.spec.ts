@@ -17,11 +17,14 @@ async function signOut(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/login$/);
 }
 
-test("S29 should complete account setup using only the keyboard", async ({ page }) => {
+test("S29 should complete account setup using only the keyboard", async ({
+  page,
+  principalEmail,
+}) => {
   await page.goto("/signup");
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("Email")).toBeFocused();
-  await page.keyboard.type("keyboard.setup@example.test");
+  await page.keyboard.type(principalEmail);
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("Password")).toBeFocused();
   await page.keyboard.type(password);
@@ -88,7 +91,12 @@ test("should redirect an authenticated visitor through the real routed commit pa
   await expect(page.getByRole("heading", { name: "Sign in to your workspace" })).toHaveCount(0);
 });
 
-test("should preserve login input offline and retry after reconnect", async ({ page, context }) => {
+test("should preserve login input offline and retry after reconnect", async ({
+  page,
+  context,
+  evidence,
+}) => {
+  evidence.allowedConsoleErrors.push("Failed to load resource: net::ERR_INTERNET_DISCONNECTED");
   const email = "login.offline@example.test";
   await createOperator(page, email);
   await signOut(page);

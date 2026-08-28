@@ -3,27 +3,25 @@ import { spawnSync } from "node:child_process";
 const npx = process.platform === "win32" ? "npx.cmd" : "npx";
 const lanes = [
   {
-    name: "catalog",
+    name: "published-regressions",
     args: [
       "playwright",
       "test",
       "--config",
       "playwright.findings.config.ts",
       "--grep",
-      "@finding",
-      "--grep-invert",
-      "ASKR-DESTROYER-009",
+      "@regression",
     ],
   },
   {
-    name: "server-disconnect",
+    name: "development-regressions",
     args: [
       "playwright",
       "test",
       "--config",
-      "playwright.findings.config.ts",
+      "playwright.dev-findings.config.ts",
       "--grep",
-      "ASKR-DESTROYER-009",
+      "@regression",
     ],
   },
 ];

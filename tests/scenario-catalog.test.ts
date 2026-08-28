@@ -17,6 +17,16 @@ describe("original scenario governance", () => {
     expect(scenarioCatalog.filter(({ route }) => !routes.has(route))).toEqual([]);
   });
 
+  test("keeps every non-standard scenario linked to an upstream issue", () => {
+    expect(
+      scenarioCatalog.filter(
+        ({ disposition, issue }) =>
+          (disposition === "standard" && issue !== undefined) ||
+          (disposition === "quarantined" && issue === undefined),
+      ),
+    ).toEqual([]);
+  });
+
   test("references every scenario ID exactly once in browser test titles", () => {
     const source = globSync("tests/browser/*.spec.ts")
       .map((file) => readFileSync(file, "utf8"))

@@ -12,7 +12,13 @@ export default defineConfig({
     command: "node dist/server/server.js",
     url: "http://127.0.0.1:4179/livez",
     reuseExistingServer: false,
-    env: { HOST: "127.0.0.1", PORT: "4179", DESTROYER_DB_PATH: ":memory:", NODE_ENV: "test" },
+    env: {
+      HOST: "127.0.0.1",
+      PORT: "4179",
+      DESTROYER_DB_PATH: ":memory:",
+      DESTROYER_DETERMINISTIC_IDS: "1",
+      NODE_ENV: "test",
+    },
   },
   projects: [
     { name: "setup", testMatch: /auth\.setup\.ts/ },

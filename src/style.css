@@ -1,6 +1,11 @@
 @import "@askrjs/themes/default";
 @import "@askrjs/charts/styles";
 
+.shrinkable-input-group,
+.shrinkable-log-service {
+  min-inline-size: 0;
+}
+
 .log-detail-popover {
   max-block-size: var(--ak-overlay-available-height);
   overflow: auto;

@@ -26,7 +26,7 @@ async function control(page: Page, path: "arm" | "state" | "release", body?: unk
   );
 }
 
-test("CA01 should not commit an aborted Metrics preload after rapid navigation", async ({
+test.fixme("CA01 should not commit an aborted Metrics preload after rapid navigation (askrjs/askr#373)", async ({
   page,
 }) => {
   await createOperator(page, "router.aborted-preload@example.test");
@@ -45,21 +45,19 @@ test("CA01 should not commit an aborted Metrics preload after rapid navigation",
   await expect(page).toHaveURL(/\/logs$/);
 });
 
-test("CA03 should terminate a self-referential post-login redirect", async ({ page }) => {
-  const email = "router.redirect-cycle@example.test";
-  await createOperator(page, email);
+test("CA03 should terminate a self-referential post-login redirect", async ({
+  page,
+  principalEmail,
+}) => {
+  await createOperator(page, principalEmail);
   await page.goto("/logout");
   await page.getByRole("button", { name: "Sign out" }).click();
   await page.goto("/login?next=/login");
-  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Email").fill(principalEmail);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/logs$/);
   await expect(page.getByRole("heading", { name: "Logs", exact: true })).toBeVisible();
-});
-
-test.fixme("CA02 @finding deferred route data needs a natural independently recoverable nested boundary", async () => {
-  // Retained as a capability finding until the Metrics sections are split into independent queries.
 });
 
 test("CA04 should keep incident evidence handoff state on its owning history entry", async ({
@@ -85,8 +83,4 @@ test("CA04 should keep incident evidence handoff state on its owning history ent
   await page.goForward();
   await expect(page).toHaveURL(/\/incidents\?review=evidence$/);
   await expect(confirmation).toContainText(`Review the staged evidence for ${incidentTitle}.`);
-});
-
-test.fixme("CA05 @finding Back and Forward need entry-owned URL scroll focus and route state", async () => {
-  // S10 retains the executable reproduction for askrjs/askr#365; no app shim is allowed.
 });

@@ -107,13 +107,14 @@ test("S02 should expose a two-page optimistic conflict without clearing stale lo
 
 test("S04 should commit a held Workspace save after route teardown without stale UI updates", async ({
   page,
+  principalEmail,
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await createOperator(page, "workspace.held@example.test");
+  await createOperator(page, principalEmail);
   await page.goto("/settings/workspace");
   await choose(page, "Default role", "Member");
   await arm(page, "settings.update", "hold-next");
@@ -124,7 +125,7 @@ test("S04 should commit a held Workspace save after route teardown without stale
     })
     .toMatchObject({ controls: [{ blocked: true }] });
 
-  await page.goto("/logs");
+  await page.getByRole("link", { name: "Logs", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Logs" })).toBeVisible();
   expect(
     (
@@ -144,7 +145,7 @@ test("S04 should commit a held Workspace save after route teardown without stale
   expect(errors).toEqual([]);
 });
 
-test("S05 should unwind invite actions through Escape, cancel, and confirm with trigger focus", async ({
+test("S05 @regression should unwind invite actions through Escape, cancel, and confirm with trigger focus", async ({
   page,
 }, testInfo) => {
   await createOperator(page, `workspace.overlays.${testInfo.repeatEachIndex}@example.test`);
@@ -164,9 +165,18 @@ test("S05 should unwind invite actions through Escape, cancel, and confirm with 
   await expect(trigger).toBeFocused();
 
   const invite = await page.getByLabel("Active invite link").inputValue();
+  await arm(page, "settings.reset-invite", "fail-next");
   await trigger.click();
   await page.getByRole("menuitem", { name: "Reset active link" }).click();
   await page.getByRole("button", { name: "Reset active link" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Action failed (500).");
+  await expect(trigger).toBeFocused();
+  await expect(page.getByLabel("Active invite link")).toHaveValue(invite);
+
+  await trigger.click();
+  await page.getByRole("menuitem", { name: "Reset active link" }).click();
+  await page.getByRole("button", { name: "Reset active link" }).click();
+  await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(trigger).toBeFocused();
   await expect(page.getByLabel("Active invite link")).not.toHaveValue(invite);

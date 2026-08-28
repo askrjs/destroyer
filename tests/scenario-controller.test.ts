@@ -58,4 +58,20 @@ describe("scenario controller", () => {
     await expect(held).rejects.toMatchObject({ name: "AbortError" });
     expect(controller.state("first")).toEqual([]);
   });
+
+  it("releases an active hold without consuming a replacement control", async () => {
+    const controller = createScenarioController();
+    controller.arm("operator", "operations.logs", "hold-next");
+    const held = controller.before("operator", "operations.logs");
+    await expect.poll(() => controller.state("operator")[0]?.blocked).toBe(true);
+
+    controller.arm("operator", "operations.logs", "empty-next");
+
+    await expect(held).resolves.toBe("hold-next");
+    expect(controller.state("operator")).toEqual([
+      { operation: "operations.logs", mode: "empty-next", blocked: false },
+    ]);
+    await expect(controller.before("operator", "operations.logs")).resolves.toBe("empty-next");
+    expect(controller.state("operator")).toEqual([]);
+  });
 });

@@ -11,7 +11,7 @@ export function LogStreamRow({ item }: VirtualListRowComponentProps<LogEntry>) {
       aria-label={`${item.severity} ${item.service} event at ${item.time}`}
     >
       <Block width="full" direction="row" align="center" paddingX="md" paddingY="sm">
-        <Block gap="xs" grow>
+        <Block direction="column" gap="xs" grow>
           <Block direction="row" align="center" justify="between" gap="sm">
             <Block direction="row" align="center" gap="sm" grow>
               <Block as="span" shrink={false}>
@@ -32,8 +32,8 @@ export function LogStreamRow({ item }: VirtualListRowComponentProps<LogEntry>) {
 
           <Block direction="row" align="center" justify="between" gap="sm">
             <Block direction="row" align="center" gap="sm" grow>
-              <Block as="span" shrink={false}>
-                <Text as="span" tone="muted" size="sm" font="mono">
+              <Block as="span" class="shrinkable-log-service" grow>
+                <Text as="span" tone="muted" size="sm" font="mono" truncate>
                   {item.service}
                 </Text>
               </Block>

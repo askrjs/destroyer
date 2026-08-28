@@ -28,6 +28,7 @@ function settingsFromRow(
   principalId: string,
   row: SettingsRow,
   now: () => number,
+  createId: () => string,
 ): OperatorSettings {
   const profile = parseObject(row.profile_json);
   const security = parseObject(row.security_json);
@@ -55,7 +56,7 @@ function settingsFromRow(
     approvalPolicy: workspace.approvalPolicy === "automatic" ? "automatic" : "manual",
     approverGroup:
       typeof workspace.approverGroup === "string" ? workspace.approverGroup : "Operations leads",
-    inviteLink: `/invite/${ensureInvite(database, principalId, now)}`,
+    inviteLink: `/invite/${ensureInvite(database, principalId, now, createId)}`,
     version: row.version,
   };
 }
@@ -63,13 +64,14 @@ function settingsFromRow(
 export function createSettingsRepository(
   database: Database.Database,
   now: () => number,
+  createId: () => string,
 ): AppDependencies["settings"] {
   const settings: AppDependencies["settings"] = {
     async get(principalId) {
       const row = database
         .prepare("SELECT * FROM operator_settings WHERE principal_id=?")
         .get(principalId) as SettingsRow | undefined;
-      return row ? settingsFromRow(database, principalId, row, now) : null;
+      return row ? settingsFromRow(database, principalId, row, now, createId) : null;
     },
     async update(
       principalId: string,
@@ -80,7 +82,7 @@ export function createSettingsRepository(
         .prepare("SELECT * FROM operator_settings WHERE principal_id=?")
         .get(principalId) as SettingsRow | undefined;
       if (!row || row.version !== expectedVersion) return { kind: "conflict" };
-      const current = settingsFromRow(database, principalId, row, now);
+      const current = settingsFromRow(database, principalId, row, now, createId);
       const next = { ...current, ...input, version: expectedVersion + 1 };
       const occurredAt = new Date(now()).toISOString();
       const committed = database.transaction(() => {
@@ -113,7 +115,7 @@ export function createSettingsRepository(
         database
           .prepare("INSERT INTO audit_events VALUES (?, ?, ?, 'operator_settings', ?, ?, ?)")
           .run(
-            crypto.randomUUID(),
+            createId(),
             principalId,
             "settings.update",
             principalId,
@@ -126,7 +128,7 @@ export function createSettingsRepository(
     },
     async resetInvite(principalId, expectedVersion) {
       const occurredAt = new Date(now()).toISOString();
-      const token = crypto.randomUUID();
+      const token = createId();
       const committed = database.transaction(() => {
         const result = database
           .prepare(
@@ -147,7 +149,7 @@ export function createSettingsRepository(
             "INSERT INTO audit_events VALUES (?, ?, 'invite.reset', 'invite_token', ?, ?, ?)",
           )
           .run(
-            crypto.randomUUID(),
+            createId(),
             principalId,
             token,
             JSON.stringify({ previousVersion: expectedVersion }),

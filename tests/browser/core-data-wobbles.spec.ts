@@ -51,11 +51,3 @@ test("CB01 should publish one refreshed summary value to every mounted reader", 
   await expect(summary).toContainText("0 healthy services");
   await expect(badge).toHaveText("0 healthy");
 });
-
-test.fixme("CB02 @finding cursor collections need a natural query-collection migration", async () => {
-  // Logs currently owns explicit cursor state; claiming cache-eviction identity would be simulated.
-});
-
-test.fixme("CB05 @finding plain component rendering needs an isolated DataRuntime", async () => {
-  // askrjs/askr#362 remains open; Destroyer never clears default-runtime internals.
-});

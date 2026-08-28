@@ -28,28 +28,28 @@ export function NotificationSettings() {
     settings.data?.inAppNotifications === false ? "disabled" : "enabled",
   );
   const mutationError = state("");
-  let committed = value();
-  let version = settings.data?.version ?? 1;
-  let draining = false;
+  const committed = state(value());
+  const version = state(settings.data?.version ?? 1);
+  const draining = state(false);
   const persistFinalIntent = async () => {
-    if (draining) return;
-    draining = true;
+    if (draining()) return;
+    draining.set(true);
     mutationError.set("");
     try {
-      while (committed !== value()) {
+      while (committed() !== value()) {
         const intended = value();
         const result = await save.submit({
           inAppNotifications: intended,
-          version: String(version),
+          version: String(version()),
         });
-        committed = intended;
-        version = result.version;
+        committed.set(intended);
+        version.set(result.version);
       }
     } catch (error) {
       mutationError.set(error instanceof Error ? error.message : "Notification update failed.");
     } finally {
-      draining = false;
-      if (!mutationError() && committed !== value()) void persistFinalIntent();
+      draining.set(false);
+      if (!mutationError() && committed() !== value()) void persistFinalIntent();
     }
   };
   return (
@@ -62,7 +62,7 @@ export function NotificationSettings() {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <Block gap="md">
+        <Block direction="column" gap="md">
           <Field>
             <Label for="settings-notifications">In-app notifications</Label>
             <Switch
@@ -75,7 +75,7 @@ export function NotificationSettings() {
               }}
             />
           </Field>
-          <Block gap="sm">
+          <Block direction="column" gap="sm">
             <Text tone="muted" size="sm">
               No external email, webhook, or scheduled delivery is claimed.
             </Text>
@@ -88,7 +88,11 @@ export function NotificationSettings() {
           <Text tone="muted" size="sm" role="status">
             {save.state().pending
               ? "Saving notification preference…"
-              : "Notification preference saved."}
+              : mutationError()
+                ? "Notification preference not saved."
+                : committed() === value()
+                  ? "Notification preference saved."
+                  : "Notification preference queued."}
           </Text>
         </Block>
       </CardContent>

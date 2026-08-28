@@ -6,7 +6,9 @@ import { liveLogQuery, toLogEntry } from "../features/logs/live-logs-resource";
 
 export function createQueryRegistry(dependencies: AppDependencies) {
   return defineServerQueries(
-    serveQuery(operatorSettingsQuery, async ({ input }) => {
+    serveQuery(operatorSettingsQuery, async ({ input, signal }) => {
+      const mode = await dependencies.scenarios.before(input.principalId, "settings.read", signal);
+      if (mode === "empty-next") throw new Error("Operator settings were not found.");
       const settings = await dependencies.settings.get(input.principalId);
       if (!settings) throw new Error("Operator settings were not found.");
       return settings;
@@ -44,7 +46,13 @@ export function createQueryRegistry(dependencies: AppDependencies) {
       }
       return dependencies.operations.metrics();
     }),
-    serveQuery(liveLogQuery, async () => {
+    serveQuery(liveLogQuery, async ({ input, signal }) => {
+      const mode = await dependencies.scenarios.before(
+        input.principalId,
+        "operations.logs",
+        signal,
+      );
+      if (mode === "empty-next") return { entries: [], nextCursor: null, sequence: 0 };
       const page = await dependencies.operations.logs({ limit: 80 });
       return { ...page, entries: page.entries.map(toLogEntry) };
     }),

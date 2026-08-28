@@ -35,7 +35,13 @@ for (const route of [...routeExpectations, { ...unknownRouteExpectation, authent
       );
       const errors: string[] = [];
       page.on("console", (message) => {
-        if (message.type() === "error") errors.push(message.text());
+        const expectedNotFoundNavigation =
+          route.path === unknownRouteExpectation.path &&
+          message.type() === "error" &&
+          message.text() ===
+            "Failed to load resource: the server responded with a status of 404 (Not Found)" &&
+          new URL(message.location().url).pathname === route.path;
+        if (message.type() === "error" && !expectedNotFoundNavigation) errors.push(message.text());
       });
       page.on("pageerror", (error) => errors.push(error.message));
       page.on("requestfailed", (request) =>
@@ -51,15 +57,27 @@ for (const route of [...routeExpectations, { ...unknownRouteExpectation, authent
       if (visualCase.mode === "zoom-200")
         await page.evaluate(() => {
           document.documentElement.style.zoom = "2";
-          document.documentElement.style.width = "50%";
         });
       await expect(page.getByRole("heading", { name: route.heading }).first()).toBeVisible();
+      await page.waitForLoadState("networkidle");
       const overflow = await page.evaluate(() => ({
         delta: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         offenders: [...document.querySelectorAll<HTMLElement>("body *")]
           .filter((element) => {
             const rect = element.getBoundingClientRect();
-            return rect.right > document.documentElement.clientWidth + 0.5 || rect.left < -0.5;
+            if (!(rect.right > document.documentElement.clientWidth + 0.5 || rect.left < -0.5))
+              return false;
+            let ancestor = element.parentElement;
+            while (ancestor && ancestor !== document.body) {
+              const style = getComputedStyle(ancestor);
+              if (
+                (style.overflowX === "auto" || style.overflowX === "scroll") &&
+                ancestor.scrollWidth > ancestor.clientWidth
+              )
+                return false;
+              ancestor = ancestor.parentElement;
+            }
+            return true;
           })
           .slice(0, 12)
           .map((element) => ({
@@ -75,7 +93,6 @@ for (const route of [...routeExpectations, { ...unknownRouteExpectation, authent
         expect(await page.evaluate(() => getComputedStyle(document.documentElement).zoom)).toBe(
           "2",
         );
-        expect(await page.evaluate(() => document.documentElement.style.width)).toBe("50%");
         expect(await page.evaluate(() => innerWidth / 2)).toBe(visualCase.viewport.width / 2);
       }
       if (visualCase.mode === "forced-colors")

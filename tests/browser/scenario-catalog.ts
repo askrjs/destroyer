@@ -1,4 +1,4 @@
-export type ScenarioDisposition = "standard" | "finding";
+export type ScenarioDisposition = "standard" | "quarantined";
 
 export interface ScenarioDefinition {
   id: `S${number}`;
@@ -7,6 +7,7 @@ export interface ScenarioDefinition {
   behavior: string;
   testTitle: string;
   disposition: ScenarioDisposition;
+  issue?: `https://github.com/${string}/issues/${number}`;
 }
 
 const scenario = (
@@ -15,6 +16,7 @@ const scenario = (
   behavior: string,
   testTitle: string,
   disposition: ScenarioDisposition = "standard",
+  issue?: ScenarioDefinition["issue"],
 ): ScenarioDefinition => ({
   id,
   milestone: "original-32",
@@ -22,6 +24,7 @@ const scenario = (
   behavior,
   testTitle,
   disposition,
+  ...(issue ? { issue } : {}),
 });
 
 export const scenarioCatalog = [
@@ -54,14 +57,12 @@ export const scenarioCatalog = [
     "/settings/workspace",
     "DropdownMenu to AlertDialog unwind restores focus",
     "unwind invite actions",
-    "finding",
   ),
   scenario(
     "S06",
     "/logs",
     "Extreme mobile log content keeps its Popover operable",
     "extreme log details",
-    "finding",
   ),
   scenario("S07", "/logs", "Session expiry tears down an open overlay", "session expires"),
   scenario(
@@ -69,7 +70,6 @@ export const scenarioCatalog = [
     "/settings/preferences",
     "Open Select survives breakpoint resize and restores focus",
     "Select portal",
-    "finding",
   ),
   scenario(
     "S09",
@@ -82,7 +82,6 @@ export const scenarioCatalog = [
     "/logs",
     "Back and Forward restore URL, state, scroll, and focus",
     "Back and Forward",
-    "finding",
   ),
   scenario(
     "S11",
@@ -103,7 +102,6 @@ export const scenarioCatalog = [
     "/login",
     "Immediate pre-hydration interaction preserves server liveness",
     "before hydration",
-    "finding",
   ),
   scenario(
     "S16",
@@ -116,6 +114,8 @@ export const scenarioCatalog = [
     "/incidents",
     "Incident selection and bulk acknowledgement persist",
     "bulk acknowledge",
+    "quarantined",
+    "https://github.com/askrjs/askr-themes/issues/141",
   ),
   scenario(
     "S18",
@@ -128,20 +128,16 @@ export const scenarioCatalog = [
     "/incidents",
     "Virtualized incident detail, actions, CSV export, and focus remain coherent",
     "virtualized incident operations",
+    "quarantined",
+    "https://github.com/askrjs/askr-themes/issues/141",
   ),
   scenario(
     "S20",
     "/logs",
-    "Cursor history load-more retries after failure",
+    "Cursor history pauses live updates, retries after failure, and resumes without a boundary gap",
     "cursor-backed log history",
   ),
-  scenario(
-    "S21",
-    "/logs",
-    "Live insertion preserves row selection",
-    "virtual-table selection",
-    "finding",
-  ),
+  scenario("S21", "/logs", "Live insertion preserves row selection", "virtual-table selection"),
   scenario(
     "S22",
     "/logs",
@@ -177,7 +173,6 @@ export const scenarioCatalog = [
     "/settings",
     "Profile validation, failure, retry, and conflict preserve input",
     "profile input",
-    "finding",
   ),
   scenario(
     "S28",

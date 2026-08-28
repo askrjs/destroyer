@@ -26,25 +26,36 @@ export function createScenarioController() {
     controls.set(principalId, current);
     return current;
   };
+  const deleteControl = (
+    principalId: string,
+    scoped: Map<ScenarioOperation, ArmedControl>,
+    operation: ScenarioOperation,
+    expected?: ArmedControl,
+  ) => {
+    if (!expected || scoped.get(operation) === expected) scoped.delete(operation);
+    if (scoped.size === 0 && controls.get(principalId) === scoped) controls.delete(principalId);
+  };
 
   return {
     arm(principalId: string, operation: ScenarioOperation, mode: ScenarioMode) {
-      principalControls(principalId).set(operation, { mode, blocked: false });
+      const scoped = principalControls(principalId);
+      scoped.get(operation)?.release?.();
+      scoped.set(operation, { mode, blocked: false });
     },
     state(principalId: string) {
-      return [...principalControls(principalId)].map(([operation, value]) => ({
+      return [...(controls.get(principalId) ?? [])].map(([operation, value]) => ({
         operation,
         mode: value.mode,
         blocked: value.blocked,
       }));
     },
     release(principalId: string, operation: ScenarioOperation) {
-      const control = principalControls(principalId).get(operation);
+      const control = controls.get(principalId)?.get(operation);
       control?.release?.();
       return Boolean(control);
     },
     reset(principalId: string) {
-      for (const control of principalControls(principalId).values()) control.release?.();
+      for (const control of controls.get(principalId)?.values() ?? []) control.release?.();
       controls.delete(principalId);
     },
     async before(
@@ -52,15 +63,16 @@ export function createScenarioController() {
       operation: ScenarioOperation,
       signal?: AbortSignal,
     ): Promise<ScenarioMode | null> {
-      const scoped = principalControls(principalId);
+      const scoped = controls.get(principalId);
+      if (!scoped) return null;
       const control = scoped.get(operation);
       if (!control) return null;
       if (control.mode === "fail-next") {
-        scoped.delete(operation);
+        deleteControl(principalId, scoped, operation, control);
         throw new ScenarioFailure(operation);
       }
       if (control.mode === "empty-next") {
-        scoped.delete(operation);
+        deleteControl(principalId, scoped, operation, control);
         return control.mode;
       }
       control.blocked = true;
@@ -76,7 +88,7 @@ export function createScenarioController() {
           else signal?.addEventListener("abort", aborted, { once: true });
         });
       } finally {
-        scoped.delete(operation);
+        deleteControl(principalId, scoped, operation, control);
       }
       return control.mode;
     },

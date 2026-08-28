@@ -79,7 +79,7 @@ export function WorkspaceSettings() {
   const inviteDialogOpen = state(false);
   const inviteActionsTrigger = state({ current: null as HTMLElement | null })();
   return (
-    <Block gap="lg">
+    <Block direction="column" gap="lg">
       <Card variant="raised">
         <CardHeader>
           <CardTitle>Workspace</CardTitle>
@@ -228,7 +228,7 @@ export function WorkspaceSettings() {
           </CardAction>
         </CardHeader>
         <CardContent>
-          <Block gap="md">
+          <Block direction="column" gap="md">
             <Field>
               <Label for="settings-invite-link">Active invite link</Label>
               <Input

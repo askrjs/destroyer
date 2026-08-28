@@ -39,7 +39,9 @@ import {
   Text,
   Toolbar,
   VirtualList,
+  type VirtualListApi,
   VirtualTable,
+  type VirtualTableApi,
 } from "@askrjs/themes/components";
 import { logColumns } from "../features/logs/log-table-columns";
 import { LogStreamRow } from "../features/logs/log-stream-row";
@@ -47,10 +49,13 @@ import type { LogEntry } from "../features/logs/logs-data";
 import {
   liveLogQuery,
   liveLogScope,
+  toLogEntry,
   type LiveLogSnapshot,
 } from "../features/logs/live-logs-resource";
+import type { OperationsLogPage } from "../server/contracts";
 
 const LOG_SEARCH_QUERY_KEY = "search";
+const LOG_TABLE_HEADER_HEIGHT = 40;
 
 function normalizeLogFilter(filter: string | null): string {
   return filter?.trim() ?? "";
@@ -92,10 +97,20 @@ export function LogsPage() {
     principalId: currentAuth().principal?.id ?? "anonymous",
   });
   const olderEntries = state<readonly LogEntry[]>([]);
-  const nextCursor = state<string | null>(liveLogs.data?.nextCursor ?? null);
+  const historyStarted = state(false);
+  const historyCursor = state<string | null>(null);
+  const nextCursor = derive(() =>
+    historyStarted() ? historyCursor() : (liveLogs.data?.nextCursor ?? null),
+  );
   const historyPending = state(false);
   const historyError = state("");
-  const currentEntries = () => [...(liveLogs.data?.entries ?? []), ...olderEntries()];
+  const liveListApi = state({ current: null as VirtualListApi<LogEntry> | null })();
+  const logTableApi = state({ current: null as VirtualTableApi<LogEntry> | null })();
+  const resumeInProgress = state(false);
+  const activeLiveSnapshot = (): LiveLogSnapshot =>
+    liveLogs.data ?? { entries: [], nextCursor: null, sequence: 0 };
+  const liveSnapshot = (): LiveLogSnapshot => frozenLiveSnapshot() ?? activeLiveSnapshot();
+  const currentEntries = () => [...liveSnapshot().entries, ...olderEntries()];
   const filteredLogEntries = derive(() =>
     currentEntries().filter((entry) => matchesLogFilter(entry, tableFilter())),
   );
@@ -112,9 +127,6 @@ export function LogsPage() {
     },
   );
 
-  const liveModePaused = livePaused();
-  const activeLiveSnapshot = liveLogs.data ?? { entries: [], nextCursor: null, sequence: 0 };
-  const liveSnapshot = frozenLiveSnapshot() ?? activeLiveSnapshot;
   const selectedLogRowKey = state<string | null>(filteredLogEntries()[0]?.id ?? null);
   const effectiveSelectedLogRowKey = derive(() => {
     const selected = selectedLogRowKey();
@@ -123,29 +135,47 @@ export function LogsPage() {
       ? selected
       : (rows[0]?.id ?? null);
   });
-  const pauseLiveMode = (event: Event) => {
+  const pauseLiveMode = (event: Event, topOffset = 0) => {
     const viewport = event.currentTarget as HTMLElement | null;
-    const hasScrolled = Boolean(viewport && (viewport.scrollTop > 0 || viewport.scrollLeft > 0));
-
-    if (!hasScrolled || livePaused()) {
+    const hasScrolled = Boolean(
+      viewport && (viewport.scrollTop > topOffset || viewport.scrollLeft > 0),
+    );
+    if (!hasScrolled || livePaused() || resumeInProgress()) {
       return;
     }
 
-    frozenLiveSnapshot.set(activeLiveSnapshot);
+    frozenLiveSnapshot.set(activeLiveSnapshot());
     livePaused.set(true);
   };
   const setLiveMode = (nextLive: boolean) => {
     if (!nextLive) {
-      frozenLiveSnapshot.set(activeLiveSnapshot);
+      resumeInProgress.set(false);
+      frozenLiveSnapshot.set(activeLiveSnapshot());
       livePaused.set(true);
       return;
     }
 
+    resumeInProgress.set(true);
+    liveListApi.current?.scrollToTop();
+    logTableApi.current?.scrollToTop();
     frozenLiveSnapshot.set(null);
     livePaused.set(false);
-    void liveLogs.refresh();
+    olderEntries.set([]);
+    historyStarted.set(false);
+    historyCursor.set(null);
+    historyError.set("");
+    const finishResume = () => {
+      requestAnimationFrame(() => {
+        if (!livePaused()) {
+          liveListApi.current?.scrollToTop();
+          logTableApi.current?.scrollToTop();
+        }
+        resumeInProgress.set(false);
+      });
+    };
+    void liveLogs.refresh().then(finishResume, finishResume);
   };
-  const toggleLiveMode = () => setLiveMode(liveModePaused);
+  const toggleLiveMode = () => setLiveMode(livePaused());
   const setTableFilter = (value: string) => {
     const nextFilter = normalizeLogFilter(value);
 
@@ -162,6 +192,10 @@ export function LogsPage() {
   const loadOlder = async () => {
     const cursor = nextCursor();
     if (!cursor || historyPending()) return;
+    if (!historyStarted()) {
+      frozenLiveSnapshot.set(activeLiveSnapshot());
+      livePaused.set(true);
+    }
     historyPending.set(true);
     historyError.set("");
     try {
@@ -170,9 +204,10 @@ export function LogsPage() {
         { credentials: "same-origin" },
       );
       if (!response.ok) throw new Error(`Log history request failed (${response.status}).`);
-      const page = (await response.json()) as LiveLogSnapshot;
-      olderEntries.set([...olderEntries(), ...page.entries]);
-      nextCursor.set(page.nextCursor);
+      const page = (await response.json()) as OperationsLogPage;
+      olderEntries.set([...olderEntries(), ...page.entries.map(toLogEntry)]);
+      historyCursor.set(page.nextCursor);
+      historyStarted.set(true);
     } catch (cause) {
       historyError.set(cause instanceof Error ? cause.message : "Log history request failed.");
     } finally {
@@ -259,18 +294,19 @@ export function LogsPage() {
             <CardDescription>Recent route, theme, and workspace events.</CardDescription>
             <CardAction>
               <Block direction="row" align="center" gap="xs">
-                <Badge variant={liveModePaused ? "outline" : "success"}>
-                  {liveModePaused ? "Paused" : "Live"}
+                <Badge variant={livePaused() ? "outline" : "success"}>
+                  {livePaused() ? "Paused" : "Live"}
                 </Badge>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={liveModePaused ? "Resume live stream" : "Pause live stream"}
-                  aria-pressed={!liveModePaused}
+                  aria-label={livePaused() ? "Resume live stream" : "Pause live stream"}
+                  aria-pressed={!livePaused()}
+                  disabled={resumeInProgress()}
                   onPress={toggleLiveMode}
                 >
-                  {liveModePaused ? (
+                  {livePaused() ? (
                     <CirclePlayIcon size={18} aria-hidden="true" />
                   ) : (
                     <CirclePauseIcon size={18} aria-hidden="true" />
@@ -281,11 +317,12 @@ export function LogsPage() {
           </CardHeader>
           <CardContent>
             <VirtualList
+              apiRef={liveListApi}
               aria-label="Recent log stream"
               viewport="lg"
-              data-live-paused={liveModePaused ? "true" : "false"}
-              data-live-sequence={liveSnapshot.sequence}
-              items={liveSnapshot.entries}
+              data-live-paused={livePaused() ? "true" : "false"}
+              data-live-sequence={liveSnapshot().sequence}
+              items={liveSnapshot().entries}
               rowHeight={64}
               overscan={3}
               getKey={(entry) => entry.id}
@@ -306,11 +343,12 @@ export function LogsPage() {
             </CardAction>
           </CardHeader>
           <CardContent>
-            <Block gap="md">
+            <Block direction="column" gap="md">
               <Toolbar
                 title="Event rows"
+                align={{ base: "stretch", md: "center" }}
                 actions={
-                  <InputGroup>
+                  <InputGroup class="shrinkable-input-group">
                     <InputGroupText>
                       <SearchIcon size={16} aria-hidden="true" />
                     </InputGroupText>
@@ -326,18 +364,19 @@ export function LogsPage() {
               />
               {filteredLogEntries().length > 0 ? (
                 <VirtualTable
+                  apiRef={logTableApi}
                   aria-label="Log event details"
                   viewport="lg"
                   tableWidth="compact"
                   rows={filteredLogEntries()}
                   rowHeight={44}
-                  headerHeight={40}
+                  headerHeight={LOG_TABLE_HEADER_HEIGHT}
                   overscan={4}
                   getKey={(entry) => entry.id}
                   columns={logColumns}
                   selectedRowKey={effectiveSelectedLogRowKey()}
                   onSelectedRowKeyChange={(key) => selectedLogRowKey.set(key)}
-                  onScroll={pauseLiveMode}
+                  onScroll={(event) => pauseLiveMode(event, LOG_TABLE_HEADER_HEIGHT)}
                 />
               ) : (
                 <EmptyState
@@ -391,7 +430,7 @@ export function LogsPage() {
           <Grid columns={{ base: 1, md: 3 }} gap="lg">
             <Block direction="row" align="start" gap="md">
               <ServerCogIcon size={18} aria-hidden="true" />
-              <Block gap="xs">
+              <Block direction="column" gap="xs">
                 <Text weight="medium">Dense status rows</Text>
                 <Text tone="muted" size="sm">
                   The list keeps badges, timestamps, and long messages aligned inside fixed rows.
@@ -400,7 +439,7 @@ export function LogsPage() {
             </Block>
             <Block direction="row" align="start" gap="md">
               <TablePropertiesIcon size={18} aria-hidden="true" />
-              <Block gap="xs">
+              <Block direction="column" gap="xs">
                 <Text weight="medium">Horizontal table overflow</Text>
                 <Text tone="muted" size="sm">
                   The table scrolls without breaking sticky headers or selected row contrast.
@@ -409,7 +448,7 @@ export function LogsPage() {
             </Block>
             <Block direction="row" align="start" gap="md">
               <RouteIcon size={18} aria-hidden="true" />
-              <Block gap="xs">
+              <Block direction="column" gap="xs">
                 <Text weight="medium">Route-backed access</Text>
                 <Text tone="muted" size="sm">
                   Logs are part of the app navigation, not a detached component showcase.

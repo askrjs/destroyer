@@ -116,7 +116,9 @@ jobs:
         run: docker build -f Dockerfile.visual -t destroyer-visual . && docker run --name destroyer-visual-run destroyer-visual
       - name: Copy visual evidence
         if: always()
-        run: docker cp destroyer-visual-run:/workspace/artifacts ./artifacts || true
+        run: |
+          docker cp destroyer-visual-run:/workspace/artifacts ./artifacts || true
+          docker cp destroyer-visual-run:/workspace/test-results ./test-results || true
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v7

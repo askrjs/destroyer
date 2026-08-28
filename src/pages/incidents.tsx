@@ -2,7 +2,6 @@ import { state } from "@askrjs/askr";
 import { currentAuth, currentRoute, navigate } from "@askrjs/askr/router";
 import {
   Badge,
-  Block,
   Button,
   Card,
   CardAction,
@@ -11,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
   Checkbox,
+  Cluster,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -32,6 +32,10 @@ export function IncidentsPage() {
   const error = state("");
   const selected = state<readonly string[]>([]);
   const expandedIncidentId = state<string | null>(null);
+  const selectedInvestigatingCount = () =>
+    (incidents.data ?? []).filter(
+      (incident) => selected().includes(incident.id) && incident.status === "investigating",
+    ).length;
   const exportSelected = () => {
     const rows = (incidents.data ?? []).filter((incident) => selected().includes(incident.id));
     const csv = [
@@ -59,6 +63,7 @@ export function IncidentsPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ status, version: incident.version }),
       });
+      await response.text();
       if (!response.ok)
         throw new Error(
           response.status === 409
@@ -88,6 +93,7 @@ export function IncidentsPage() {
             body: JSON.stringify({ status: "acknowledged", version: incident.version }),
           },
         );
+        await response.text();
         if (!response.ok) throw new Error(`Bulk acknowledgement failed (${response.status}).`);
       }
       location.reload();
@@ -107,21 +113,23 @@ export function IncidentsPage() {
           {error()}
         </Text>
       ) : null}
-      <Button
-        type="button"
-        disabled={pending() === "bulk" || selected().length === 0}
-        onPress={() => void bulkAcknowledge()}
-      >
-        Acknowledge selected
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        disabled={selected().length === 0}
-        onPress={exportSelected}
-      >
-        Export selected
-      </Button>
+      <Cluster gap="sm">
+        <Button
+          type="button"
+          disabled={pending() !== "" || selectedInvestigatingCount() === 0}
+          onPress={() => void bulkAcknowledge()}
+        >
+          Acknowledge selected
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={selected().length === 0}
+          onPress={exportSelected}
+        >
+          Export selected
+        </Button>
+      </Cluster>
       {route.query.get("review") === "evidence" ? (
         <Card aria-label="Evidence confirmation">
           <CardHeader>
@@ -143,8 +151,8 @@ export function IncidentsPage() {
         aria-label="Operational incidents"
         viewport="lg"
         items={incidents.data ?? []}
-        rowHeight={220}
-        getRowHeight={(incident) => (expandedIncidentId() === incident.id ? 310 : 220)}
+        rowHeight={280}
+        getRowHeight={(incident) => (expandedIncidentId() === incident.id ? 380 : 280)}
         overscan={1}
         getKey={(incident) => incident.id}
         rowComponent={({ item: incident }) => (
@@ -159,7 +167,7 @@ export function IncidentsPage() {
               </CardAction>
             </CardHeader>
             <CardContent>
-              <Block direction={{ base: "column", sm: "row" }} gap="sm">
+              <Cluster gap="sm" align="center">
                 <Checkbox
                   aria-label={`Select ${incident.title}`}
                   checked={selected().includes(incident.id)}
@@ -174,7 +182,7 @@ export function IncidentsPage() {
                 <Text>Status: {incident.status}</Text>
                 {incident.status === "investigating" ? (
                   <Button
-                    disabled={pending() === incident.id}
+                    disabled={pending() !== ""}
                     onPress={() => void mutate(incident, "acknowledged")}
                   >
                     Acknowledge
@@ -183,7 +191,7 @@ export function IncidentsPage() {
                 {incident.status !== "resolved" ? (
                   <Button
                     variant="outline"
-                    disabled={pending() === incident.id}
+                    disabled={pending() !== ""}
                     onPress={() => void mutate(incident, "resolved")}
                   >
                     Resolve
@@ -200,7 +208,7 @@ export function IncidentsPage() {
                 >
                   Review evidence
                 </Button>
-              </Block>
+              </Cluster>
               <Collapsible
                 open={expandedIncidentId() === incident.id}
                 onOpenChange={(open) => expandedIncidentId.set(open ? incident.id : null)}

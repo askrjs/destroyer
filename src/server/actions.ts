@@ -43,7 +43,6 @@ export const settingsActionHandlers = [
     updateSecurityAction,
     async (context, input, dependencies) => {
       if (!context.auth.principal) return { redirect: "/login" };
-      await dependencies.scenarios.before(context.auth.principal.id, "settings.reset-invite");
       const value = await update(
         dependencies,
         context.auth.principal.id,
@@ -118,6 +117,7 @@ export const settingsActionHandlers = [
     resetInviteAction,
     async (context, input, dependencies) => {
       if (!context.auth.principal) return { redirect: "/login" };
+      await dependencies.scenarios.before(context.auth.principal.id, "settings.reset-invite");
       const result = await dependencies.settings.resetInvite(
         context.auth.principal.id,
         Number(input.version),

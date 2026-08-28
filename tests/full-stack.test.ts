@@ -1,5 +1,6 @@
 import { createJwtIssuer } from "@askrjs/auth/jwt";
 import { CLIENT_ADDRESS_HEADER, listen } from "@askrjs/node";
+import Database from "better-sqlite3";
 import { generateKeyPairSync } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -362,8 +363,11 @@ describe("Destroyer full stack", () => {
     }
   });
 
-  it("should expose versioned incident mutations and exact-confirmation account deletion", async () => {
-    const app = testApp(dependencies());
+  it("should expose versioned incident mutations and normalized-confirmation account deletion", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "destroyer-account-confirmation-"));
+    temporaryDirectories.push(directory);
+    const databasePath = join(directory, "destroyer.sqlite");
+    const app = testApp(dependencies({ path: databasePath }));
     const cookie = await authenticated(app, "delete.me@example.test");
     const headers = { cookie, "content-type": "application/json" };
     const incidents = await app.fetch(
@@ -387,6 +391,12 @@ describe("Destroyer full stack", () => {
     );
     expect(stale.status).toBe(409);
 
+    const database = new Database(databasePath);
+    database
+      .prepare("UPDATE principals SET email=? WHERE email=?")
+      .run("Delete.Me@Example.Test", "delete.me@example.test");
+    database.close();
+
     const wrong = await app.fetch(
       new Request("http://destroyer.test/api/account", {
         method: "DELETE",
@@ -399,10 +409,42 @@ describe("Destroyer full stack", () => {
       new Request("http://destroyer.test/api/account", {
         method: "DELETE",
         headers,
-        body: JSON.stringify({ confirmation: "delete.me@example.test" }),
+        body: JSON.stringify({ confirmation: "  delete.me@example.test  " }),
       }),
     );
     expect(deleted.status).toBe(204);
     expect(deleted.headers.get("set-cookie")).toContain("destroyer-session=");
+  });
+
+  it("should upgrade version-two seed data to the dense operational dataset", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "destroyer-seed-upgrade-"));
+    temporaryDirectories.push(directory);
+    const databasePath = join(directory, "destroyer.sqlite");
+    const initial = dependencies({ path: databasePath });
+    initial.lifecycle.close();
+
+    const oldDatabase = new Database(databasePath);
+    oldDatabase.prepare("UPDATE app_metadata SET value='2' WHERE key='seed_version'").run();
+    oldDatabase.prepare("DELETE FROM incidents WHERE id >= 'inc-200'").run();
+    oldDatabase.prepare("UPDATE services SET name='webhook-gateway' WHERE id='service-3'").run();
+    oldDatabase.close();
+
+    const upgraded = dependencies({ path: databasePath });
+    const incidents = await upgraded.operations.incidents();
+    const logs = await upgraded.operations.logs({ limit: 1 });
+    expect(incidents).toHaveLength(39);
+    expect(logs.entries[0]).toMatchObject({
+      service: "webhook-delivery-gateway-us-east-1",
+      route: "/api/workspaces/north-america-production/webhook-deliveries/attempts/retry-pending",
+    });
+
+    const upgradedDatabase = new Database(databasePath, { readonly: true });
+    expect(
+      upgradedDatabase
+        .prepare("SELECT value FROM app_metadata WHERE key='seed_version'")
+        .pluck()
+        .get(),
+    ).toBe("3");
+    upgradedDatabase.close();
   });
 });

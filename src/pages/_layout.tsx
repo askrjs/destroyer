@@ -160,7 +160,9 @@ export function PageLayout({ children }: { children?: unknown }) {
                       <NavLink href="/metrics">Metrics</NavLink>
                     </Block>
                     {currentAuth().authenticated ? (
-                      <NavLink href="/settings">Settings</NavLink>
+                      <Block hide={{ base: true, sm: false }}>
+                        <NavLink href="/settings">Settings</NavLink>
+                      </Block>
                     ) : null}
                     <Block hide={{ base: true, md: false }}>
                       <NavLink href="/about">About</NavLink>

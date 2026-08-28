@@ -1,4 +1,11 @@
-import { createRouteRegistry, group, lazy, route, type RouteOptions } from "@askrjs/askr/router";
+import {
+  createRouteRegistry,
+  fallback,
+  group,
+  lazy,
+  route,
+  type RouteOptions,
+} from "@askrjs/askr/router";
 import { safeRedirect } from "@askrjs/server/auth";
 import { requireAnonymous, requireUser } from "@askrjs/auth";
 import { resolveAuth } from "../auth";
@@ -16,6 +23,7 @@ const LoginPage = lazy(() => import("./login").then((module) => module.LoginPage
 const LogsPage = lazy(() => import("./logs").then((module) => module.LogsPage));
 const LogoutPage = lazy(() => import("./logout").then((module) => module.LogoutPage));
 const MetricsPage = lazy(() => import("./metrics").then((module) => module.MetricsPage));
+const NotFoundPage = lazy(() => import("./not-found").then((module) => module.NotFoundPage));
 const ProfilePage = lazy(() => import("./profile").then((module) => module.ProfilePage));
 const SettingsPage = lazy(() => import("./settings").then((module) => module.SettingsPage));
 const SignupPage = lazy(() => import("./signup").then((module) => module.SignupPage));
@@ -77,6 +85,7 @@ export const pageRegistry = createRouteRegistry(
       route("/settings/notifications", SettingsPage, settingsRoute);
       route("/settings/billing", SettingsPage, settingsRoute);
       route("/settings/workspace", SettingsPage, settingsRoute);
+      fallback(NotFoundPage);
     });
   },
   {

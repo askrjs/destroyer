@@ -29,7 +29,7 @@ export function LogoutPage() {
   return (
     <Page background="muted" center>
       <Block as="section" align="center" justify="center" grow>
-        <Block width="full" maxWidth="sm" gap="lg">
+        <Block width="full" maxWidth="sm" direction="column" gap="lg">
           <Card variant="raised">
             <CardHeader>
               <Brand>

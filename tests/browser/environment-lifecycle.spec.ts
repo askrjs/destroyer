@@ -18,15 +18,18 @@ function collectErrors(page: Page): string[] {
   return errors;
 }
 
-test("S09 should preserve a protected mobile deep link through sign-in", async ({ page }) => {
-  await createOperator(page, "mobile.deeplink@example.test");
+test("S09 should preserve a protected mobile deep link through sign-in", async ({
+  page,
+  principalEmail,
+}) => {
+  await createOperator(page, principalEmail);
   await page.goto("/logout");
   await page.getByRole("button", { name: "Sign out" }).click();
   await page.setViewportSize({ width: 390, height: 844 });
 
   await page.goto("/settings/workspace?source=security-review");
   await expect(page).toHaveURL(/\/login\?next=%2Fsettings%2Fworkspace%3Fsource%3Dsecurity-review$/);
-  await page.getByLabel("Email").fill("mobile.deeplink@example.test");
+  await page.getByLabel("Email").fill(principalEmail);
   await page.getByLabel("Password").fill("correct horse battery staple");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/settings\/workspace\?source=security-review$/);
@@ -56,7 +59,7 @@ test("S07 should tear down an open overlay when the authenticated session expire
   expect(errors).toEqual([]);
 });
 
-test("S08 should keep a Select portal inside the viewport while crossing breakpoints", async ({
+test("S08 @regression should keep a Select portal inside the viewport while crossing breakpoints", async ({
   page,
 }, testInfo) => {
   await createOperator(page, `responsive.portal.${testInfo.repeatEachIndex}@example.test`);

@@ -17,14 +17,20 @@ export type {
 } from "./contracts";
 
 export function createDependencies(
-  options: { path?: string; now?: () => number } = {},
+  options: { path?: string; now?: () => number; createId?: () => string } = {},
 ): AppDependencies {
   const path = options.path ?? process.env.DESTROYER_DB_PATH ?? ".data/destroyer.sqlite";
   const now =
     options.now ??
     (process.env.NODE_ENV === "test" ? () => Date.parse("2026-01-15T12:00:00.000Z") : Date.now);
+  let identifier = 0;
+  const createId =
+    options.createId ??
+    (process.env.DESTROYER_DETERMINISTIC_IDS === "1"
+      ? () => `00000000-0000-4000-8000-${String((identifier += 1)).padStart(12, "0")}`
+      : () => crypto.randomUUID());
   const opened = openDatabase(path, now);
-  const repositories = createRepositories(opened.database, now);
+  const repositories = createRepositories(opened.database, now, createId);
   const scenarios = createScenarioController();
   let closed = false;
 

@@ -42,7 +42,7 @@ export function SecuritySettings() {
   const deleting = state(false);
 
   return (
-    <Block gap="lg">
+    <Block direction="column" gap="lg">
       <Card variant="raised">
         <CardHeader>
           <CardTitle>Security</CardTitle>
@@ -71,7 +71,7 @@ export function SecuritySettings() {
           >
             <Field>
               <Block direction="row" align="center" justify="between" gap="md">
-                <Block gap="0">
+                <Block direction="column" gap="0">
                   <Label for="session-timeout">Session timeout</Label>
                   <Text tone="muted" size="sm">
                     End idle sessions after {sessionTimeout()} minutes.
@@ -134,7 +134,13 @@ export function SecuritySettings() {
           <Button
             type="button"
             variant="destructive"
-            disabled={deleting() || deleteConfirmation() !== currentAuth().principal?.email}
+            disabled={
+              deleting() ||
+              deleteConfirmation().trim().toLowerCase() !==
+                String(currentAuth().principal?.email ?? "")
+                  .trim()
+                  .toLowerCase()
+            }
             onPress={() => {
               deleting.set(true);
               deleteError.set("");
@@ -143,14 +149,19 @@ export function SecuritySettings() {
                 credentials: "same-origin",
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({ confirmation: deleteConfirmation() }),
-              }).then((response) => {
-                if (response.ok) {
-                  location.assign("/login");
-                  return;
-                }
-                deleting.set(false);
-                deleteError.set("Account deletion failed.");
-              });
+              })
+                .then((response) => {
+                  if (response.ok) {
+                    location.assign("/login");
+                    return;
+                  }
+                  deleting.set(false);
+                  deleteError.set("Account deletion failed.");
+                })
+                .catch(() => {
+                  deleting.set(false);
+                  deleteError.set("Account deletion failed. Check your connection and retry.");
+                });
             }}
           >
             {deleting() ? "Deleting…" : "Delete account"}

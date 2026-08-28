@@ -62,7 +62,7 @@ function seed(database: Database.Database, now: () => number): void {
       | { value: string }
       | undefined
   )?.value;
-  if (version === "2") return;
+  if (version === "3") return;
   const timestamp = now();
   database.transaction(() => {
     if (!version) {
@@ -84,6 +84,23 @@ function seed(database: Database.Database, now: () => number): void {
           new Date(timestamp).toISOString(),
         );
       }
+      database
+        .prepare("INSERT INTO policies VALUES (?, ?, ?, 1, ?)")
+        .run(
+          "support-escalation",
+          "support-escalation",
+          JSON.stringify({ rules: [{ when: "severity == 'high'", notify: "on-call" }] }),
+          new Date(timestamp).toISOString(),
+        );
+    }
+
+    if (version !== "3") {
+      database
+        .prepare("UPDATE services SET name=? WHERE id='service-3'")
+        .run("webhook-delivery-gateway-us-east-1");
+      const insertIncident = database.prepare(
+        "INSERT OR IGNORE INTO incidents VALUES (?, ?, ?, ?, ?, 1, ?, ?)",
+      );
       for (let index = 0; index < 36; index += 1) {
         insertIncident.run(
           `inc-${200 + index}`,
@@ -95,17 +112,6 @@ function seed(database: Database.Database, now: () => number): void {
           new Date(timestamp - index * 60_000).toISOString(),
         );
       }
-      database
-        .prepare("INSERT INTO policies VALUES (?, ?, ?, 1, ?)")
-        .run(
-          "support-escalation",
-          "support-escalation",
-          JSON.stringify({ rules: [{ when: "severity == 'high'", notify: "on-call" }] }),
-          new Date(timestamp).toISOString(),
-        );
-    }
-
-    if (version !== "2") {
       database.prepare("DELETE FROM log_events").run();
       database.prepare("DELETE FROM metric_samples").run();
       const insertLog = database.prepare(
@@ -144,7 +150,7 @@ function seed(database: Database.Database, now: () => number): void {
       }
       database
         .prepare(
-          "INSERT INTO app_metadata(key,value) VALUES ('seed_version','2') ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+          "INSERT INTO app_metadata(key,value) VALUES ('seed_version','3') ON CONFLICT(key) DO UPDATE SET value=excluded.value",
         )
         .run();
     }

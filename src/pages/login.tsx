@@ -59,7 +59,7 @@ export function LoginPage() {
   return (
     <Page background="muted" center>
       <Block as="section" align="center" justify="center" grow>
-        <Block width="full" maxWidth="sm" gap="lg">
+        <Block width="full" maxWidth="sm" direction="column" gap="lg">
           <Card variant="raised">
             <CardHeader>
               <Brand>
@@ -75,7 +75,7 @@ export function LoginPage() {
               <Block as="form" direction="column" gap="md" onSubmit={submit}>
                 <Field>
                   <Label for="login-email">Email</Label>
-                  <InputGroup>
+                  <InputGroup class="shrinkable-input-group">
                     <InputGroupText>
                       <MailIcon size={16} aria-hidden="true" />
                     </InputGroupText>
@@ -90,7 +90,7 @@ export function LoginPage() {
                 </Field>
                 <Field>
                   <Label for="login-password">Password</Label>
-                  <InputGroup>
+                  <InputGroup class="shrinkable-input-group">
                     <InputGroupText>
                       <LockIcon size={16} aria-hidden="true" />
                     </InputGroupText>

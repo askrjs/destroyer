@@ -33,8 +33,9 @@ async function control(page: Page, path: string, body?: unknown): Promise<unknow
 
 test("S24 should persist the approver group only through the manual approval workflow", async ({
   page,
+  principalEmail,
 }) => {
-  await createOperator(page, "manual.approver@example.test");
+  await createOperator(page, principalEmail);
   await page.goto("/settings/workspace");
   await choose(page, "Approval policy", "Automatic approval");
   await expect(page.getByLabel("Approver group")).toHaveCount(0);
@@ -85,7 +86,7 @@ test("S26 should autosave rapid notification changes to the final intent", async
     .toBe(true);
 });
 
-test("S27 CB04 should preserve valid profile input through validation, failure, retry, and optimistic conflict", async ({
+test("S27 CB04 @regression should preserve valid profile input through validation, failure, retry, and optimistic conflict", async ({
   page,
   principalEmail,
 }) => {
@@ -122,7 +123,7 @@ test("S27 CB04 should preserve valid profile input through validation, failure, 
   await expect(stale.getByLabel("Display name")).toHaveValue("Local recovery name");
 });
 
-test("S28 should require exact typed confirmation, clear authentication, and redirect after deletion", async ({
+test("S28 should require normalized typed confirmation, clear authentication, and redirect after deletion", async ({
   page,
 }) => {
   const email = "delete.operator@example.test";
@@ -132,7 +133,7 @@ test("S28 should require exact typed confirmation, clear authentication, and red
   const remove = page.getByRole("button", { name: "Delete account" });
   await confirmation.fill("wrong@example.test");
   await expect(remove).toBeDisabled();
-  await confirmation.fill(email);
+  await confirmation.fill(`  ${email.toUpperCase()}  `);
   await expect(remove).toBeEnabled();
   await remove.click();
   await expect(page).toHaveURL(/\/login$/);

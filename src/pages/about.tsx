@@ -79,11 +79,15 @@ export function AboutPage() {
             </Block>
             <Block direction="row" align="center" gap="sm">
               <ShieldCheckIcon size={16} aria-hidden="true" />
-              <span>No extra routes beyond overview, about, contact, and the fallback.</span>
+              <span>
+                Product routes stay explicit, local, and narratable from action to result.
+              </span>
             </Block>
             <Block direction="row" align="center" gap="sm">
               <ShieldCheckIcon size={16} aria-hidden="true" />
-              <span>No SSR or SSG changes in this pass.</span>
+              <span>
+                SSR, hydration, persistence, and API behavior remain visible at the boundary.
+              </span>
             </Block>
           </Block>
         </CardContent>

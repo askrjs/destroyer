@@ -7,6 +7,11 @@ export default defineConfig({
     askr({ optimizeTemplates: true }),
     askrServer({ entry: "./src/server/entry-server.ts" }),
   ],
+  server: {
+    host: "127.0.0.1",
+    port: 5173,
+    allowedHosts: ["127.0.0.1", "localhost", "[::1]"],
+  },
   lint: { ignorePatterns: ["dist/**", "node_modules/**", "coverage/**"] },
   test: {
     exclude: [

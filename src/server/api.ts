@@ -151,7 +151,9 @@ export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
     .delete("/account", {
       input: {
         body: {
-          schema: schema.object({ confirmation: schema.email() }),
+          schema: schema.object({
+            confirmation: schema.string({ minLength: 3, maxLength: 254 }),
+          }),
           mediaTypes: ["application/json"],
         },
       },
@@ -161,7 +163,7 @@ export function defineOperationsApi(api: AskrAppApi<AppDependencies>) {
           ctx.auth.principal?.id ?? "",
           input.body.confirmation,
         );
-        if (!deleted) return ctx.unprocessableEntity("Type the account email exactly.");
+        if (!deleted) return ctx.unprocessableEntity("Type the account email to confirm deletion.");
         return ctx.clearCookie(ctx.noContent(), "destroyer-session", {
           httpOnly: true,
           sameSite: "lax",

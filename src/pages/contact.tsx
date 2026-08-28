@@ -89,7 +89,7 @@ export function ContactPage() {
           <Block as="form" direction="column" gap="md" onSubmit={submit}>
             <Field>
               <Label for="contact-email">Email</Label>
-              <InputGroup>
+              <InputGroup class="shrinkable-input-group">
                 <InputGroupText>
                   <MailIcon size={16} aria-hidden="true" />
                 </InputGroupText>
@@ -131,7 +131,14 @@ export function ContactPage() {
             </ButtonGroup>
           </Block>
           {receipt() ? (
-            <Block background="muted" padding="md" radius="md" gap="xs" role="status">
+            <Block
+              direction="column"
+              background="muted"
+              padding="md"
+              radius="md"
+              gap="xs"
+              role="status"
+            >
               <Block direction="row" align="center" gap="sm">
                 <CheckCircle2Icon size={16} aria-hidden="true" />
                 <Text weight="semibold">Support request received</Text>

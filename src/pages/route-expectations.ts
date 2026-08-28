@@ -18,7 +18,7 @@ export const routeExpectations: readonly RouteExpectation[] = [
   { path: "/docs/settings", authenticated: false, heading: "Settings shell" },
   { path: "/docs/deployment", authenticated: false, heading: "Deployment" },
   { path: "/login", authenticated: false, heading: "Sign in" },
-  { path: "/signup", authenticated: false, heading: "Create account" },
+  { path: "/signup", authenticated: false, heading: "Create your operator account" },
   { path: "/logs", authenticated: true, heading: "Logs" },
   { path: "/incidents", authenticated: true, heading: "Incidents" },
   { path: "/metrics", authenticated: true, heading: "Metrics" },

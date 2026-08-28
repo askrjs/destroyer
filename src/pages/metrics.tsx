@@ -252,7 +252,7 @@ export function MetricsPage() {
               <CardHeader>
                 <CardTitle>Response distribution</CardTitle>
                 <CardDescription>
-                  Requests by latency band over the active 24-hour window.
+                  Requests by latency band across persisted log history.
                 </CardDescription>
                 <CardAction>
                   <ChartColumnIncreasingIcon size={18} aria-hidden="true" />
@@ -264,10 +264,10 @@ export function MetricsPage() {
                   data={responseDistribution()}
                   rowKey="id"
                   label="Response latency distribution"
-                  summary="Most requests complete within 200ms; six percent remain in the 400ms-and-over tail."
+                  summary="Request counts grouped into latency bands from persisted operational events."
                 >
                   <ResponseDistributionPlot.Bar x="latencyBand" y="requests" title="description" />
-                  <ResponseDistributionPlot.Axis axis="y" label="Requests (thousands)" />
+                  <ResponseDistributionPlot.Axis axis="y" label="Requests" />
                   <ResponseDistributionPlot.Tooltip />
                 </ResponseDistributionPlot.Root>
               </CardContent>
@@ -289,7 +289,7 @@ export function MetricsPage() {
                   data={subsystemMix()}
                   rowKey="id"
                   label="Subsystem event mix"
-                  summary="Router and theme activity account for 64 percent of observed workspace events."
+                  summary="Relative share of persisted operational events for the six busiest services."
                 >
                   <SubsystemMixPlot.Arc
                     value="share"
@@ -322,7 +322,7 @@ export function MetricsPage() {
                   data={routeWorkload()}
                   rowKey="id"
                   label="Route workload"
-                  summary="Logs carry the highest workload while virtual rows and live updates are active."
+                  summary="Persisted request counts grouped by route."
                 >
                   <RouteWorkloadPlot.Bar
                     x="route"
@@ -338,7 +338,9 @@ export function MetricsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Reliability trend</CardTitle>
-                <CardDescription>Seven-day request success rate for the workspace.</CardDescription>
+                <CardDescription>
+                  Daily request success rate across persisted log history.
+                </CardDescription>
                 <CardAction>
                   <ChartLineIcon size={18} aria-hidden="true" />
                 </CardAction>
@@ -349,7 +351,7 @@ export function MetricsPage() {
                   data={reliabilityTrend()}
                   rowKey="id"
                   label="Weekly reliability"
-                  summary="Reliability remains above 99.7 percent and ends the week at 99.92 percent."
+                  summary="Daily success rate calculated from persisted error and request events."
                 >
                   <ReliabilityPlot.Scale
                     channel="y"
