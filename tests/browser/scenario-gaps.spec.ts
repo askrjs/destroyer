@@ -57,8 +57,9 @@ test("S01 should cancel, discard, and save through owned dirty Workspace navigat
   await expect(dialog).toHaveCount(0);
 });
 
-test.fixme("S19 @finding virtualized incident operations require published variable-height collection support", async () => {
-  // The natural incident surface uses cards; simulated virtualization would be dishonest coverage.
+test.fixme("S19 @finding askr-ui#119 virtualized incident operations require variable-height row support", async () => {
+  // VirtualList enforces one fixed height and overflow:hidden per row. The natural inline incident
+  // timeline stays quarantined until the public primitive can reposition keyed rows after expansion.
 });
 
 test("S23 should keep independent Metrics sections alive through held, failed, and empty reads", async ({
