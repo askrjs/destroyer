@@ -20,9 +20,9 @@ describe("scenario controller", () => {
     controller.arm("operator", "settings.update", "hold-next");
     const held = controller.before("operator", "settings.update");
 
-    await expect.poll(() => controller.state("operator")).toEqual([
-      { operation: "settings.update", mode: "hold-next", blocked: true },
-    ]);
+    await expect
+      .poll(() => controller.state("operator"))
+      .toEqual([{ operation: "settings.update", mode: "hold-next", blocked: true }]);
     expect(controller.release("operator", "settings.update")).toBe(true);
     await expect(held).resolves.toBe("hold-next");
     expect(controller.state("operator")).toEqual([]);

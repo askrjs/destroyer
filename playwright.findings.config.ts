@@ -8,7 +8,10 @@ export default defineConfig({
   ...base,
   repeatEach: 3,
   maxFailures: 0,
-  reporter: [["html", { outputFolder: `artifacts/findings-report${suffix}`, open: "never" }], ["line"]],
+  reporter: [
+    ["html", { outputFolder: `artifacts/findings-report${suffix}`, open: "never" }],
+    ["line"],
+  ],
   outputDir: `artifacts/findings-results${suffix}`,
   use: {
     ...base.use,

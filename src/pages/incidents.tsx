@@ -1,5 +1,5 @@
 import { state } from "@askrjs/askr";
-import { currentAuth } from "@askrjs/askr/router";
+import { currentAuth, currentRoute, navigate } from "@askrjs/askr/router";
 import {
   Badge,
   Block,
@@ -23,6 +23,10 @@ import type { IncidentRecord } from "../server/contracts";
 
 export function IncidentsPage() {
   const incidents = incidentsData(currentAuth().principal?.id ?? "anonymous");
+  const route = currentRoute<never, { incidentId?: string }>();
+  const evidenceIncident = (incidents.data ?? []).find(
+    (incident) => incident.id === route.state?.incidentId,
+  );
   const pending = state("");
   const error = state("");
   const selected = state<readonly string[]>([]);
@@ -91,6 +95,23 @@ export function IncidentsPage() {
       >
         Acknowledge selected
       </Button>
+      {route.query.get("review") === "evidence" ? (
+        <Card aria-label="Evidence confirmation">
+          <CardHeader>
+            <CardTitle>Confirm incident evidence</CardTitle>
+            <CardDescription>
+              {evidenceIncident
+                ? `Review the staged evidence for ${evidenceIncident.title}.`
+                : "The originating incident is unavailable in this history entry."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button type="button" variant="outline" onPress={() => history.back()}>
+              Back to incidents
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
       <Block gap="md" aria-label="Operational incidents">
         {(incidents.data ?? []).map((incident) => (
           <Card key={incident.id}>
@@ -134,6 +155,17 @@ export function IncidentsPage() {
                     Resolve
                   </Button>
                 ) : null}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onPress={() =>
+                    navigate("/incidents?review=evidence", {
+                      state: { incidentId: incident.id },
+                    })
+                  }
+                >
+                  Review evidence
+                </Button>
               </Block>
               <Collapsible>
                 <CollapsibleTrigger>View timeline</CollapsibleTrigger>

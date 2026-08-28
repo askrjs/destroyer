@@ -1,10 +1,7 @@
 import { defineServerQueries, serveQuery } from "@askrjs/askr/data";
 import { operatorActivityQuery, operatorSettingsQuery } from "../features/settings/settings-model";
 import type { AppDependencies } from "./dependencies";
-import {
-  operationsMetricsQuery,
-  operationsSummaryQuery,
-} from "../features/metrics/metrics-model";
+import { operationsMetricsQuery, operationsSummaryQuery } from "../features/metrics/metrics-model";
 import { liveLogQuery, toLogEntry } from "../features/logs/live-logs-resource";
 
 export function createQueryRegistry(dependencies: AppDependencies) {

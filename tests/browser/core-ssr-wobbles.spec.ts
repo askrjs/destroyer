@@ -43,7 +43,9 @@ test.fixme("CC02 hydration mismatch diagnostics need an independently recoverabl
   // as a healthy product workflow without first resolving the framework capability.
 });
 
-test("CC05 should load a lazy production route and preserve hydrated navigation", async ({ page }) => {
+test("CC05 should load a lazy production route and preserve hydrated navigation", async ({
+  page,
+}) => {
   const scripts = new Set<string>();
   page.on("response", (response) => {
     const pathname = new URL(response.url()).pathname;
@@ -56,9 +58,7 @@ test("CC05 should load a lazy production route and preserve hydrated navigation"
   expect([...scripts].some((path) => /docs-/i.test(path))).toBe(true);
 });
 
-test("CC05 should preserve Block layout through production SSR and hydration", async ({
-  page,
-}) => {
+test("CC05 should preserve Block layout through production SSR and hydration", async ({ page }) => {
   test.info().annotations.push({
     type: "expected-observed",
     description:

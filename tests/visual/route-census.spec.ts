@@ -38,7 +38,11 @@ for (const route of [...routeExpectations, { ...unknownRouteExpectation, authent
         if (message.type() === "error") errors.push(message.text());
       });
       page.on("pageerror", (error) => errors.push(error.message));
-      page.on("requestfailed", (request) => errors.push(`${request.method()} ${request.url()}: ${request.failure()?.errorText ?? "failed"}`));
+      page.on("requestfailed", (request) =>
+        errors.push(
+          `${request.method()} ${request.url()}: ${request.failure()?.errorText ?? "failed"}`,
+        ),
+      );
       page.on("response", (response) => {
         if (response.status() >= 400 && response.status() !== 404)
           errors.push(`${response.status()} ${response.url()}`);
@@ -77,7 +81,9 @@ for (const route of [...routeExpectations, { ...unknownRouteExpectation, authent
       if (visualCase.mode === "forced-colors")
         expect(await page.evaluate(() => matchMedia("(forced-colors: active)").matches)).toBe(true);
       if (visualCase.mode === "reduced-motion")
-        expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
+        expect(
+          await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches),
+        ).toBe(true);
       expect(errors).toEqual([]);
       await expect(page).toHaveScreenshot(
         `${route.path.replace(/^\/$/u, "home").replaceAll("/", "-")}-${visualCase.viewport.name}-${visualCase.mode}-${visualCase.theme}.png`,

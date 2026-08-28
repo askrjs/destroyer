@@ -73,7 +73,9 @@ test("S10 should restore Logs filter focus and state through Back and Forward", 
   await expect(page.getByRole("heading", { name: "Metrics" })).toBeVisible();
 });
 
-test("S11 should keep an open Select portal themed during a live theme change", async ({ page }) => {
+test("S11 should keep an open Select portal themed during a live theme change", async ({
+  page,
+}) => {
   await createOperator(page, "portal.theme@example.test");
   await page.goto("/settings/preferences");
   await page.getByLabel("Region").click();
@@ -131,9 +133,7 @@ test("S15 should tolerate an immediate interaction before hydration completes", 
   );
   for (const interactionPage of interactionPages) {
     await expect(interactionPage).toHaveURL(/\/about$/);
-    await expect(
-      interactionPage.getByRole("heading", { name: "About Destroyer" }),
-    ).toBeVisible();
+    await expect(interactionPage.getByRole("heading", { name: "About Destroyer" })).toBeVisible();
     expect(
       await interactionPage.evaluate(() => sessionStorage.getItem("destroyer-prehydration-click")),
     ).toBe("true");
@@ -142,11 +142,12 @@ test("S15 should tolerate an immediate interaction before hydration completes", 
   const assetsRoot = resolve(process.cwd(), "dist/assets");
   const asset = readdirSync(assetsRoot)
     .filter((name) => name.endsWith(".js"))
-    .sort((left, right) => statSync(resolve(assetsRoot, right)).size - statSync(resolve(assetsRoot, left)).size)[0];
+    .sort(
+      (left, right) =>
+        statSync(resolve(assetsRoot, right)).size - statSync(resolve(assetsRoot, left)).size,
+    )[0];
   expect(asset).toBeTruthy();
-  await Promise.all(
-    Array.from({ length: 24 }, () => abandonStaticAsset(`/assets/${asset ?? ""}`)),
-  );
+  await Promise.all(Array.from({ length: 24 }, () => abandonStaticAsset(`/assets/${asset ?? ""}`)));
   expect((await context.request.get("/livez")).status()).toBe(200);
 });
 
@@ -174,9 +175,7 @@ test("S31 should preserve dirty Workspace input offline and commit after reconne
     .toBe("member");
 });
 
-test("should expose a native article heading on Docs", async ({
-  page,
-}, testInfo) => {
+test("should expose a native article heading on Docs", async ({ page }, testInfo) => {
   await page.goto("/docs");
   await expect(page.locator("h1", { hasText: "Askr documentation" })).toBeVisible();
 });

@@ -38,10 +38,7 @@ import {
   type SubsystemMixRow,
 } from "../features/metrics/metrics-data";
 import { liveLogQuery } from "../features/logs/live-logs-resource";
-import {
-  operationsMetricsData,
-  operationsSummaryData,
-} from "../features/metrics/metrics-model";
+import { operationsMetricsData, operationsSummaryData } from "../features/metrics/metrics-model";
 
 const ResponseDistributionPlot = createPlot<ResponseDistributionRow>();
 const RouteWorkloadPlot = createPlot<RouteWorkloadRow>();
@@ -152,7 +149,9 @@ export function MetricsPage() {
         <Card variant="raised" aria-busy={summary.loading || summary.refreshing}>
           <CardHeader>
             <CardTitle>Service summary</CardTitle>
-            <CardDescription>Current service and incident health from the summary API.</CardDescription>
+            <CardDescription>
+              Current service and incident health from the summary API.
+            </CardDescription>
             <CardAction>
               <Button type="button" variant="outline" onPress={() => void summary.refresh()}>
                 Refresh summary
@@ -168,7 +167,8 @@ export function MetricsPage() {
               />
             ) : (
               <StatDescription>
-                {summary.data?.healthyServices ?? 0} healthy services; {summary.data?.openIncidents ?? 0} open incidents.
+                {summary.data?.healthyServices ?? 0} healthy services;{" "}
+                {summary.data?.openIncidents ?? 0} open incidents.
               </StatDescription>
             )}
           </CardContent>
@@ -192,7 +192,9 @@ export function MetricsPage() {
                 description="The logs query failed without collapsing summary or metrics."
               />
             ) : (
-              <StatDescription>{logs.data?.entries.length ?? 0} recent persisted events.</StatDescription>
+              <StatDescription>
+                {logs.data?.entries.length ?? 0} recent persisted events.
+              </StatDescription>
             )}
           </CardContent>
         </Card>

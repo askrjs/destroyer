@@ -24,7 +24,10 @@ async function post(page: Page, path: string, body: unknown): Promise<number> {
   );
 }
 
-test("S17 should select and bulk acknowledge eligible incidents", async ({ page, principalEmail }) => {
+test("S17 should select and bulk acknowledge eligible incidents", async ({
+  page,
+  principalEmail,
+}) => {
   await createOperator(page, principalEmail);
   await page.goto("/incidents");
   await page.getByRole("checkbox", { name: "Select Webhook delivery delays" }).click();

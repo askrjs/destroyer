@@ -1,4 +1,10 @@
-import { expect, test as base, type BrowserContext, type Page, type TestInfo } from "@playwright/test";
+import {
+  expect,
+  test as base,
+  type BrowserContext,
+  type Page,
+  type TestInfo,
+} from "@playwright/test";
 
 export interface BrowserEvidence {
   consoleErrors: string[];

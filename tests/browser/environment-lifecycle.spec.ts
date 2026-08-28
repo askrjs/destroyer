@@ -86,8 +86,11 @@ test("S08 should keep a Select portal inside the viewport while crossing breakpo
 });
 
 for (const environment of ["forced-colors", "reduced-motion", "zoom-200"] as const) {
-  const scenarioId = environment === "forced-colors" ? "S12" : environment === "reduced-motion" ? "S14" : "S13";
-  test(`${scenarioId} should preserve long-copy interaction under ${environment}`, async ({ page }) => {
+  const scenarioId =
+    environment === "forced-colors" ? "S12" : environment === "reduced-motion" ? "S14" : "S13";
+  test(`${scenarioId} should preserve long-copy interaction under ${environment}`, async ({
+    page,
+  }) => {
     if (environment === "forced-colors") await page.emulateMedia({ forcedColors: "active" });
     if (environment === "reduced-motion") await page.emulateMedia({ reducedMotion: "reduce" });
     await page.setViewportSize({ width: 390, height: 844 });

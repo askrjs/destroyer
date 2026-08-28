@@ -6,7 +6,13 @@ if (process.env.DESTROYER_CANONICAL_VISUAL !== "1") {
 }
 const result = spawnSync(
   process.execPath,
-  ["node_modules/@playwright/test/cli.js", "test", "--config", "playwright.visual.config.ts", "--update-snapshots"],
+  [
+    "node_modules/@playwright/test/cli.js",
+    "test",
+    "--config",
+    "playwright.visual.config.ts",
+    "--update-snapshots",
+  ],
   { stdio: "inherit" },
 );
 process.exit(result.status ?? 1);

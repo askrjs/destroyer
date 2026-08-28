@@ -1,8 +1,6 @@
 import { expect, test } from "./fixture";
 
-test("should preserve Block layout in Vite development", async ({
-  page,
-}) => {
+test("should preserve Block layout in Vite development", async ({ page }) => {
   test.info().annotations.push({
     type: "issue",
     description: "https://github.com/askrjs/askr-vite/issues/39",

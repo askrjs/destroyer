@@ -1,6 +1,7 @@
-import { state } from "@askrjs/askr";
+import { derive, state } from "@askrjs/askr";
 import { action, ActionForm } from "@askrjs/askr/actions";
-import { currentAuth } from "@askrjs/askr/router";
+import { on } from "@askrjs/askr/resources";
+import { currentAuth, navigate } from "@askrjs/askr/router";
 import { Building2Icon, Link2OffIcon, MoreHorizontalIcon, Trash2Icon } from "@askrjs/lucide";
 import {
   AlertDialog,
@@ -57,6 +58,24 @@ export function WorkspaceSettings() {
   );
   const approverGroup = state(settings.data?.approverGroup ?? "Operations leads");
   const mutationError = state("");
+  const saved = state(true);
+  const navigationDialogOpen = state(false);
+  const workspaceNavigationTrigger = state({ current: null as HTMLElement | null })();
+  const dirty = derive(
+    () =>
+      !saved() &&
+      (defaultRole() !== (settings.data?.defaultRole ?? "viewer") ||
+        approvalPolicy() !== (settings.data?.approvalPolicy ?? "manual") ||
+        approverGroup() !== (settings.data?.approverGroup ?? "Operations leads")),
+  );
+  on(
+    () => window,
+    "beforeunload",
+    (event) => {
+      if (!dirty()) return;
+      event.preventDefault();
+    },
+  );
   const inviteDialogOpen = state(false);
   const inviteActionsTrigger = state({ current: null as HTMLElement | null })();
   return (
@@ -85,6 +104,7 @@ export function WorkspaceSettings() {
                 .then((result) => {
                   if (result.kind === "conflict")
                     mutationError.set("Settings changed in another session; reload and retry.");
+                  else saved.set(true);
                 })
                 .catch((error: unknown) =>
                   mutationError.set(
@@ -100,7 +120,10 @@ export function WorkspaceSettings() {
                   name="defaultRole"
                   value={defaultRole()}
                   onValueChange={(value) => {
-                    if (value === "viewer" || value === "member") setDefaultRole(value);
+                    if (value === "viewer" || value === "member") {
+                      saved.set(false);
+                      setDefaultRole(value);
+                    }
                   }}
                 >
                   <SelectTrigger id="settings-default-role">
@@ -120,7 +143,10 @@ export function WorkspaceSettings() {
                   name="approvalPolicy"
                   value={approvalPolicy()}
                   onValueChange={(value) => {
-                    if (value === "automatic" || value === "manual") setApprovalPolicy(value);
+                    if (value === "automatic" || value === "manual") {
+                      saved.set(false);
+                      setApprovalPolicy(value);
+                    }
                   }}
                 >
                   <SelectTrigger id="settings-approval">
@@ -142,9 +168,10 @@ export function WorkspaceSettings() {
                   id="settings-approver-group"
                   name="approverGroup"
                   value={approverGroup()}
-                  onInput={(event: Event) =>
-                    approverGroup.set((event.currentTarget as HTMLInputElement).value)
-                  }
+                  onInput={(event: Event) => {
+                    saved.set(false);
+                    approverGroup.set((event.currentTarget as HTMLInputElement).value);
+                  }}
                   required
                 />
               </Field>
@@ -157,7 +184,39 @@ export function WorkspaceSettings() {
             <Button type="submit" variant="primary" disabled={save.state().pending}>
               Save workspace
             </Button>
+            <Button
+              ref={(node) => (workspaceNavigationTrigger.current = node as HTMLElement | null)}
+              type="button"
+              variant="outline"
+              onPress={() => (dirty() ? navigationDialogOpen.set(true) : navigate("/logs"))}
+            >
+              Return to logs
+            </Button>
           </ActionForm>
+          <AlertDialog
+            open={navigationDialogOpen()}
+            onOpenChange={(open) => navigationDialogOpen.set(open)}
+          >
+            <AlertDialogPortal>
+              <AlertDialogOverlay />
+              <AlertDialogContent restoreFocus={() => workspaceNavigationTrigger.current}>
+                <AlertDialogTitle>Leave without saving workspace changes?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your local role and approval changes will be discarded.
+                </AlertDialogDescription>
+                <Block direction="row" justify="end" gap="sm">
+                  <Button asChild variant="outline">
+                    <AlertDialogCancel>Keep editing</AlertDialogCancel>
+                  </Button>
+                  <Button asChild variant="destructive">
+                    <AlertDialogAction onPress={() => navigate("/logs")}>
+                      Discard changes
+                    </AlertDialogAction>
+                  </Button>
+                </Block>
+              </AlertDialogContent>
+            </AlertDialogPortal>
+          </AlertDialog>
         </CardContent>
       </Card>
       <Card>

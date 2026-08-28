@@ -11,19 +11,55 @@ async function createOperator(page: Page, email: string): Promise<void> {
   await expect(page).toHaveURL(/\/logs$/);
 }
 
-test.fixme(
-  "S01 @finding dirty Workspace navigation requires a public navigation-blocking contract",
-  async () => {
-    // Destroyer has no public Askr navigation-blocking API to compose this without patching internals.
-  },
-);
+test("S01 should cancel, discard, and save through owned dirty Workspace navigation", async ({
+  page,
+  principalEmail,
+}) => {
+  await createOperator(page, principalEmail);
+  await page.goto("/settings/workspace");
+  const approverGroup = page.getByLabel("Approver group");
+  const returnToLogs = page.getByRole("button", { name: "Return to logs" });
+  await approverGroup.fill("Release captains");
+  expect(
+    await page.evaluate(() => {
+      const event = new Event("beforeunload", { cancelable: true });
+      return !window.dispatchEvent(event);
+    }),
+  ).toBe(true);
 
-test.fixme(
-  "S19 @finding virtualized incident operations require published variable-height collection support",
-  async () => {
-    // The natural incident surface uses cards; simulated virtualization would be dishonest coverage.
-  },
-);
+  await returnToLogs.click();
+  const dialog = page.getByRole("alertdialog", {
+    name: "Leave without saving workspace changes?",
+  });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Keep editing" }).click();
+  await expect(returnToLogs).toBeFocused();
+  await expect(approverGroup).toHaveValue("Release captains");
+
+  await returnToLogs.click();
+  await dialog.getByRole("button", { name: "Discard changes" }).click();
+  await expect(page).toHaveURL(/\/logs$/);
+  await page.goto("/settings/workspace");
+  await expect(approverGroup).toHaveValue("Operations leads");
+
+  await approverGroup.fill("Release captains");
+  await page.getByRole("button", { name: "Save workspace" }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const response = await fetch("/api/settings", { credentials: "same-origin" });
+        return ((await response.json()) as { approverGroup: string }).approverGroup;
+      }),
+    )
+    .toBe("Release captains");
+  await returnToLogs.click();
+  await expect(page).toHaveURL(/\/logs$/);
+  await expect(dialog).toHaveCount(0);
+});
+
+test.fixme("S19 @finding virtualized incident operations require published variable-height collection support", async () => {
+  // The natural incident surface uses cards; simulated virtualization would be dishonest coverage.
+});
 
 test("S23 should keep independent Metrics sections alive through held, failed, and empty reads", async ({
   page,
@@ -80,7 +116,9 @@ test("S23 should keep independent Metrics sections alive through held, failed, a
   );
   await page.getByRole("button", { name: "Refresh metrics" }).click();
   expect(((await (await emptyMetrics).json()) as { requests: number }).requests).toBe(0);
-  const requests = page.getByText("Requests", { exact: true }).locator('xpath=ancestor::*[@data-slot="card"]');
+  const requests = page
+    .getByText("Requests", { exact: true })
+    .locator('xpath=ancestor::*[@data-slot="card"]');
   await expect(requests.getByText("0", { exact: true })).toBeVisible();
   await expect(summary).toContainText("healthy services");
 
@@ -104,7 +142,9 @@ test("S32 CB03 should ignore a reverse-order stale notification response", async
     });
   });
   await toggle.click();
-  await expect.poll(() => page.evaluate(async () => (await fetch("/api/__test/control/state")).text())).toContain('"blocked":true');
+  await expect
+    .poll(() => page.evaluate(async () => (await fetch("/api/__test/control/state")).text()))
+    .toContain('"blocked":true');
   await toggle.click();
   await expect(toggle).toBeChecked();
   await page.evaluate(async () => {
@@ -114,9 +154,13 @@ test("S32 CB03 should ignore a reverse-order stale notification response", async
       body: JSON.stringify({ operation: "settings.update" }),
     });
   });
-  await expect.poll(() => page.evaluate(async () => {
-    const response = await fetch("/api/settings");
-    return ((await response.json()) as { inAppNotifications: boolean }).inAppNotifications;
-  })).toBe(true);
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const response = await fetch("/api/settings");
+        return ((await response.json()) as { inAppNotifications: boolean }).inAppNotifications;
+      }),
+    )
+    .toBe(true);
   await expect(toggle).toBeChecked();
 });
