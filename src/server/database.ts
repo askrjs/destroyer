@@ -84,6 +84,17 @@ function seed(database: Database.Database, now: () => number): void {
           new Date(timestamp).toISOString(),
         );
       }
+      for (let index = 0; index < 36; index += 1) {
+        insertIncident.run(
+          `inc-${200 + index}`,
+          `Regional delivery variance ${String(index + 1).padStart(2, "0")}`,
+          "resolved",
+          index % 3 === 0 ? "high" : index % 3 === 1 ? "medium" : "low",
+          `service-${(index % seedServices.length) + 1}`,
+          new Date(timestamp - (index + 1) * 60_000).toISOString(),
+          new Date(timestamp - index * 60_000).toISOString(),
+        );
+      }
       database
         .prepare("INSERT INTO policies VALUES (?, ?, ?, 1, ?)")
         .run(

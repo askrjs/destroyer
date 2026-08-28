@@ -57,15 +57,53 @@ test("S01 should cancel, discard, and save through owned dirty Workspace navigat
   await expect(dialog).toHaveCount(0);
 });
 
-test.fixme("S19 @finding askr-ui#119 virtualized incident operations require variable-height row support", async () => {
-  // VirtualList enforces one fixed height and overflow:hidden per row. The natural inline incident
-  // timeline stays quarantined until the public primitive can reposition keyed rows after expansion.
-});
-
-test("S23 should keep independent Metrics sections alive through held, failed, and empty reads", async ({
+test("S19 should virtualize expandable incident operations and export selected rows", async ({
   page,
   principalEmail,
-}, testInfo) => {
+}) => {
+  await page.addInitScript(() => {
+    const original = URL.revokeObjectURL.bind(URL);
+    (window as Window & { __revokedObjectUrls?: string[] }).__revokedObjectUrls = [];
+    URL.revokeObjectURL = (url) => {
+      (window as Window & { __revokedObjectUrls?: string[] }).__revokedObjectUrls?.push(url);
+      original(url);
+    };
+  });
+  await createOperator(page, principalEmail);
+  await page.goto("/incidents");
+  const list = page.getByRole("list", { name: "Operational incidents" });
+  await expect(list.locator('[data-slot="virtual-list-row"]')).toHaveCount(4);
+  const firstRow = list.locator('[data-slot="virtual-list-row"]').first();
+  const selectedTitle = await firstRow.getByRole("heading", { level: 3 }).textContent();
+  const compactHeight = await firstRow.evaluate((row) => row.getBoundingClientRect().height);
+  await firstRow.getByRole("checkbox").check();
+  await firstRow.getByRole("button", { name: "View timeline" }).click();
+  await expect(firstRow.getByRole("button", { name: "Inspect timeline evidence" })).toBeVisible();
+  expect(await firstRow.evaluate((row) => row.getBoundingClientRect().height)).toBeGreaterThan(
+    compactHeight,
+  );
+  await firstRow.getByRole("button", { name: "Inspect timeline evidence" }).focus();
+  await expect(firstRow.getByRole("button", { name: "Inspect timeline evidence" })).toBeFocused();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export selected" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("selected-incidents.csv");
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream!) chunks.push(Buffer.from(chunk));
+  expect(Buffer.concat(chunks).toString("utf8")).toContain(selectedTitle);
+  expect(
+    await page.evaluate(
+      () => (window as Window & { __revokedObjectUrls?: string[] }).__revokedObjectUrls?.length,
+    ),
+  ).toBe(1);
+});
+
+test("S23 @finding should keep independent Metrics sections alive through held, failed, and empty reads", async ({
+  page,
+  principalEmail,
+}) => {
   await createOperator(page, principalEmail);
   await page.goto("/metrics");
   const summary = page

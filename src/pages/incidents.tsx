@@ -17,6 +17,7 @@ import {
   Page,
   PageHeader,
   Text,
+  VirtualList,
 } from "@askrjs/themes/components";
 import { incidentsData } from "../features/incidents/incidents-model";
 import type { IncidentRecord } from "../server/contracts";
@@ -30,6 +31,24 @@ export function IncidentsPage() {
   const pending = state("");
   const error = state("");
   const selected = state<readonly string[]>([]);
+  const expandedIncidentId = state<string | null>(null);
+  const exportSelected = () => {
+    const rows = (incidents.data ?? []).filter((incident) => selected().includes(incident.id));
+    const csv = [
+      "id,title,service,severity,status",
+      ...rows.map((incident) =>
+        [incident.id, incident.title, incident.service, incident.severity, incident.status]
+          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+          .join(","),
+      ),
+    ].join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "selected-incidents.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
   const mutate = async (incident: IncidentRecord, status: "acknowledged" | "resolved") => {
     pending.set(incident.id);
     error.set("");
@@ -95,6 +114,14 @@ export function IncidentsPage() {
       >
         Acknowledge selected
       </Button>
+      <Button
+        type="button"
+        variant="outline"
+        disabled={selected().length === 0}
+        onPress={exportSelected}
+      >
+        Export selected
+      </Button>
       {route.query.get("review") === "evidence" ? (
         <Card aria-label="Evidence confirmation">
           <CardHeader>
@@ -112,8 +139,15 @@ export function IncidentsPage() {
           </CardContent>
         </Card>
       ) : null}
-      <Block gap="md" aria-label="Operational incidents">
-        {(incidents.data ?? []).map((incident) => (
+      <VirtualList
+        aria-label="Operational incidents"
+        viewport="lg"
+        items={incidents.data ?? []}
+        rowHeight={220}
+        getRowHeight={(incident) => (expandedIncidentId() === incident.id ? 310 : 220)}
+        overscan={1}
+        getKey={(incident) => incident.id}
+        rowComponent={({ item: incident }) => (
           <Card key={incident.id}>
             <CardHeader>
               <CardTitle>{incident.title}</CardTitle>
@@ -167,7 +201,10 @@ export function IncidentsPage() {
                   Review evidence
                 </Button>
               </Block>
-              <Collapsible>
+              <Collapsible
+                open={expandedIncidentId() === incident.id}
+                onOpenChange={(open) => expandedIncidentId.set(open ? incident.id : null)}
+              >
                 <CollapsibleTrigger>View timeline</CollapsibleTrigger>
                 <CollapsibleContent>
                   <Text>Created · {new Date(incident.createdAt).toLocaleString()}</Text>
@@ -175,12 +212,15 @@ export function IncidentsPage() {
                     {incident.status} · {new Date(incident.updatedAt).toLocaleString()} · version{" "}
                     {incident.version}
                   </Text>
+                  <Button type="button" variant="ghost">
+                    Inspect timeline evidence
+                  </Button>
                 </CollapsibleContent>
               </Collapsible>
             </CardContent>
           </Card>
-        ))}
-      </Block>
+        )}
+      />
     </Page>
   );
 }

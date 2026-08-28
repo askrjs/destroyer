@@ -34,7 +34,7 @@ test("S17 should select and bulk acknowledge eligible incidents", async ({
   await page.getByRole("checkbox", { name: "Select Search indexing lag" }).click();
   await page.getByRole("button", { name: "Acknowledge selected" }).click();
   await expect(page.getByText("Status: acknowledged").first()).toBeVisible();
-  await expect(page.getByText("Status: resolved")).toBeVisible();
+  await expect(page.getByText("Status: resolved").first()).toBeVisible();
 });
 
 test("S18 should expose timeline detail and reject a stale incident resolution", async ({
