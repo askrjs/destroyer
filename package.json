@@ -20,7 +20,7 @@
     "test:visual": "playwright test --config playwright.visual.config.ts",
     "test:visual:update": "node scripts/visual-update.mjs",
     "test:visual:canonical": "docker build -f Dockerfile.visual -t destroyer-visual . && docker run --rm destroyer-visual",
-    "test:journey": "playwright test tests/browser/operations-workspace.spec.ts --grep responsiveness",
+    "test:journey": "playwright test tests/browser/operations-workspace.spec.ts --grep responsive",
     "test:heap": "playwright test tests/browser/operations-workspace.spec.ts --grep 'heap plateau'",
     "acceptance": "npm run check && npm run test:production && npm run test:browser",
     "check": "npm run lint && npm run typecheck && npm test && npm run build"

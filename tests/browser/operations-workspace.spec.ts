@@ -1,5 +1,5 @@
 import { expect, test, waitForHydration } from "./fixture";
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   clickThroughPaint,
@@ -16,7 +16,7 @@ test("should keep five workspace journeys responsive without forced collection",
 }, testInfo) => {
   test.setTimeout(60_000);
   const errors: string[] = [];
-  const actionDurationsMs: number[] = [];
+  const actionSamples: Array<{ cycle: number; route: "logs" | "metrics"; durationMs: number }> = [];
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
@@ -37,12 +37,41 @@ test("should keep five workspace journeys responsive without forced collection",
   await page.getByLabel("Password").fill("correct horse battery staple");
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/logs$/);
+  await page.evaluate(() => {
+    const target = globalThis as typeof globalThis & { __destroyerLongTasks?: number[] };
+    target.__destroyerLongTasks = [];
+  });
+
+  const profileSession = process.env.DESTROYER_CPU_PROFILE
+    ? await page.context().newCDPSession(page)
+    : undefined;
+  if (profileSession) {
+    await profileSession.send("Profiler.enable");
+    await profileSession.send("Profiler.start");
+  }
 
   for (let cycle = 0; cycle < 5; cycle += 1) {
-    actionDurationsMs.push(await clickThroughPaint(page.locator('a[href="/metrics"]')));
+    actionSamples.push({
+      cycle: cycle + 1,
+      route: "metrics",
+      durationMs: await clickThroughPaint(page.locator('a[href="/metrics"]')),
+    });
     await expect(page.getByRole("heading", { name: "Metrics" })).toBeVisible();
-    actionDurationsMs.push(await clickThroughPaint(page.locator('a[href="/logs"]').first()));
+    actionSamples.push({
+      cycle: cycle + 1,
+      route: "logs",
+      durationMs: await clickThroughPaint(page.locator('a[href="/logs"]').first()),
+    });
     await expect(page.getByRole("heading", { name: "Logs" })).toBeVisible();
+  }
+
+  if (profileSession) {
+    const { profile: cpuProfile } = await profileSession.send("Profiler.stop");
+    await writeFile(
+      testInfo.outputPath("operations-workspace.cpuprofile"),
+      JSON.stringify(cpuProfile),
+    );
+    await profileSession.detach();
   }
 
   const longTasks = await page.evaluate(
@@ -50,9 +79,12 @@ test("should keep five workspace journeys responsive without forced collection",
       (globalThis as typeof globalThis & { __destroyerLongTasks?: number[] })
         .__destroyerLongTasks ?? [],
   );
-  const profile = { actionDurationsMs, errors, longTasks };
+  const actionDurationsMs = actionSamples.map((sample) => sample.durationMs);
+  const profile = { actionSamples, errors, longTasks };
+  const profilePath = testInfo.outputPath("operations-workspace-responsiveness.json");
+  await writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`);
   await testInfo.attach("operations-workspace-responsiveness", {
-    body: JSON.stringify(profile, null, 2),
+    path: profilePath,
     contentType: "application/json",
   });
   expect(errors).toEqual([]);
