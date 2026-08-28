@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixture";
 
 async function createOperator(page: Page, email: string): Promise<void> {
   await page.goto("/signup");
@@ -31,8 +32,9 @@ test("should complete persisted product workflows given an authenticated operato
   await expect(page.getByLabel("Approval policy")).toHaveText("Automatic approval");
 
   const invite = await page.getByLabel("Active invite link").inputValue();
-  await page.getByRole("button", { name: "Reset links" }).click();
-  await page.locator("button").filter({ hasText: "Reset links" }).last().click();
+  await page.getByRole("button", { name: "Open invite actions" }).click();
+  await page.getByRole("menuitem", { name: "Reset active link" }).click();
+  await page.getByRole("button", { name: "Reset active link" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByLabel("Active invite link")).not.toHaveValue(invite);
 
@@ -89,5 +91,56 @@ test("should poll live operations without runtime errors given an active logs ro
   await expect(resume).toBeVisible();
   await resume.click();
   await expect.poll(() => logResponses, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
+  expect(errors).toEqual([]);
+});
+
+test("S06 @regression should keep extreme log details operable at a 320px mobile viewport", async ({
+  page,
+  principalEmail,
+}) => {
+  test.info().annotations.push({
+    type: "regression",
+    description: "Released in @askrjs/themes 0.2.5 from askrjs/askr-themes#133.",
+  });
+  await page.setViewportSize({ width: 320, height: 568 });
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+  await createOperator(page, principalEmail);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    ),
+  ).toBe(false);
+
+  await page.getByRole("button", { name: "View details for evt-10000" }).click();
+  const details = page.getByRole("dialog", { name: "Log event details" });
+  await expect(details).toBeVisible();
+  await expect(details).toContainText("webhook-delivery-gateway-us-east-1");
+  await expect(details).toContainText("req_01JHPA5TG00000000000000000_delivery_attempt_0000042");
+  await expect(details).toContainText("retry-pending");
+
+  const geometry = await details.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+      viewportWidth: innerWidth,
+      viewportHeight: innerHeight,
+      documentOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  expect(geometry.documentOverflow).toBe(false);
+  expect(geometry.left).toBeGreaterThanOrEqual(0);
+  expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth);
+  expect(geometry.top).toBeGreaterThanOrEqual(0);
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.viewportHeight);
+  await page.keyboard.press("Escape");
+  await expect(details).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "View details for evt-10000" })).toBeFocused();
   expect(errors).toEqual([]);
 });

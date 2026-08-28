@@ -39,6 +39,7 @@ import {
   Text,
 } from "@askrjs/themes/components";
 import { ThemeScope, ThemeToggle } from "@askrjs/themes/theme";
+import { OverlayHost } from "@askrjs/ui";
 
 function ProfileMenu() {
   const principal = currentAuth().principal;
@@ -127,91 +128,107 @@ export function PageLayout({ children }: { children?: unknown }) {
 
   return (
     <ThemeScope defaultTheme="light" storageKey="destroyer-theme">
-      <Block minHeight="screen">
-        {!isAuthRoute && !isDocsRoute && (
-          <Header sticky>
-            <Container paddingY="sm">
-              <Navbar aria-label="Primary navigation" width="full">
-                <NavBrand>
-                  <Brand asChild>
-                    <Link href="/">
+      <OverlayHost>
+        <Block minHeight="screen" direction="column">
+          {!isAuthRoute && !isDocsRoute && (
+            <Header sticky>
+              <Container paddingY="sm">
+                <Navbar aria-label="Primary navigation" width="full">
+                  <NavBrand>
+                    <Brand asChild>
+                      <Link href="/">
+                        <BrandMark aria-hidden="true">
+                          <BoxIcon size={16} />
+                        </BrandMark>
+                        <Block hide={{ base: true, sm: false }}>
+                          <BrandLabel>Destroyer</BrandLabel>
+                        </Block>
+                      </Link>
+                    </Brand>
+                  </NavBrand>
+                  <NavGroup>
+                    <Block hide={{ base: true, sm: false }}>
+                      <NavLink href="/docs">Docs</NavLink>
+                    </Block>
+                    <NavLink href="/logs">Logs</NavLink>
+                    {currentAuth().authenticated ? (
+                      <Block hide={{ base: true, sm: false }}>
+                        <NavLink href="/incidents">Incidents</NavLink>
+                      </Block>
+                    ) : null}
+                    <Block hide={{ base: true, sm: false }}>
+                      <NavLink href="/metrics">Metrics</NavLink>
+                    </Block>
+                    {currentAuth().authenticated ? (
+                      <Block hide={{ base: true, sm: false }}>
+                        <NavLink href="/settings">Settings</NavLink>
+                      </Block>
+                    ) : null}
+                    <Block hide={{ base: true, md: false }}>
+                      <NavLink href="/about">About</NavLink>
+                    </Block>
+                    <Block hide={{ base: true, md: false }}>
+                      <NavLink href="/contact">Contact</NavLink>
+                    </Block>
+                  </NavGroup>
+                  <NavGroup align="end">
+                    <ThemeToggle
+                      aria-label="Toggle theme"
+                      variant="ghost"
+                      size="icon"
+                      lightIcon={<SunIcon size={16} aria-hidden="true" />}
+                      darkIcon={<MoonIcon size={16} aria-hidden="true" />}
+                    />
+                    <AuthNavControl />
+                  </NavGroup>
+                </Navbar>
+              </Container>
+            </Header>
+          )}
+          {children}
+          {!isAuthRoute && !isDocsRoute && (
+            <Footer>
+              <Container paddingY="2xl">
+                <FooterContent>
+                  <FooterSection>
+                    <Brand>
                       <BrandMark aria-hidden="true">
                         <BoxIcon size={16} />
                       </BrandMark>
-                      <BrandLabel>Destroyer</BrandLabel>
-                    </Link>
-                  </Brand>
-                </NavBrand>
-                <NavGroup>
-                  <NavLink href="/docs">Docs</NavLink>
-                  <NavLink href="/logs">Logs</NavLink>
-                  <NavLink href="/metrics">Metrics</NavLink>
-                  {currentAuth().authenticated ? (
-                    <NavLink href="/settings">Settings</NavLink>
-                  ) : null}
-                  <Block hide={{ base: true, md: false }}>
-                    <NavLink href="/about">About</NavLink>
-                  </Block>
-                  <Block hide={{ base: true, md: false }}>
-                    <NavLink href="/contact">Contact</NavLink>
-                  </Block>
-                </NavGroup>
-                <NavGroup align="end">
-                  <ThemeToggle
-                    aria-label="Toggle theme"
-                    variant="ghost"
-                    size="icon"
-                    lightIcon={<SunIcon size={16} aria-hidden="true" />}
-                    darkIcon={<MoonIcon size={16} aria-hidden="true" />}
-                  />
-                  <AuthNavControl />
-                </NavGroup>
-              </Navbar>
-            </Container>
-          </Header>
-        )}
-        {children}
-        {!isAuthRoute && !isDocsRoute && (
-          <Footer>
-            <Container paddingY="2xl">
-              <FooterContent>
-                <FooterSection>
-                  <Brand>
-                    <BrandMark aria-hidden="true">
-                      <BoxIcon size={16} />
-                    </BrandMark>
-                    <FooterTitle>Destroyer</FooterTitle>
-                  </Brand>
-                  <FooterDescription>
-                    Destroyer is a compact Askr workspace for checking routes, theme behavior, and
-                    SSR, APIs, operational workflows, and component composition in one application.
-                  </FooterDescription>
-                </FooterSection>
+                      <FooterTitle>Destroyer</FooterTitle>
+                    </Brand>
+                    <FooterDescription>
+                      Destroyer is a compact Askr workspace for checking routes, theme behavior, and
+                      SSR, APIs, operational workflows, and component composition in one
+                      application.
+                    </FooterDescription>
+                  </FooterSection>
 
-                <FooterSection>
-                  <FooterTitle>Explore</FooterTitle>
-                  <FooterLinks aria-label="Explore">
-                    <FooterLink href="#routing">Routing</FooterLink>
-                    <FooterLink href="#themes">Themes</FooterLink>
-                    <FooterLink href="#components">Components</FooterLink>
-                    <FooterLink href="#forms">Forms</FooterLink>
-                  </FooterLinks>
-                </FooterSection>
+                  <FooterSection>
+                    <FooterTitle>Explore</FooterTitle>
+                    <FooterLinks aria-label="Explore">
+                      <FooterLink href="#routing">Routing</FooterLink>
+                      <FooterLink href="#themes">Themes</FooterLink>
+                      <FooterLink href="#components">Components</FooterLink>
+                      <FooterLink href="#forms">Forms</FooterLink>
+                    </FooterLinks>
+                  </FooterSection>
 
-                <FooterSection>
-                  <FooterTitle>Resources</FooterTitle>
-                  <FooterLinks aria-label="Resources">
-                    <FooterLink href="#docs">Docs</FooterLink>
-                    <FooterLink href="#patterns">Patterns</FooterLink>
-                    <FooterLink href="#tokens">Tokens</FooterLink>
-                    <FooterLink href="#examples">Examples</FooterLink>
-                  </FooterLinks>
-                </FooterSection>
-              </FooterContent>
-            </Container>
-          </Footer>
-        )}
-      </Block>
+                  <FooterSection>
+                    <FooterTitle>Resources</FooterTitle>
+                    <FooterLinks aria-label="Resources">
+                      <FooterLink href="#docs">Docs</FooterLink>
+                      <FooterLink href="#patterns">Patterns</FooterLink>
+                      <FooterLink href="#tokens">Tokens</FooterLink>
+                      <FooterLink href="#examples">Examples</FooterLink>
+                    </FooterLinks>
+                  </FooterSection>
+                </FooterContent>
+              </Container>
+            </Footer>
+          )}
+        </Block>
+      </OverlayHost>
     </ThemeScope>
   );
 }

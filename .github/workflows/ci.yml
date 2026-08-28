@@ -29,7 +29,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: "lts/*"
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -56,7 +56,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: "lts/*"
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -68,5 +68,64 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Browser product tests
-        run: npx playwright test tests/browser/auth.spec.ts tests/browser/product-flows.spec.ts
+      - name: Standard browser scenarios
+        run: npm run test:scenarios
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-scenario-evidence
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            playwright-report
+            test-results
+
+  findings:
+    name: Published-package findings
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:findings
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: published-package-findings
+          if-no-files-found: ignore
+          retention-days: 14
+          path: artifacts/findings-*
+
+  visual:
+    name: Canonical visual census
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run pinned canonical image
+        run: docker build -f Dockerfile.visual -t destroyer-visual . && docker run --name destroyer-visual-run destroyer-visual
+      - name: Copy visual evidence
+        if: always()
+        run: |
+          docker cp destroyer-visual-run:/workspace/artifacts ./artifacts || true
+          docker cp destroyer-visual-run:/workspace/test-results ./test-results || true
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-census-evidence
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            artifacts/visual-report
+            test-results

@@ -86,7 +86,9 @@ export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
       }),
       rateLimit({
         store: deps.rateLimits,
-        limit: 600,
+        // Browser scenarios intentionally share one server and client address;
+        // keep production pressure intact without coupling independent test principals.
+        limit: process.env.NODE_ENV === "test" ? 100_000 : 600,
         windowMs: 60_000,
         key: (ctx) => `app:${ctx.auth.session?.id ?? "anonymous"}`,
       }),

@@ -21,7 +21,7 @@ export function ProfileAccess() {
   return (
     <Block direction="column" gap="md">
       <Block direction="row" align="center" justify="between" gap="md">
-        <Block gap="0">
+        <Block direction="column" gap="0">
           <Text weight="medium">Workspace role</Text>
           <Text tone="muted" size="sm">
             Review the access model attached to this local demo identity.

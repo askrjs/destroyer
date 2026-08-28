@@ -8,13 +8,13 @@ export function ProfileOverview() {
         signed-in state without requiring a backend.
       </Text>
       <Grid columns={{ base: 1, md: 2 }} gap="md">
-        <Block background="muted" padding="md" radius="lg" gap="xs">
+        <Block direction="column" background="muted" padding="md" radius="lg" gap="xs">
           <Text tone="muted" size="sm">
             Workspace
           </Text>
           <Text weight="semibold">Destroyer</Text>
         </Block>
-        <Block background="muted" padding="md" radius="lg" gap="xs">
+        <Block direction="column" background="muted" padding="md" radius="lg" gap="xs">
           <Text tone="muted" size="sm">
             Session scope
           </Text>

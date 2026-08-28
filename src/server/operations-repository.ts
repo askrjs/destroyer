@@ -1,5 +1,10 @@
 import type Database from "better-sqlite3";
-import type { AppDependencies, OperationsLogPage, OperationsMetrics } from "./contracts";
+import type {
+  AppDependencies,
+  IncidentRecord,
+  OperationsLogPage,
+  OperationsMetrics,
+} from "./contracts";
 import { RepositoryConflictError } from "./contracts";
 
 function encodeCursor(timestamp: string, id: string): string {
@@ -30,6 +35,7 @@ function percentile95(values: readonly number[]): number {
 
 export function createOperationsRepository(
   database: Database.Database,
+  now: () => number,
 ): AppDependencies["operations"] {
   return {
     async summary() {
@@ -92,6 +98,34 @@ export function createOperationsRepository(
         sequence: Number(entries[0]?.id.replace(/\D/gu, "") ?? 0),
       };
     },
+    async insertLogFixture(input) {
+      const timestamp = new Date(now() + 1_000).toISOString();
+      database
+        .prepare(
+          "INSERT INTO log_events(id,service_id,level,message,occurred_at,route,latency_ms,request_id,metadata_json) VALUES (?,?,?,?,?,?,?,?,?)",
+        )
+        .run(
+          input.id,
+          "service-1",
+          "info",
+          input.message,
+          timestamp,
+          input.route,
+          41,
+          input.requestId,
+          "{}",
+        );
+      return {
+        id: input.id,
+        timestamp,
+        service: "identity-api",
+        route: input.route,
+        severity: "info",
+        latency: 41,
+        requestId: input.requestId,
+        message: input.message,
+      };
+    },
     async metrics(): Promise<OperationsMetrics> {
       const logs = database
         .prepare("SELECT route,level,latency_ms FROM log_events")
@@ -143,6 +177,28 @@ export function createOperationsRepository(
           successRate: row.total === 0 ? 100 : ((row.total - row.errors) / row.total) * 100,
         })),
       };
+    },
+    async incidents(): Promise<readonly IncidentRecord[]> {
+      return database
+        .prepare(
+          `SELECT i.id,i.title,i.status,i.severity,s.name service,i.version,
+                  i.created_at createdAt,i.updated_at updatedAt
+           FROM incidents i JOIN services s ON s.id=i.service_id
+           ORDER BY CASE i.status WHEN 'investigating' THEN 0 WHEN 'acknowledged' THEN 1 ELSE 2 END,
+                    i.updated_at DESC,i.id DESC`,
+        )
+        .all() as unknown as readonly IncidentRecord[];
+    },
+    async updateIncident(id, status, expectedVersion) {
+      const updatedAt = new Date(now()).toISOString();
+      const result = database
+        .prepare(
+          "UPDATE incidents SET status=?,version=version+1,updated_at=? WHERE id=? AND version=?",
+        )
+        .run(status, updatedAt, id, expectedVersion);
+      if (result.changes !== 1) return { kind: "conflict" as const };
+      const value = (await this.incidents()).find((incident) => incident.id === id);
+      return value ? { kind: "updated" as const, value } : { kind: "conflict" as const };
     },
   };
 }

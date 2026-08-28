@@ -22,13 +22,14 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
       </Button>
       <PopoverPortal>
         <PopoverContent
+          class="log-detail-popover"
           aria-label="Log event details"
           side="left"
           align="start"
           sideOffset={8}
           width="md"
         >
-          <Block gap="sm">
+          <Block direction="column" gap="sm">
             <Block direction="row" align="center" justify="between" gap="md">
               <Badge variant={getBadgeVariant(entry.severity)}>{entry.severity}</Badge>
               <Text as="span" tone="muted" size="sm" font="mono" numeric="tabular">
@@ -39,16 +40,16 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
               {entry.message}
             </Text>
             <Separator decorative />
-            <Block gap="xs">
-              <Block direction="row" align="center" justify="between" gap="md">
+            <Block direction="column" gap="xs">
+              <Block rowFrom="sm" align="center" justify="between" gap="md">
                 <Text tone="subtle" size="sm">
                   Service
                 </Text>
-                <Text size="sm" font="mono">
+                <Text size="sm" font="mono" wrap="anywhere">
                   {entry.service}
                 </Text>
               </Block>
-              <Block direction="row" align="center" justify="between" gap="md">
+              <Block rowFrom="sm" align="center" justify="between" gap="md">
                 <Text tone="subtle" size="sm">
                   Latency
                 </Text>
@@ -56,19 +57,19 @@ export function LogDetailPopover({ entry }: { entry: LogEntry }) {
                   {entry.latency}ms
                 </Text>
               </Block>
-              <Block direction="row" align="center" justify="between" gap="md">
+              <Block rowFrom="sm" align="center" justify="between" gap="md">
                 <Text tone="subtle" size="sm">
                   Route
                 </Text>
-                <Text size="sm" font="mono">
+                <Text size="sm" font="mono" wrap="anywhere">
                   {entry.route}
                 </Text>
               </Block>
-              <Block direction="row" align="center" justify="between" gap="md">
+              <Block rowFrom="sm" align="center" justify="between" gap="md">
                 <Text tone="subtle" size="sm">
                   Request
                 </Text>
-                <Text size="sm" font="mono" numeric="tabular">
+                <Text size="sm" font="mono" numeric="tabular" wrap="anywhere">
                   {entry.requestId}
                 </Text>
               </Block>

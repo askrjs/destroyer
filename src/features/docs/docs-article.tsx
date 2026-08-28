@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
   Badge,
   Block,
+  Heading,
   Separator,
   Text,
 } from "@askrjs/themes/components";
@@ -18,22 +19,22 @@ export function DocsArticle({ activePath }: { activePath: DocsPath }) {
   const Icon = content.icon;
 
   return (
-    <Block as="article" gap="2xl" maxWidth="lg">
-      <Block gap="lg">
+    <Block as="article" direction="column" gap="2xl" maxWidth="lg">
+      <Block direction="column" gap="lg">
         <Block direction="row" align="center" gap="sm">
           <Block center padding="sm" radius="md" background="selected">
             <Icon size={20} aria-hidden="true" />
           </Block>
           <Badge variant="secondary">{content.badge}</Badge>
         </Block>
-        <Block gap="sm">
+        <Block direction="column" gap="sm">
           <Text tone="muted" size="sm">
             {content.eyebrow}
           </Text>
           <Block rowFrom="md" align={{ base: "start", md: "center" }} justify="between" gap="md">
-            <Text as="strong" weight="bold" size="lg">
+            <Heading level={1} size="xl" wrap="anywhere">
               {content.title}
-            </Text>
+            </Heading>
             <DocsArticleTools activePath={activePath} />
           </Block>
           <Text tone="muted">{content.description}</Text>
@@ -42,23 +43,23 @@ export function DocsArticle({ activePath }: { activePath: DocsPath }) {
 
       <Separator decorative />
 
-      <Block gap="2xl">
+      <Block direction="column" gap="2xl">
         {content.sections.map((section) => (
-          <Block key={section.title} gap="sm">
-            <Text as="strong" weight="semibold">
+          <Block key={section.title} direction="column" gap="sm">
+            <Heading level={2} size="md">
               {section.title}
-            </Text>
+            </Heading>
             <Text tone="muted">{section.body}</Text>
           </Block>
         ))}
       </Block>
 
-      <Block gap="md" padding="lg" background="muted" radius="md">
+      <Block direction="column" gap="md" padding="lg" background="muted" radius="md">
         <Block direction="row" align="center" gap="sm">
           <LayersIcon size={16} aria-hidden="true" />
-          <Text as="strong" weight="semibold">
+          <Heading level={2} size="md">
             Verification notes
-          </Text>
+          </Heading>
         </Block>
         <Accordion defaultValue="route-checks" collapsible>
           <AccordionItem value="route-checks">
@@ -66,7 +67,7 @@ export function DocsArticle({ activePath }: { activePath: DocsPath }) {
               <AccordionTrigger>Route and shell checks</AccordionTrigger>
             </AccordionHeader>
             <AccordionContent>
-              <Block gap="sm">
+              <Block direction="column" gap="sm">
                 {content.checks.map((check) => (
                   <Text key={check} tone="muted" size="sm">
                     {check}

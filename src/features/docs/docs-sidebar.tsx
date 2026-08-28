@@ -52,7 +52,7 @@ export function DocsSidebar({
       top="0"
     >
       <SidebarHeader>
-        <Block hide={{ base: false, lg: !collapsed }} gap="xs" align="center">
+        <Block hide={{ base: false, lg: !collapsed }} direction="row" gap="xs" align="center">
           <BrandMark aria-hidden="true">
             <BoxIcon size={16} />
           </BrandMark>

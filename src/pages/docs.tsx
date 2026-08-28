@@ -34,9 +34,9 @@ export function DocsPage() {
           onToggle={() => setDocsSidebarCollapsed(!collapsed())}
         />
         <Block padding={{ base: "md", lg: "2xl" }}>
-          <Block maxWidth="lg" gap="2xl">
+          <Block maxWidth="lg" direction="column" gap="2xl">
             <Block rowFrom="md" align={{ base: "start", md: "center" }} justify="between" gap="md">
-              <Block gap="xs">
+              <Block direction="column" gap="xs">
                 <Text as="strong" weight="bold" size="lg">
                   Docs
                 </Text>

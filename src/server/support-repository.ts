@@ -4,11 +4,12 @@ import type { AppDependencies } from "./contracts";
 export function createSupportRepositories(
   database: Database.Database,
   now: () => number,
+  createId: () => string,
 ): Pick<AppDependencies, "contacts" | "invoices"> {
   return {
     contacts: {
       async create(input) {
-        const receipt = { id: crypto.randomUUID(), receivedAt: new Date(now()).toISOString() };
+        const receipt = { id: createId(), receivedAt: new Date(now()).toISOString() };
         database
           .prepare("INSERT INTO support_requests VALUES (?, ?, ?, ?, ?)")
           .run(

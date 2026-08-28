@@ -62,7 +62,7 @@ function seed(database: Database.Database, now: () => number): void {
       | { value: string }
       | undefined
   )?.value;
-  if (version === "2") return;
+  if (version === "3") return;
   const timestamp = now();
   database.transaction(() => {
     if (!version) {
@@ -94,7 +94,24 @@ function seed(database: Database.Database, now: () => number): void {
         );
     }
 
-    if (version !== "2") {
+    if (version !== "3") {
+      database
+        .prepare("UPDATE services SET name=? WHERE id='service-3'")
+        .run("webhook-delivery-gateway-us-east-1");
+      const insertIncident = database.prepare(
+        "INSERT OR IGNORE INTO incidents VALUES (?, ?, ?, ?, ?, 1, ?, ?)",
+      );
+      for (let index = 0; index < 36; index += 1) {
+        insertIncident.run(
+          `inc-${200 + index}`,
+          `Regional delivery variance ${String(index + 1).padStart(2, "0")}`,
+          "resolved",
+          index % 3 === 0 ? "high" : index % 3 === 1 ? "medium" : "low",
+          `service-${(index % seedServices.length) + 1}`,
+          new Date(timestamp - (index + 1) * 60_000).toISOString(),
+          new Date(timestamp - index * 60_000).toISOString(),
+        );
+      }
       database.prepare("DELETE FROM log_events").run();
       database.prepare("DELETE FROM metric_samples").run();
       const insertLog = database.prepare(
@@ -102,15 +119,22 @@ function seed(database: Database.Database, now: () => number): void {
       );
       for (let index = 0; index < 420; index += 1) {
         const severity = index % 29 === 0 ? "error" : index % 11 === 0 ? "warning" : "info";
+        const extreme = index === 0;
         insertLog.run(
           `evt-${10_000 - index}`,
-          `service-${(index % seedServices.length) + 1}`,
+          extreme ? "service-3" : `service-${(index % seedServices.length) + 1}`,
           severity,
-          seedMessages[index % seedMessages.length],
+          extreme
+            ? "Webhook delivery exhausted its retry budget.\nThe receiving workspace endpoint returned a transient failure after the signed payload was accepted for delivery.\nOperators should inspect the complete request identity before retrying."
+            : seedMessages[index % seedMessages.length],
           new Date(timestamp - index * 45_000).toISOString(),
-          seedRoutes[index % seedRoutes.length],
+          extreme
+            ? "/api/workspaces/north-america-production/webhook-deliveries/attempts/retry-pending"
+            : seedRoutes[index % seedRoutes.length],
           38 + ((index * 17) % 420),
-          `req_${(index * 7919).toString(16).padStart(8, "0")}`,
+          extreme
+            ? "req_01JHPA5TG00000000000000000_delivery_attempt_0000042"
+            : `req_${(index * 7919).toString(16).padStart(8, "0")}`,
           JSON.stringify({ seeded: true }),
         );
       }
@@ -126,7 +150,7 @@ function seed(database: Database.Database, now: () => number): void {
       }
       database
         .prepare(
-          "INSERT INTO app_metadata(key,value) VALUES ('seed_version','2') ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+          "INSERT INTO app_metadata(key,value) VALUES ('seed_version','3') ON CONFLICT(key) DO UPDATE SET value=excluded.value",
         )
         .run();
     }

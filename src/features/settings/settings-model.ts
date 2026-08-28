@@ -54,6 +54,7 @@ export const updatePreferencesAction = defineAction({
     density: schema.enum(["comfortable", "compact"]),
     region: schema.enum(["us-east", "us-west", "eu-west"]),
     theme: schema.enum(["system", "light", "dark"]),
+    timezone: schema.enum(["America/New_York", "America/Los_Angeles", "Europe/Dublin"]),
     version,
   }),
   invalidates: settingsInvalidations,
@@ -70,6 +71,7 @@ export const updateWorkspaceAction = defineAction({
   input: schema.object({
     defaultRole: schema.enum(["viewer", "member"]),
     approvalPolicy: schema.enum(["automatic", "manual"]),
+    approverGroup: schema.string({ minLength: 2, maxLength: 80 }),
     version,
   }),
   invalidates: settingsInvalidations,

@@ -28,6 +28,7 @@ function settingsFromRow(
   principalId: string,
   row: SettingsRow,
   now: () => number,
+  createId: () => string,
 ): OperatorSettings {
   const profile = parseObject(row.profile_json);
   const security = parseObject(row.security_json);
@@ -44,12 +45,18 @@ function settingsFromRow(
       preferences.region === "us-west" || preferences.region === "eu-west"
         ? preferences.region
         : "us-east",
+    timezone:
+      preferences.timezone === "America/Los_Angeles" || preferences.timezone === "Europe/Dublin"
+        ? preferences.timezone
+        : "America/New_York",
     theme:
       preferences.theme === "light" || preferences.theme === "dark" ? preferences.theme : "system",
     inAppNotifications: notifications.inApp !== false,
     defaultRole: workspace.defaultRole === "member" ? "member" : "viewer",
     approvalPolicy: workspace.approvalPolicy === "automatic" ? "automatic" : "manual",
-    inviteLink: `/invite/${ensureInvite(database, principalId, now)}`,
+    approverGroup:
+      typeof workspace.approverGroup === "string" ? workspace.approverGroup : "Operations leads",
+    inviteLink: `/invite/${ensureInvite(database, principalId, now, createId)}`,
     version: row.version,
   };
 }
@@ -57,13 +64,14 @@ function settingsFromRow(
 export function createSettingsRepository(
   database: Database.Database,
   now: () => number,
+  createId: () => string,
 ): AppDependencies["settings"] {
   const settings: AppDependencies["settings"] = {
     async get(principalId) {
       const row = database
         .prepare("SELECT * FROM operator_settings WHERE principal_id=?")
         .get(principalId) as SettingsRow | undefined;
-      return row ? settingsFromRow(database, principalId, row, now) : null;
+      return row ? settingsFromRow(database, principalId, row, now, createId) : null;
     },
     async update(
       principalId: string,
@@ -74,7 +82,7 @@ export function createSettingsRepository(
         .prepare("SELECT * FROM operator_settings WHERE principal_id=?")
         .get(principalId) as SettingsRow | undefined;
       if (!row || row.version !== expectedVersion) return { kind: "conflict" };
-      const current = settingsFromRow(database, principalId, row, now);
+      const current = settingsFromRow(database, principalId, row, now, createId);
       const next = { ...current, ...input, version: expectedVersion + 1 };
       const occurredAt = new Date(now()).toISOString();
       const committed = database.transaction(() => {
@@ -85,11 +93,17 @@ export function createSettingsRepository(
           .run(
             JSON.stringify({ displayName: next.displayName, visibility: next.profileVisibility }),
             JSON.stringify({ sessionTimeout: next.sessionTimeoutMinutes }),
-            JSON.stringify({ density: next.density, region: next.region, theme: next.theme }),
+            JSON.stringify({
+              density: next.density,
+              region: next.region,
+              timezone: next.timezone,
+              theme: next.theme,
+            }),
             JSON.stringify({ inApp: next.inAppNotifications }),
             JSON.stringify({
               defaultRole: next.defaultRole,
               approvalPolicy: next.approvalPolicy,
+              approverGroup: next.approverGroup,
             }),
             principalId,
             expectedVersion,
@@ -101,7 +115,7 @@ export function createSettingsRepository(
         database
           .prepare("INSERT INTO audit_events VALUES (?, ?, ?, 'operator_settings', ?, ?, ?)")
           .run(
-            crypto.randomUUID(),
+            createId(),
             principalId,
             "settings.update",
             principalId,
@@ -114,7 +128,7 @@ export function createSettingsRepository(
     },
     async resetInvite(principalId, expectedVersion) {
       const occurredAt = new Date(now()).toISOString();
-      const token = crypto.randomUUID();
+      const token = createId();
       const committed = database.transaction(() => {
         const result = database
           .prepare(
@@ -135,7 +149,7 @@ export function createSettingsRepository(
             "INSERT INTO audit_events VALUES (?, ?, 'invite.reset', 'invite_token', ?, ?, ?)",
           )
           .run(
-            crypto.randomUUID(),
+            createId(),
             principalId,
             token,
             JSON.stringify({ previousVersion: expectedVersion }),

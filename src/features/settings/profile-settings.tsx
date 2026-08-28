@@ -27,11 +27,14 @@ import { operatorSettingsData, updateProfileAction } from "./settings-model";
 export function ProfileSettings() {
   const principal = currentAuth().principal;
   const settings = operatorSettingsData(principal?.id ?? "anonymous");
-  const update = action<{
-    displayName: string;
-    profileVisibility: "workspace" | "private";
-    version: string;
-  }>(updateProfileAction);
+  const update = action<
+    {
+      displayName: string;
+      profileVisibility: "workspace" | "private";
+      version: string;
+    },
+    { kind: "updated"; value: unknown } | { kind: "conflict" }
+  >(updateProfileAction);
   const initialError = update.state().error as ActionValidationError | undefined;
   const [displayName, setDisplayName] = state<string>(
     initialError?.kind === "invalid" && typeof initialError.values.displayName === "string"
@@ -43,7 +46,7 @@ export function ProfileSettings() {
   );
   const mutationError = state("");
   const fieldError = (update.state().error as ActionValidationError | undefined)?.fieldErrors
-    .displayName?.[0];
+    ?.displayName?.[0];
 
   return (
     <Card variant="raised">
@@ -65,6 +68,11 @@ export function ProfileSettings() {
                 displayName: displayName(),
                 profileVisibility: visibility(),
                 version: String(settings.data?.version ?? 1),
+              })
+              .then((result) => {
+                if (result.kind === "conflict") {
+                  mutationError.set("Settings changed in another session; reload and retry.");
+                }
               })
               .catch((error: unknown) =>
                 mutationError.set(

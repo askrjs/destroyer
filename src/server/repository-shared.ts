@@ -36,6 +36,7 @@ export function ensureInvite(
   database: Database.Database,
   principalId: string,
   now: () => number,
+  createId: () => string,
 ): string {
   const active = database
     .prepare(
@@ -43,7 +44,7 @@ export function ensureInvite(
     )
     .get(principalId) as { id: string } | undefined;
   if (active) return active.id;
-  const token = crypto.randomUUID();
+  const token = createId();
   database
     .prepare("INSERT INTO invite_tokens VALUES (?, ?, ?, ?, NULL)")
     .run(token, principalId, inviteHash(token), new Date(now()).toISOString());

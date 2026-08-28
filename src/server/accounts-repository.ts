@@ -15,6 +15,7 @@ const PASSWORD_OPTIONS = {
 export function createAccountRepositories(
   database: Database.Database,
   now: () => number,
+  createId: () => string,
 ): Pick<AppDependencies, "principals" | "accounts"> {
   const dummyHash = hash("destroyer-dummy-password", PASSWORD_OPTIONS);
   return {
@@ -26,7 +27,7 @@ export function createAccountRepositories(
     accounts: {
       async register(email, password) {
         const normalized = email.trim().toLowerCase();
-        const id = crypto.randomUUID();
+        const id = createId();
         const label = normalized.slice(0, normalized.indexOf("@")) || "Operator";
         const passwordHash = await hash(password, PASSWORD_OPTIONS);
         const occurredAt = new Date(now()).toISOString();
@@ -55,12 +56,12 @@ export function createAccountRepositories(
                 '{"inApp":true}',
                 '{"defaultRole":"viewer","approvalPolicy":"manual"}',
               );
-            ensureInvite(database, id, now);
+            ensureInvite(database, id, now, createId);
             database
               .prepare(
                 "INSERT INTO audit_events VALUES (?, ?, 'account.signup', 'principal', ?, '{}', ?)",
               )
-              .run(crypto.randomUUID(), id, id, occurredAt);
+              .run(createId(), id, id, occurredAt);
           })();
         } catch (error) {
           if (error instanceof Database.SqliteError && error.code === "SQLITE_CONSTRAINT_UNIQUE") {
@@ -79,6 +80,20 @@ export function createAccountRepositories(
           .get(normalized) as { subject: string; password_hash: string } | undefined;
         const valid = await verify(row?.password_hash ?? (await dummyHash), password);
         return valid && row ? principalFromDatabase(database, row.subject) : null;
+      },
+      async delete(principalId, confirmation) {
+        const row = database.prepare("SELECT email FROM principals WHERE id=?").get(principalId) as
+          | { email: string }
+          | undefined;
+        if (!row || row.email.trim().toLowerCase() !== confirmation.trim().toLowerCase()) {
+          return false;
+        }
+        return database.transaction(() => {
+          database.prepare("DELETE FROM audit_events WHERE principal_id=?").run(principalId);
+          return (
+            database.prepare("DELETE FROM principals WHERE id=?").run(principalId).changes === 1
+          );
+        })();
       },
     },
   };

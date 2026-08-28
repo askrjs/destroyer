@@ -8,14 +8,15 @@ import { createSupportRepositories } from "./support-repository";
 export function createRepositories(
   database: Database.Database,
   now: () => number,
+  createId: () => string,
 ): Pick<
   AppDependencies,
   "principals" | "accounts" | "settings" | "operations" | "contacts" | "invoices"
 > {
   return {
-    ...createAccountRepositories(database, now),
-    settings: createSettingsRepository(database, now),
-    operations: createOperationsRepository(database),
-    ...createSupportRepositories(database, now),
+    ...createAccountRepositories(database, now, createId),
+    settings: createSettingsRepository(database, now, createId),
+    operations: createOperationsRepository(database, now),
+    ...createSupportRepositories(database, now, createId),
   };
 }

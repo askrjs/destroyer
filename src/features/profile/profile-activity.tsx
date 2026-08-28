@@ -7,10 +7,12 @@ export function ProfileActivity() {
   return (
     <Block direction="column" gap="md">
       {(activity.data ?? []).map((entry) => (
-        <Block key={entry.id} direction="row" gap="md" align="start">
+        <Block key={entry.id} rowFrom="md" gap="sm" align="start">
           <Badge variant="outline">{entry.action}</Badge>
-          <Block gap="0">
-            <Text weight="medium">{entry.target}</Text>
+          <Block direction="column" gap="0">
+            <Text weight="medium" wrap="anywhere">
+              {entry.target}
+            </Text>
             <Text tone="muted" size="sm">
               {new Date(entry.occurredAt).toLocaleString()}
             </Text>

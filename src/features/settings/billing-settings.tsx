@@ -36,7 +36,7 @@ export function BillingSettings() {
     }
   };
   return (
-    <Block gap="lg">
+    <Block direction="column" gap="lg">
       <Card variant="raised">
         <CardHeader>
           <CardTitle>Billing</CardTitle>
@@ -47,19 +47,19 @@ export function BillingSettings() {
         </CardHeader>
         <CardContent>
           <Grid columns={{ base: 1, md: 3 }} gap="md">
-            <Block background="muted" padding="md" radius="lg" gap="xs">
+            <Block direction="column" background="muted" padding="md" radius="lg" gap="xs">
               <Text tone="muted" size="sm">
                 Plan
               </Text>
               <Text weight="semibold">Starter</Text>
             </Block>
-            <Block background="muted" padding="md" radius="lg" gap="xs">
+            <Block direction="column" background="muted" padding="md" radius="lg" gap="xs">
               <Text tone="muted" size="sm">
                 Seats
               </Text>
               <Text weight="semibold">3 active</Text>
             </Block>
-            <Block background="muted" padding="md" radius="lg" gap="xs">
+            <Block direction="column" background="muted" padding="md" radius="lg" gap="xs">
               <Text tone="muted" size="sm">
                 Renewal
               </Text>

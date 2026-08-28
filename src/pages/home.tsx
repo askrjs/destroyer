@@ -315,7 +315,7 @@ export function HomePage() {
             <Block direction="column" gap="md">
               <Field>
                 <Label for="theme-search">Search components</Label>
-                <InputGroup>
+                <InputGroup class="shrinkable-input-group">
                   <InputGroupText>
                     <SearchIcon size={16} aria-hidden="true" />
                   </InputGroupText>

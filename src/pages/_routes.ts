@@ -1,4 +1,11 @@
-import { createRouteRegistry, group, lazy, route, type RouteOptions } from "@askrjs/askr/router";
+import {
+  createRouteRegistry,
+  fallback,
+  group,
+  lazy,
+  route,
+  type RouteOptions,
+} from "@askrjs/askr/router";
 import { safeRedirect } from "@askrjs/server/auth";
 import { requireAnonymous, requireUser } from "@askrjs/auth";
 import { resolveAuth } from "../auth";
@@ -11,10 +18,12 @@ const AboutPage = lazy(() => import("./about").then((module) => module.AboutPage
 const ContactPage = lazy(() => import("./contact").then((module) => module.ContactPage));
 const DocsPage = lazy(() => import("./docs").then((module) => module.DocsPage));
 const HomePage = lazy(() => import("./home").then((module) => module.HomePage));
+const IncidentsPage = lazy(() => import("./incidents").then((module) => module.IncidentsPage));
 const LoginPage = lazy(() => import("./login").then((module) => module.LoginPage));
 const LogsPage = lazy(() => import("./logs").then((module) => module.LogsPage));
 const LogoutPage = lazy(() => import("./logout").then((module) => module.LogoutPage));
 const MetricsPage = lazy(() => import("./metrics").then((module) => module.MetricsPage));
+const NotFoundPage = lazy(() => import("./not-found").then((module) => module.NotFoundPage));
 const ProfilePage = lazy(() => import("./profile").then((module) => module.ProfilePage));
 const SettingsPage = lazy(() => import("./settings").then((module) => module.SettingsPage));
 const SignupPage = lazy(() => import("./signup").then((module) => module.SignupPage));
@@ -62,6 +71,7 @@ export const pageRegistry = createRouteRegistry(
       route("/docs/settings", DocsPage);
       route("/docs/deployment", DocsPage);
       route("/logs", LogsPage, logsRoute);
+      route("/incidents", IncidentsPage, { auth: requireUser() });
       route("/metrics", MetricsPage, metricsRoute);
       route("/login", LoginPage, { auth: requireAnonymous() });
       route("/signup", SignupPage, { auth: requireAnonymous() });
@@ -75,6 +85,7 @@ export const pageRegistry = createRouteRegistry(
       route("/settings/notifications", SettingsPage, settingsRoute);
       route("/settings/billing", SettingsPage, settingsRoute);
       route("/settings/workspace", SettingsPage, settingsRoute);
+      fallback(NotFoundPage);
     });
   },
   {
