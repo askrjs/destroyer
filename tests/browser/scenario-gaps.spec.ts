@@ -100,7 +100,7 @@ test("S19 should virtualize expandable incident operations and export selected r
   ).toBe(1);
 });
 
-test("S23 @finding should keep independent Metrics sections alive through held, failed, and empty reads", async ({
+test("S23 should keep independent Metrics sections alive through held, failed, and empty reads", async ({
   page,
   principalEmail,
 }) => {
@@ -159,6 +159,7 @@ test("S23 @finding should keep independent Metrics sections alive through held, 
     .getByText("Requests", { exact: true })
     .locator('xpath=ancestor::*[@data-slot="card"]');
   await expect(requests.getByText("0", { exact: true })).toBeVisible();
+  await expect(page.getByText("No telemetry in this window")).toBeVisible();
   await expect(summary).toContainText("healthy services");
 
   await logs.getByRole("button", { name: "Refresh logs" }).click();

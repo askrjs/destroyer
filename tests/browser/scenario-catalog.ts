@@ -153,7 +153,6 @@ export const scenarioCatalog = [
     "/metrics",
     "Summary, metrics, and logs fail or hold independently",
     "independent Metrics sections",
-    "finding",
   ),
   scenario(
     "S24",
