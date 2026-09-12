@@ -9,3 +9,6 @@ coverage/
 test-results/
 artifacts/
 tests/visual/*-snapshots/*-darwin.png
+
+# Local agent state and worktrees
+.claude/
