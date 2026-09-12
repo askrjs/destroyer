@@ -20,6 +20,9 @@ export default defineConfig({
       "tests/production.test.ts",
       "node_modules/**",
       "dist/**",
+      // Agent worktrees are full checkouts of this repo; without this their
+      // copies of every suite get discovered alongside the real ones.
+      "**/.claude/**",
     ],
   },
   build: { manifest: true, sourcemap: "hidden" },
