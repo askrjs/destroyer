@@ -22,7 +22,10 @@ export function toLogEntry(entry: OperationsLogPage["entries"][number]): LogEntr
   };
 }
 
-export async function fetchLiveLogs({ signal }: { signal: AbortSignal }): Promise<LiveLogSnapshot> {
+export async function fetchLiveLogs(
+  _input: { principalId: string },
+  { signal }: { signal: AbortSignal },
+): Promise<LiveLogSnapshot> {
   const response = await fetch("/api/operations/logs?limit=80", {
     signal,
     credentials: "same-origin",

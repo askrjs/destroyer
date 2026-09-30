@@ -169,7 +169,9 @@ test("S05 @regression should unwind invite actions through Escape, cancel, and c
   await trigger.click();
   await page.getByRole("menuitem", { name: "Reset active link" }).click();
   await page.getByRole("button", { name: "Reset active link" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Action failed (500).");
+  await expect(page.getByRole("alert")).toHaveText(
+    "Action failed (500): The request could not be completed",
+  );
   await expect(trigger).toBeFocused();
   await expect(page.getByLabel("Active invite link")).toHaveValue(invite);
 

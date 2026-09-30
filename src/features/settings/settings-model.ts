@@ -9,7 +9,7 @@ const settingsInvalidations = [operatorSettingsScope.prefix(), operatorActivityS
 
 export const operatorSettingsQuery = defineQuery<{ principalId: string }, OperatorSettings>({
   key: ({ principalId }) => operatorSettingsScope.key(principalId),
-  async fetch({ signal }) {
+  async fetch(_input, { signal }) {
     const response = await fetch("/api/settings", { signal, credentials: "same-origin" });
     if (!response.ok) throw new Error(`Settings request failed (${response.status}).`);
     return response.json() as Promise<OperatorSettings>;
@@ -19,7 +19,7 @@ export const operatorSettingsQuery = defineQuery<{ principalId: string }, Operat
 export const operatorActivityQuery = defineQuery<{ principalId: string }, readonly ActivityEntry[]>(
   {
     key: ({ principalId }) => operatorActivityScope.key(principalId),
-    async fetch({ signal }) {
+    async fetch(_input, { signal }) {
       const response = await fetch("/api/activity", { signal, credentials: "same-origin" });
       if (!response.ok) throw new Error(`Activity request failed (${response.status}).`);
       return response.json() as Promise<readonly ActivityEntry[]>;

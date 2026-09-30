@@ -3,7 +3,7 @@ import type { OperationsMetrics, OperationsSummary } from "../../server/contract
 
 export const operationsSummaryQuery = defineQuery<{ principalId: string }, OperationsSummary>({
   key: ({ principalId }) => `destroyer.operations-summary:${principalId}`,
-  async fetch({ signal }) {
+  async fetch(_input, { signal }) {
     const response = await fetch("/api/operations/summary", {
       signal,
       credentials: "same-origin",
@@ -15,7 +15,7 @@ export const operationsSummaryQuery = defineQuery<{ principalId: string }, Opera
 
 export const operationsMetricsQuery = defineQuery<{ principalId: string }, OperationsMetrics>({
   key: ({ principalId }) => `destroyer.operations-metrics:${principalId}`,
-  async fetch({ signal }) {
+  async fetch(_input, { signal }) {
     const response = await fetch("/api/operations/metrics", {
       signal,
       credentials: "same-origin",

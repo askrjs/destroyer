@@ -4,7 +4,7 @@ import type { IncidentRecord } from "../../server/contracts";
 const incidentsScope = queryScope("destroyer.incidents");
 export const incidentsQuery = defineQuery<{ principalId: string }, readonly IncidentRecord[]>({
   key: ({ principalId }) => incidentsScope.key(principalId),
-  async fetch({ signal }) {
+  async fetch(_input, { signal }) {
     const response = await fetch("/api/operations/incidents", {
       credentials: "same-origin",
       signal,
