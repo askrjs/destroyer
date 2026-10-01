@@ -175,6 +175,11 @@ test("S22 should preserve zero, one, and complete-history filter cardinalities a
     const load = page.getByRole("button", { name: "Load older events" });
     if ((await load.count()) === 0) break;
     await load.click();
+    await expect
+      .poll(async () => {
+        return (await load.count()) > 0 || (await page.getByRole("status").count()) > 0;
+      })
+      .toBe(true);
   }
   const eventCount = page
     .getByText("Events", { exact: true })
