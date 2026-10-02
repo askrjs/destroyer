@@ -285,10 +285,11 @@ export function LogsPage() {
 
       <Grid
         as="section"
+        class="log-stream-layout"
         columns={{ base: 1, xl: "minmax(18rem, 0.8fr) minmax(0, 1.45fr)" }}
         gap="lg"
       >
-        <Card variant="raised">
+        <Card variant="raised" class="log-stream-card">
           <CardHeader>
             <CardTitle>Live stream</CardTitle>
             <CardDescription>Recent route, theme, and workspace events.</CardDescription>

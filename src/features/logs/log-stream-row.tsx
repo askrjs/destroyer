@@ -1,68 +1,54 @@
-import { Block, Text, type VirtualListRowComponentProps } from "@askrjs/themes/components";
+import { Text, type VirtualListRowComponentProps } from "@askrjs/themes/components";
 import { getSeverityTone, type LogEntry } from "./logs-data";
 
 export function LogStreamRow({ item }: VirtualListRowComponentProps<LogEntry>) {
   return (
-    <Block
+    <div
       class="log-stream-row"
-      width="full"
-      direction="row"
-      align="stretch"
+      data-slot="block"
+      data-ak-layout="true"
       data-severity={item.severity}
       aria-label={`${item.severity} ${item.service} event at ${item.time}`}
     >
-      <Block
-        class="log-stream-row-content"
-        width="full"
-        direction="row"
-        align="center"
-        paddingX="md"
-        paddingY="sm"
-      >
-        <Block class="log-stream-row-lines" direction="column" gap="xs" grow>
-          <Block
-            class="log-stream-row-heading"
-            direction="row"
-            align="center"
-            justify="between"
-            gap="sm"
-          >
-            <Block direction="row" align="center" gap="sm" grow>
-              <Block as="span" shrink={false}>
+      <div class="log-stream-row-content" data-slot="block" data-ak-layout="true">
+        <div class="log-stream-row-lines" data-slot="block" data-ak-layout="true">
+          <div class="log-stream-row-heading" data-slot="block" data-ak-layout="true">
+            <div class="log-stream-row-message" data-slot="block" data-ak-layout="true">
+              <span class="log-stream-row-severity" data-slot="block" data-ak-layout="true">
                 <Text as="span" tone={getSeverityTone(item.severity)} weight="semibold" size="sm">
                   {item.severity}
                 </Text>
-              </Block>
+              </span>
               <Text size="sm" truncate>
                 {item.message}
               </Text>
-            </Block>
-            <Block as="span" shrink={false}>
+            </div>
+            <span class="log-stream-row-time" data-slot="block" data-ak-layout="true">
               <Text as="span" tone="muted" size="sm" font="mono" numeric="tabular">
                 {item.time}
               </Text>
-            </Block>
-          </Block>
+            </span>
+          </div>
 
-          <Block direction="row" align="center" justify="between" gap="sm">
-            <Block direction="row" align="center" gap="sm" grow>
-              <Block as="span" class="shrinkable-log-service" grow>
+          <div class="log-stream-row-details" data-slot="block" data-ak-layout="true">
+            <div class="log-stream-row-service-route" data-slot="block" data-ak-layout="true">
+              <span class="shrinkable-log-service" data-slot="block" data-ak-layout="true">
                 <Text as="span" tone="muted" size="sm" font="mono" truncate>
                   {item.service}
                 </Text>
-              </Block>
+              </span>
               <Text as="span" tone="muted" size="sm" truncate>
                 {item.route}
               </Text>
-            </Block>
-            <Block direction="row" align="center" shrink={false}>
+            </div>
+            <div class="log-stream-row-latency" data-slot="block" data-ak-layout="true">
               <Text as="span" tone="muted" size="sm" font="mono" numeric="tabular">
                 {item.latency}ms
               </Text>
-            </Block>
-          </Block>
-        </Block>
-      </Block>
-    </Block>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

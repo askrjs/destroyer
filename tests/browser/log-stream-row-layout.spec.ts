@@ -5,6 +5,9 @@ import { expect, test } from "./fixture";
 
 const cases = [
   { name: "desktop", width: 1440, height: 900, zoom: 1, theme: "light" },
+  { name: "320px normal", width: 320, height: 844, zoom: 1, theme: "light" },
+  { name: "light at 320px zoom 200", width: 320, height: 844, zoom: 2, theme: "light" },
+  { name: "dark at 320px zoom 200", width: 320, height: 844, zoom: 2, theme: "dark" },
   { name: "mobile", width: 390, height: 844, zoom: 1, theme: "light" },
   { name: "mobile zoom 150 light", width: 390, height: 844, zoom: 1.5, theme: "light" },
   { name: "mobile zoom 200 light", width: 390, height: 844, zoom: 2, theme: "light" },
@@ -141,6 +144,24 @@ for (const visualCase of cases) {
     await expect(
       stream.locator('[data-slot="virtual-list-row"][data-visible="true"]').first(),
     ).toBeVisible();
+    const containerGeometry = await stream.evaluate((element) => {
+      const card = element.closest<HTMLElement>('[data-slot="card"]')!;
+      const grid = card.parentElement!;
+      const cardStyle = getComputedStyle(card);
+      return {
+        zoom: Number(document.documentElement.style.zoom) || 1,
+        gridWidth: grid.getBoundingClientRect().width,
+        cardWidth: card.getBoundingClientRect().width,
+        cardPaddingInline: cardStyle.paddingInlineStart,
+        cardBorderInline: cardStyle.borderInlineStartWidth,
+        viewportWidth: element.getBoundingClientRect().width,
+        viewportBorderInline: getComputedStyle(element).borderInlineStartWidth,
+      };
+    });
+    await writeFile(
+      testInfo.outputPath("container-geometry.json"),
+      JSON.stringify(containerGeometry, null, 2),
+    );
     const beforeScroll = await measureRows(stream);
     const initialGeometryPath = testInfo.outputPath("initial-row-geometry.json");
     await writeFile(initialGeometryPath, JSON.stringify(beforeScroll, null, 2));
@@ -184,3 +205,88 @@ for (const visualCase of cases) {
     ]);
   });
 }
+
+test("fixed log stream wrappers inherit default and customized spacing tokens", async ({
+  page,
+  principalEmail,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/signup");
+  await page.getByLabel("Email").fill(principalEmail);
+  await page.getByLabel("Password").fill("correct horse battery staple");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/logs$/u);
+  await page.getByRole("button", { name: "Pause live stream" }).click();
+  const row = page
+    .getByRole("list", { name: "Recent log stream" })
+    .locator('[data-slot="virtual-list-row"][data-visible="true"] .log-stream-row')
+    .first();
+  await expect(row).toBeVisible();
+  const spacing = () =>
+    row.evaluate((element) => {
+      const content = getComputedStyle(element.children[0]);
+      const lines = getComputedStyle(element.children[0].children[0]);
+      const heading = getComputedStyle(element.children[0].children[0].children[0]);
+      return {
+        paddingInline: content.paddingInlineStart,
+        paddingBlock: content.paddingBlockStart,
+        linesGap: lines.rowGap,
+        headingGap: heading.columnGap,
+      };
+    });
+  expect(await spacing()).toEqual({
+    paddingInline: "14px",
+    paddingBlock: "8px",
+    linesGap: "4px",
+    headingGap: "8px",
+  });
+  await page.evaluate(() => {
+    document.documentElement.style.setProperty("--ak-space-xs", "3px");
+    document.documentElement.style.setProperty("--ak-space-sm", "7px");
+    document.documentElement.style.setProperty("--ak-space-md", "13px");
+  });
+  expect(await spacing()).toEqual({
+    paddingInline: "13px",
+    paddingBlock: "7px",
+    linesGap: "3px",
+    headingGap: "7px",
+  });
+});
+
+test("the narrow live stream inset changes only below its local width boundary", async ({
+  page,
+  principalEmail,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/signup");
+  await page.getByLabel("Email").fill(principalEmail);
+  await page.getByLabel("Password").fill("correct horse battery staple");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/logs$/u);
+  await page.getByRole("button", { name: "Pause live stream" }).click();
+  const stream = page.getByRole("list", { name: "Recent log stream" });
+  for (const width of [143.5, 144, 144.5]) {
+    const geometry = await stream.evaluate((element, requestedWidth) => {
+      const card = element.closest<HTMLElement>('[data-slot="card"]')!;
+      const grid = card.parentElement!;
+      grid.style.width = `${requestedWidth}px`;
+      return {
+        gridWidth: grid.getBoundingClientRect().width,
+        inset: getComputedStyle(card).paddingInlineStart,
+      };
+    }, width);
+    expect(geometry.gridWidth).toBeCloseTo(width, 1);
+    expect(geometry.inset).toBe(width < 144 ? "14px" : "36px");
+    await expect
+      .poll(() => stream.locator('[data-slot="virtual-list-row"][data-visible="true"]').count())
+      .toBeGreaterThan(1);
+    expectReadableRows(await measureRows(stream), 1);
+  }
+  const inheritedInset = await stream.evaluate((element) => {
+    document.documentElement.style.setProperty("--ak-space-md", "13px");
+    const card = element.closest<HTMLElement>('[data-slot="card"]')!;
+    card.parentElement!.style.width = "143.5px";
+    return getComputedStyle(card).paddingInlineStart;
+  });
+  expect(inheritedInset).toBe("13px");
+});

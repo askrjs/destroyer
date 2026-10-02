@@ -83,3 +83,59 @@
     display: contents;
   }
 }
+
+.log-stream-row {
+  --ak-width-base: 100%;
+  --ak-align-items-base: stretch;
+}
+
+.log-stream-row-content {
+  --ak-width-base: 100%;
+  --ak-align-items-base: center;
+  --ak-px-base: var(--ak-space-md);
+  --ak-py-base: var(--ak-space-sm);
+}
+
+.log-stream-row-lines {
+  --ak-flex-direction-base: column;
+  --ak-gap-base: var(--ak-space-xs);
+  --ak-flex-grow-base: 1;
+}
+
+.log-stream-row-heading,
+.log-stream-row-details {
+  --ak-align-items-base: center;
+  --ak-justify-content-base: space-between;
+  --ak-gap-base: var(--ak-space-sm);
+}
+
+.log-stream-row-message,
+.log-stream-row-service-route {
+  --ak-align-items-base: center;
+  --ak-gap-base: var(--ak-space-sm);
+  --ak-flex-grow-base: 1;
+}
+
+.log-stream-row-severity,
+.log-stream-row-time,
+.log-stream-row-latency {
+  --ak-flex-shrink-base: 0;
+}
+
+.log-stream-row .shrinkable-log-service {
+  --ak-flex-grow-base: 1;
+}
+
+.log-stream-row-latency {
+  --ak-align-items-base: center;
+}
+
+.log-stream-layout {
+  container: log-stream-layout / inline-size;
+}
+
+@container log-stream-layout (width < 9rem) {
+  .log-stream-card {
+    --ak-card-inset: var(--ak-space-md);
+  }
+}
