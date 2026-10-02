@@ -3,7 +3,9 @@ import { expect, test, waitForHydration } from "./fixture";
 const layouts = [
   { name: "desktop", width: 1440, height: 900, zoom: "1" },
   { name: "mobile", width: 390, height: 844, zoom: "1" },
+  { name: "narrow mobile", width: 320, height: 844, zoom: "1" },
   { name: "desktop at 200%", width: 1440, height: 900, zoom: "2" },
+  { name: "mobile at 150%", width: 390, height: 844, zoom: "1.5" },
   { name: "mobile at 200%", width: 390, height: 844, zoom: "2" },
 ] as const;
 
@@ -32,8 +34,17 @@ for (const layout of layouts) {
         "The server-rendered workspace and hydrated client share the same theme contract.",
         { exact: true },
       );
+      const applicationTitle = page.getByText("Application shell", { exact: true });
+      const themeTitle = page.getByText("Theme contract", { exact: true });
 
-      for (const text of [coverage, coverageDescription, alertTitle, alertDescription]) {
+      for (const text of [
+        coverage,
+        coverageDescription,
+        alertTitle,
+        alertDescription,
+        applicationTitle,
+        themeTitle,
+      ]) {
         await expect(text).toBeVisible();
         const splitWords = await text.evaluate((element) => {
           const words: string[] = [];
@@ -52,6 +63,26 @@ for (const layout of layouts) {
         expect
           .soft(splitWords, `${await text.textContent()} splits words across lines`)
           .toEqual([]);
+      }
+
+      for (const title of [applicationTitle, themeTitle]) {
+        const overlapsAction = await title.evaluate((element) => {
+          const action = element
+            .closest('[data-slot="item"]')
+            ?.querySelector('[data-slot="badge"]');
+          if (!action) throw new Error("Home item status badge is missing.");
+          const badge = action.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          return [...range.getClientRects()].some(
+            (rect) =>
+              Math.min(rect.right, badge.right) - Math.max(rect.left, badge.left) > 0.5 &&
+              Math.min(rect.bottom, badge.bottom) - Math.max(rect.top, badge.top) > 0.5,
+          );
+        });
+        expect
+          .soft(overlapsAction, `${await title.textContent()} overlaps its status badge`)
+          .toBe(false);
       }
 
       const progress = await page

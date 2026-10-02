@@ -5,20 +5,25 @@
   container: home-layout / inline-size;
 }
 
-@container home-layout (max-width: 15rem) {
+@container home-layout (max-width: 20rem) {
   .home-layout [data-slot="card"] {
     --ak-card-inset: var(--ak-space-md);
   }
 
   .home-layout .home-coverage-summary,
   .home-layout .home-coverage-value,
-  .home-layout .home-theme-alert {
+  .home-layout .home-theme-alert,
+  .home-layout .home-baseline-item {
     flex-direction: column;
     align-items: stretch;
   }
 
   .home-layout .home-coverage-summary > [data-slot="progress-circle"] {
     align-self: center;
+  }
+
+  .home-layout .home-baseline-item [data-slot="item-actions"] {
+    margin-inline-start: 0;
   }
 }
 

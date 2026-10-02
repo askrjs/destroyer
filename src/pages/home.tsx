@@ -110,7 +110,7 @@ export function HomePage() {
           </CardHeader>
           <CardContent>
             <Block direction="column" gap="md">
-              <Item variant="muted">
+              <Item class="home-baseline-item" variant="muted">
                 <ItemMedia>
                   <LayersIcon size={18} aria-hidden="true" />
                 </ItemMedia>
@@ -124,7 +124,7 @@ export function HomePage() {
                   <Badge variant="outline">Ready</Badge>
                 </ItemActions>
               </Item>
-              <Item>
+              <Item class="home-baseline-item">
                 <ItemMedia>
                   <PaletteIcon size={18} aria-hidden="true" />
                 </ItemMedia>
