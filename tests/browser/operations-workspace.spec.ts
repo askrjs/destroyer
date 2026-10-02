@@ -109,7 +109,7 @@ test("should keep five workspace journeys responsive without forced collection",
 });
 
 test.describe("workspace route heap retention", () => {
-  test.fixme("@regression should return workspace route generations to a stable heap plateau (askrjs/askr#374)", async ({
+  test("@regression should return workspace route generations to a stable heap plateau (askrjs/askr#374)", async ({
     page,
     principalEmail,
   }, testInfo) => {
@@ -129,12 +129,18 @@ test.describe("workspace route heap retention", () => {
     await page.addInitScript(() => {
       const target = globalThis as typeof globalThis & {
         __destroyerLongTasks?: number[];
+        __destroyerLongTaskEntries?: Array<{ startTime: number; duration: number }>;
       };
       target.__destroyerLongTasks = [];
+      target.__destroyerLongTaskEntries = [];
       if (PerformanceObserver.supportedEntryTypes.includes("longtask")) {
         new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
             target.__destroyerLongTasks?.push(entry.duration);
+            target.__destroyerLongTaskEntries?.push({
+              startTime: entry.startTime,
+              duration: entry.duration,
+            });
           }
         }).observe({ entryTypes: ["longtask"] });
       }
@@ -177,6 +183,27 @@ test.describe("workspace route heap retention", () => {
     if (snapshotDirectory) await mkdir(snapshotDirectory, { recursive: true });
     let initialHeapBytes = 0;
     const actionDurationsMs: number[] = [];
+    const actionIntervals: Array<{ stage: string; startTime: number; endTime: number }> = [];
+    const forcedGcIntervals: Array<{ stage: string; startTime: number; endTime: number }> = [];
+    // Keep interval data outside the page's measured heap. These timestamps
+    // describe observations; they never exclude a task from the strict budgets.
+    const measureAction = async (
+      locator: Parameters<typeof clickThroughPaint>[0],
+      actionStage: string,
+    ) => {
+      const startTime = await page.evaluate(() => performance.now());
+      const duration = await clickThroughPaint(locator);
+      const endTime = await page.evaluate(() => performance.now());
+      actionIntervals.push({ stage: actionStage, startTime, endTime });
+      return duration;
+    };
+    const measureHeapBytes = async (checkpointStage: string) => {
+      const startTime = await page.evaluate(() => performance.now());
+      const bytes = await usedHeapBytes(session);
+      const endTime = await page.evaluate(() => performance.now());
+      forcedGcIntervals.push({ stage: checkpointStage, startTime, endTime });
+      return bytes;
+    };
     const heapBytesByCycle: number[] = [];
     const heapCheckpoints: Array<{
       stage: string;
@@ -189,7 +216,7 @@ test.describe("workspace route heap retention", () => {
     const recordHeapCheckpoint = async (checkpointStage: string) => {
       heapCheckpoints.push({
         stage: checkpointStage,
-        bytes: await usedHeapBytes(session),
+        bytes: await measureHeapBytes(checkpointStage),
         ...(await componentHostStats(page)),
       });
     };
@@ -197,23 +224,25 @@ test.describe("workspace route heap retention", () => {
     for (let cycle = 0; cycle < warmupCycles + measuredCycles; cycle++) {
       const measuredCycle = cycle - warmupCycles;
       if (measuredCycle === 0) {
-        initialHeapBytes = await usedHeapBytes(session);
+        initialHeapBytes = await measureHeapBytes("baseline");
         if (snapshotDirectory)
           await takeHeapSnapshot(session, join(snapshotDirectory, "before.heapsnapshot"));
       }
       stage = `cycle ${cycle + 1} logs to metrics`;
-      actionDurationsMs.push(await clickThroughPaint(page.locator('a[href="/metrics"]')));
+      actionDurationsMs.push(await measureAction(page.locator('a[href="/metrics"]'), stage));
       await expect(page.getByRole("heading", { name: "Metrics" })).toBeVisible();
       if (measuredCycle >= 0) await recordHeapCheckpoint(`${measuredCycle + 1}:metrics`);
 
       stage = `cycle ${cycle + 1} metrics to settings`;
-      stage = `cycle ${cycle + 1} settings to workspace`;
-      actionDurationsMs.push(await clickThroughPaint(page.locator('a[href="/settings"]').first()));
+      actionDurationsMs.push(
+        await measureAction(page.locator('a[href="/settings"]').first(), stage),
+      );
       await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
       await expect(page.getByLabel("Display name")).toBeVisible();
+      stage = `cycle ${cycle + 1} settings to workspace`;
 
       actionDurationsMs.push(
-        await clickThroughPaint(page.locator('a[href="/settings/workspace"]')),
+        await measureAction(page.locator('a[href="/settings/workspace"]'), stage),
       );
       await expect(page.getByRole("heading", { name: "Workspace", exact: true })).toBeVisible();
       stage = `cycle ${cycle + 1} workspace dialog`;
@@ -225,7 +254,7 @@ test.describe("workspace route heap retention", () => {
       if (measuredCycle >= 0) await recordHeapCheckpoint(`${measuredCycle + 1}:workspace`);
 
       stage = `cycle ${cycle + 1} workspace to docs`;
-      actionDurationsMs.push(await clickThroughPaint(page.locator('a[href="/docs"]').first()));
+      actionDurationsMs.push(await measureAction(page.locator('a[href="/docs"]').first(), stage));
       await expect(page.getByText("Full-width documentation shell")).toBeVisible();
       stage = `cycle ${cycle + 1} docs section`;
       await page.locator('a[href="/docs/components"]').first().click();
@@ -233,12 +262,12 @@ test.describe("workspace route heap retention", () => {
       if (measuredCycle >= 0) await recordHeapCheckpoint(`${measuredCycle + 1}:docs`);
 
       stage = `cycle ${cycle + 1} docs to logs`;
-      actionDurationsMs.push(await clickThroughPaint(page.locator('a[href="/logs"]').first()));
+      actionDurationsMs.push(await measureAction(page.locator('a[href="/logs"]').first(), stage));
       await expect(page.getByRole("heading", { name: "Logs" })).toBeVisible();
       await expect(page.getByLabel("Recent log stream")).toBeVisible();
       await expect(page.getByLabel("Log event details")).toBeVisible();
       if (measuredCycle >= 0) {
-        const bytes = await usedHeapBytes(session);
+        const bytes = await measureHeapBytes(`${measuredCycle + 1}:logs`);
         heapBytesByCycle.push(bytes);
         heapCheckpoints.push({
           stage: `${measuredCycle + 1}:logs`,
@@ -252,11 +281,17 @@ test.describe("workspace route heap retention", () => {
     if (snapshotDirectory)
       await takeHeapSnapshot(session, join(snapshotDirectory, "after.heapsnapshot"));
     await session.detach();
-    const longTasks = await page.evaluate(
-      () =>
-        (globalThis as typeof globalThis & { __destroyerLongTasks?: number[] })
-          .__destroyerLongTasks ?? [],
-    );
+    const { longTasks, longTaskEntries } = await page.evaluate(() => {
+      const target = globalThis as typeof globalThis & {
+        __destroyerLongTasks?: number[];
+        __destroyerLongTaskEntries?: Array<{ startTime: number; duration: number }>;
+      };
+      return {
+        longTasks: target.__destroyerLongTasks ?? [],
+        longTaskEntries: target.__destroyerLongTaskEntries ?? [],
+      };
+    });
+
     const profile = {
       warmupCycles,
       measuredCycles,
@@ -271,10 +306,17 @@ test.describe("workspace route heap retention", () => {
       longTaskCount: longTasks.length,
       maxLongTaskMs: Math.max(0, ...longTasks),
       longTasksMs: longTasks.reduce((total, duration) => total + duration, 0),
+      longTaskEntries,
+      actionIntervals,
+      forcedGcIntervals,
+      observationScope:
+        "Signup, initial route warmup, all journey cycles and forced collection remain included.",
       errors,
     };
+    const profilePath = testInfo.outputPath("operations-workspace-profile.json");
+    await writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`);
     await testInfo.attach("operations-workspace-profile", {
-      body: JSON.stringify(profile, null, 2),
+      path: profilePath,
       contentType: "application/json",
     });
 

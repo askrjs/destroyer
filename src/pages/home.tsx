@@ -73,7 +73,7 @@ export function HomePage() {
       : packages;
   });
   return (
-    <Page>
+    <Page class="home-layout">
       <PageHeader
         title="Destroyer"
         description="A full-stack operations workspace with SSR, authenticated APIs, observability, and production-oriented workflows."
@@ -110,7 +110,7 @@ export function HomePage() {
           </CardHeader>
           <CardContent>
             <Block direction="column" gap="md">
-              <Item variant="muted">
+              <Item class="home-baseline-item" variant="muted">
                 <ItemMedia>
                   <LayersIcon size={18} aria-hidden="true" />
                 </ItemMedia>
@@ -124,7 +124,7 @@ export function HomePage() {
                   <Badge variant="outline">Ready</Badge>
                 </ItemActions>
               </Item>
-              <Item>
+              <Item class="home-baseline-item">
                 <ItemMedia>
                   <PaletteIcon size={18} aria-hidden="true" />
                 </ItemMedia>
@@ -174,6 +174,7 @@ export function HomePage() {
           <CardContent>
             <Block direction="column" gap="md">
               <Block
+                class="home-coverage-summary"
                 direction="row"
                 align="center"
                 gap="md"
@@ -185,7 +186,7 @@ export function HomePage() {
                   <ProgressCircleIndicator />
                 </ProgressCircle>
                 <Block direction="column" gap="xs">
-                  <Block direction="row" align="baseline" gap="sm">
+                  <Block class="home-coverage-value" direction="row" align="baseline" gap="sm">
                     <Text as="strong" size="lg" weight="semibold" numeric="tabular">
                       89%
                     </Text>
@@ -335,6 +336,7 @@ export function HomePage() {
                 <ThemePicker id="theme-mode" />
               </Field>
               <Alert
+                class="home-theme-alert"
                 variant="info"
                 icon={<ZapIcon size={17} aria-hidden="true" />}
                 title="Token-backed visuals"

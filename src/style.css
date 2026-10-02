@@ -1,6 +1,32 @@
 @import "@askrjs/themes/default";
 @import "@askrjs/charts/styles";
 
+.home-layout {
+  container: home-layout / inline-size;
+}
+
+@container home-layout (max-width: 20rem) {
+  .home-layout [data-slot="card"] {
+    --ak-card-inset: var(--ak-space-md);
+  }
+
+  .home-layout .home-coverage-summary,
+  .home-layout .home-coverage-value,
+  .home-layout .home-theme-alert,
+  .home-layout .home-baseline-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-layout .home-coverage-summary > [data-slot="progress-circle"] {
+    align-self: center;
+  }
+
+  .home-layout .home-baseline-item [data-slot="item-actions"] {
+    margin-inline-start: 0;
+  }
+}
+
 .shrinkable-input-group,
 .shrinkable-log-service {
   min-inline-size: 0;
@@ -37,5 +63,79 @@
 
   .metrics-plot--trace {
     --ak-chart-height: 12rem;
+  }
+}
+
+.log-stream-row {
+  container: log-stream-row / inline-size;
+}
+
+@container log-stream-row (max-width: 12rem) {
+  .log-stream-row-content {
+    padding: 0;
+  }
+
+  .log-stream-row-lines {
+    gap: 0;
+  }
+
+  .log-stream-row-heading {
+    display: contents;
+  }
+}
+
+.log-stream-row {
+  --ak-width-base: 100%;
+  --ak-align-items-base: stretch;
+}
+
+.log-stream-row-content {
+  --ak-width-base: 100%;
+  --ak-align-items-base: center;
+  --ak-px-base: var(--ak-space-md);
+  --ak-py-base: var(--ak-space-sm);
+}
+
+.log-stream-row-lines {
+  --ak-flex-direction-base: column;
+  --ak-gap-base: var(--ak-space-xs);
+  --ak-flex-grow-base: 1;
+}
+
+.log-stream-row-heading,
+.log-stream-row-details {
+  --ak-align-items-base: center;
+  --ak-justify-content-base: space-between;
+  --ak-gap-base: var(--ak-space-sm);
+}
+
+.log-stream-row-message,
+.log-stream-row-service-route {
+  --ak-align-items-base: center;
+  --ak-gap-base: var(--ak-space-sm);
+  --ak-flex-grow-base: 1;
+}
+
+.log-stream-row-severity,
+.log-stream-row-time,
+.log-stream-row-latency {
+  --ak-flex-shrink-base: 0;
+}
+
+.log-stream-row .shrinkable-log-service {
+  --ak-flex-grow-base: 1;
+}
+
+.log-stream-row-latency {
+  --ak-align-items-base: center;
+}
+
+.log-stream-layout {
+  container: log-stream-layout / inline-size;
+}
+
+@container log-stream-layout (width < 9rem) {
+  .log-stream-card {
+    --ak-card-inset: var(--ak-space-md);
   }
 }

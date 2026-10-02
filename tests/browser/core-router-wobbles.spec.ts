@@ -26,7 +26,7 @@ async function control(page: Page, path: "arm" | "state" | "release", body?: unk
   );
 }
 
-test.fixme("CA01 should not commit an aborted Metrics preload after rapid navigation (askrjs/askr#373)", async ({
+test("CA01 should not commit an aborted Metrics preload after rapid navigation (askrjs/askr#373)", async ({
   page,
 }) => {
   await createOperator(page, "router.aborted-preload@example.test");

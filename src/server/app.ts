@@ -51,6 +51,7 @@ export function createApp(deps: AppDependencies, issuer: JwtIssuer) {
         issuer,
         cookie: {
           name: SESSION_COOKIE,
+          secure: process.env.NODE_ENV !== "development" && process.env.NODE_ENV !== "test",
           httpOnly: true,
           sameSite: "lax",
           path: "/",

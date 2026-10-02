@@ -24,7 +24,7 @@ async function post(page: Page, path: string, body: unknown): Promise<number> {
   );
 }
 
-test.fixme("S17 should select and bulk acknowledge eligible incidents (askrjs/askr-themes#141)", async ({
+test("S17 should select and bulk acknowledge eligible incidents (askrjs/askr-themes#141)", async ({
   page,
   principalEmail,
 }) => {
@@ -175,6 +175,11 @@ test("S22 should preserve zero, one, and complete-history filter cardinalities a
     const load = page.getByRole("button", { name: "Load older events" });
     if ((await load.count()) === 0) break;
     await load.click();
+    await expect
+      .poll(async () => {
+        return (await load.count()) > 0 || (await page.getByRole("status").count()) > 0;
+      })
+      .toBe(true);
   }
   const eventCount = page
     .getByText("Events", { exact: true })
