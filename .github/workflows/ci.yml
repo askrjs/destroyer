@@ -1,135 +1,107 @@
-name: CI
+name: Native Logs CPU diagnostic
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "15 3 * * *"
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
-  ci:
-    name: CI (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Format check
-        run: npm run fmt -- --check
-
-      - name: Check
-        run: npm run check
-
-      - name: Production artifact tests
-        run: npm run test:production
-
-  browser:
-    name: Browser product flows
+  diagnostic:
+    name: One unchanged-source CPU and Timeline diagnostic
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
-      - name: Checkout repository
+      - name: Checkout diagnostic branch
         uses: actions/checkout@v7
-
+        with:
+          fetch-depth: 2
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
-
-      - name: Install dependencies
+      - name: Install exact registry lock
         run: npm ci
-
+      - name: Record source and installed package binding
+        run: |
+          mkdir -p artifacts/native-cpu-diagnostic
+          node --input-type=module <<'NODE'
+          import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+          import { execFileSync } from "node:child_process";
+          import { createHash } from "node:crypto";
+          import { cpus } from "node:os";
+          const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
+          const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
+          const paths = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(Boolean).sort();
+          const sourceFiles = paths.map((path) => ({ path, sha256: hash(readFileSync(path)) }));
+          const walk = (root, relative = "") => readdirSync(`${root}/${relative}`).sort().flatMap((name) => {
+            const path = relative ? `${relative}/${name}` : name;
+            return statSync(`${root}/${path}`).isDirectory() ? walk(root, path) : [{ path, sha256: hash(readFileSync(`${root}/${path}`)) }];
+          });
+          const packages = Object.fromEntries(["askr", "ui", "themes"].map((name) => {
+            const root = `node_modules/@askrjs/${name}`;
+            const manifest = JSON.parse(readFileSync(`${root}/package.json`, "utf8"));
+            return [name, { version: manifest.version, files: walk(root) }];
+          }));
+          writeFileSync("artifacts/native-cpu-diagnostic/installed-source-binding.json", JSON.stringify({
+            diagnosticOnly: true,
+            sourceHead: git("rev-parse", "HEAD"),
+            sourceTree: git("rev-parse", "HEAD^{tree}"),
+            unchangedProductBase: "1b4eb311bf5f9a0f2b50eb5b270e0cd45f1626dd",
+            changedPaths: git("diff", "--name-status", "1b4eb311bf5f9a0f2b50eb5b270e0cd45f1626dd", "HEAD"),
+            acceptanceScenarioSha256: hash(readFileSync("tests/browser/operations-workspace.spec.ts")),
+            nodeVersion: process.version,
+            platform: process.platform,
+            architecture: process.arch,
+            cpuModels: [...new Set(cpus().map((cpu) => cpu.model))],
+            cpuCount: cpus().length,
+            runnerImageVersion: process.env.ImageVersion,
+            npmVersion: execFileSync("npm", ["--version"], { encoding: "utf8" }).trim(),
+            packages,
+            sourceFiles,
+          }, null, 2) + "\n");
+          NODE
       - name: Install Chromium
         run: npx playwright install chromium
-
-      - name: Build
+      - name: Build unchanged product with existing hidden source maps
         run: npm run build
-
-      - name: Standard browser scenarios
-        run: npm run test:scenarios
-
-      - name: Vite development layout regression
-        run: npm run test:development
-
-      - name: Upload browser evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: browser-scenario-evidence
-          if-no-files-found: ignore
-          retention-days: 14
-          path: |
-            playwright-report
-            test-results
-            artifacts/findings-*
-
-  findings:
-    name: Published-package findings
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run build
-      - run: npm run test:findings
-      - if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: published-package-findings
-          if-no-files-found: ignore
-          retention-days: 14
-          path: artifacts/findings-*
-
-  visual:
-    name: Canonical visual census
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v7
-      - name: Run pinned canonical image
-        run: docker build -f Dockerfile.visual -t destroyer-visual . && docker run --name destroyer-visual-run destroyer-visual
-      - name: Copy visual evidence
+      - name: Run exactly one diagnostic attempt
+        env:
+          DESTROYER_DIAGNOSTIC_HEAD: ${{ github.sha }}
+        run: npx playwright test tests/browser/operations-workspace.cpu-diagnostic.spec.ts --workers=1 --retries=0 --reporter=line
+      - name: Read back source and built evidence
         if: always()
         run: |
-          docker cp destroyer-visual-run:/workspace/artifacts ./artifacts || true
-          docker cp destroyer-visual-run:/workspace/test-results ./test-results || true
-      - name: Upload visual evidence
+          mkdir -p artifacts/native-cpu-diagnostic
+          node --input-type=module <<'NODE'
+          import { readFileSync, readdirSync, statSync, writeFileSync, existsSync } from "node:fs";
+          import { execFileSync } from "node:child_process";
+          import { createHash } from "node:crypto";
+          const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
+          const bindingPath = "artifacts/native-cpu-diagnostic/installed-source-binding.json";
+          const before = existsSync(bindingPath) ? JSON.parse(readFileSync(bindingPath, "utf8")) : null;
+          const sourceAfter = before?.sourceFiles.map(({ path }) => ({ path, sha256: hash(readFileSync(path)) })) ?? [];
+          const packageAfter = before ? Object.fromEntries(Object.entries(before.packages).map(([name, record]) => [name, record.files.map(({ path }) => ({ path, sha256: hash(readFileSync(`node_modules/@askrjs/${name}/${path}`)) }))])) : {};
+          const walk = (root, relative = "") => existsSync(`${root}/${relative}`) ? readdirSync(`${root}/${relative}`).sort().flatMap((name) => {
+            const path = relative ? `${relative}/${name}` : name;
+            return statSync(`${root}/${path}`).isDirectory() ? walk(root, path) : [{ path, bytes: statSync(`${root}/${path}`).size, sha256: hash(readFileSync(`${root}/${path}`)) }];
+          }) : [];
+          const builtFiles = walk("dist");
+          const sourceUnchanged = Boolean(before) && JSON.stringify(before.sourceFiles) === JSON.stringify(sourceAfter);
+          const packagesUnchanged = Boolean(before) && Object.entries(before.packages).every(([name, record]) => JSON.stringify(record.files) === JSON.stringify(packageAfter[name]));
+          writeFileSync("artifacts/native-cpu-diagnostic/final-source-build-readback.json", JSON.stringify({ diagnosticOnly: true, sourceUnchanged, packagesUnchanged, sourceAfter, packageAfter, builtFiles, gitStatus: execFileSync("git", ["status", "--porcelain=v1"], { encoding: "utf8" }) }, null, 2) + "\n");
+          if (!sourceUnchanged || !packagesUnchanged) process.exitCode = 1;
+          NODE
+      - name: Always upload raw diagnostic evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: visual-census-evidence
-          if-no-files-found: ignore
+          name: native-logs-cpu-timeline-${{ github.sha }}
+          if-no-files-found: error
           retention-days: 14
           path: |
-            artifacts/visual-report
+            artifacts/native-cpu-diagnostic
             test-results
+            playwright-report
+            dist
