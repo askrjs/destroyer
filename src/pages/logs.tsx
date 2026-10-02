@@ -318,6 +318,7 @@ export function LogsPage() {
           </CardHeader>
           <CardContent>
             <VirtualList
+              class="logs-virtual-viewport"
               apiRef={liveListApi}
               aria-label="Recent log stream"
               viewport="lg"
@@ -365,6 +366,7 @@ export function LogsPage() {
               />
               {filteredLogEntries().length > 0 ? (
                 <VirtualTable
+                  class="logs-virtual-viewport"
                   apiRef={logTableApi}
                   aria-label="Log event details"
                   viewport="lg"

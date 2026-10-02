@@ -139,3 +139,7 @@
     --ak-card-inset: var(--ak-space-md);
   }
 }
+
+.logs-virtual-viewport {
+  contain: layout;
+}
