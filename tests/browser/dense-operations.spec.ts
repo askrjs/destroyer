@@ -24,7 +24,7 @@ async function post(page: Page, path: string, body: unknown): Promise<number> {
   );
 }
 
-test.fixme("S17 should select and bulk acknowledge eligible incidents (askrjs/askr-themes#141)", async ({
+test("S17 should select and bulk acknowledge eligible incidents (askrjs/askr-themes#141)", async ({
   page,
   principalEmail,
 }) => {

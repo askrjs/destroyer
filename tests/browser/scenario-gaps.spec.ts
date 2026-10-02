@@ -57,7 +57,7 @@ test("S01 should cancel, discard, and save through owned dirty Workspace navigat
   await expect(dialog).toHaveCount(0);
 });
 
-test.fixme("S19 @regression should virtualize expandable incident operations and export selected rows (askrjs/askr-themes#141)", async ({
+test("S19 @regression should virtualize expandable incident operations and export selected rows (askrjs/askr-themes#141)", async ({
   page,
   principalEmail,
 }) => {

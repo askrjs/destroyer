@@ -109,7 +109,7 @@ test("should keep five workspace journeys responsive without forced collection",
 });
 
 test.describe("workspace route heap retention", () => {
-  test.fixme("@regression should return workspace route generations to a stable heap plateau (askrjs/askr#374)", async ({
+  test("@regression should return workspace route generations to a stable heap plateau (askrjs/askr#374)", async ({
     page,
     principalEmail,
   }, testInfo) => {

@@ -4,6 +4,7 @@ import findings from "./playwright.findings.config";
 export default defineConfig({
   ...findings,
   testMatch: "dev-server-wobbles.spec.ts",
+  testIgnore: [],
   use: { ...findings.use, baseURL: "http://127.0.0.1:4182" },
   webServer: {
     command: "npm run dev -- --host 127.0.0.1 --port 4182 --open false",

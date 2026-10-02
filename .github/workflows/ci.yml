@@ -71,6 +71,9 @@ jobs:
       - name: Standard browser scenarios
         run: npm run test:scenarios
 
+      - name: Vite development layout regression
+        run: npm run test:development
+
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -81,6 +84,7 @@ jobs:
           path: |
             playwright-report
             test-results
+            artifacts/findings-*
 
   findings:
     name: Published-package findings

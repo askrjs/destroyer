@@ -1,11 +1,11 @@
 import { expect, test } from "./fixture";
 
-test.fixme("@regression should preserve Block layout in Vite development (askrjs/askr-vite#39)", async ({
+test("@regression should preserve Block layout in Vite development (askrjs/askr#376)", async ({
   page,
 }) => {
   test.info().annotations.push({
     type: "issue",
-    description: "https://github.com/askrjs/askr-vite/issues/39",
+    description: "https://github.com/askrjs/askr/issues/376",
   });
   test.info().annotations.push({
     type: "expected-observed",
