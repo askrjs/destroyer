@@ -133,7 +133,7 @@ test.describe("workspace route heap retention CPU diagnostic", () => {
       });
       await diagnosticSession.send("Tracing.start", {
         categories:
-          "devtools.timeline,disabled-by-default-devtools.timeline,disabled-by-default-v8.cpu_profiler,v8.execute,blink.user_timing",
+          "devtools.timeline,disabled-by-default-devtools.timeline,disabled-by-default-devtools.timeline.stack,disabled-by-default-v8.cpu_profiler,v8.execute,blink.user_timing",
         transferMode: "ReturnAsStream",
       });
       tracingStarted = true;
