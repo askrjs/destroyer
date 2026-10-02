@@ -65,3 +65,21 @@
     --ak-chart-height: 12rem;
   }
 }
+
+.log-stream-row {
+  container: log-stream-row / inline-size;
+}
+
+@container log-stream-row (max-width: 12rem) {
+  .log-stream-row-content {
+    padding: 0;
+  }
+
+  .log-stream-row-lines {
+    gap: 0;
+  }
+
+  .log-stream-row-heading {
+    display: contents;
+  }
+}
