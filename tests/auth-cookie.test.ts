@@ -1,6 +1,6 @@
 import { createJwtIssuer } from "@askrjs/auth/jwt";
 import { generateKeyPairSync } from "node:crypto";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { createApp } from "../src/server/app";
 import { createDependencies } from "../src/server/dependencies";
 

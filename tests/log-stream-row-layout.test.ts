@@ -1,7 +1,7 @@
 import { jsx } from "@askrjs/askr";
 import { renderToStringSync } from "@askrjs/askr/ssr";
 import { Block } from "@askrjs/themes/components";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { LogStreamRow } from "../src/features/logs/log-stream-row";
 import type { LogEntry, LogSeverity } from "../src/features/logs/logs-data";
 
