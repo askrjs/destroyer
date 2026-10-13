@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { pageRegistry } from "../src/pages/_routes";
 import { routeExpectations } from "../src/pages/route-expectations";
 

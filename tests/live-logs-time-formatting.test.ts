@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { fetchLiveLogs, toLogEntry } from "../src/features/logs/live-logs-resource";
 import type { OperationsLogPage } from "../src/server/contracts";
 
