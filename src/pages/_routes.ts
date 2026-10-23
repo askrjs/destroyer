@@ -11,7 +11,6 @@ import { requireAnonymous, requireUser } from "@askrjs/auth";
 import { resolveAuth } from "../auth";
 import { PageLayout } from "./_layout";
 import { operatorSettingsQuery, settingsActions } from "../features/settings/settings-model";
-import { liveLogQuery } from "../features/logs/live-logs-resource";
 import { operationsMetricsQuery } from "../features/metrics/metrics-model";
 
 const AboutPage = lazy(() => import("./about").then((module) => module.AboutPage));
@@ -39,13 +38,7 @@ const settingsRoute = {
       : undefined,
 } satisfies RouteOptions;
 
-const logsRoute = {
-  auth: requireUser(),
-  preload: (context) =>
-    context.auth.principal
-      ? context.data.prefetch(liveLogQuery, { principalId: context.auth.principal.id })
-      : undefined,
-} satisfies RouteOptions;
+const logsRoute = { auth: requireUser() } satisfies RouteOptions;
 
 const metricsRoute = {
   auth: requireUser(),
