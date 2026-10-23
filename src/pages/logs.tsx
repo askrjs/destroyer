@@ -379,6 +379,10 @@ export function LogsPage() {
                   onSelectedRowKeyChange={(key) => selectedLogRowKey.set(key)}
                   onScroll={(event) => pauseLiveMode(event, LOG_TABLE_HEADER_HEIGHT)}
                 />
+              ) : liveLogs.loading ? (
+                <Text role="status" tone="muted">
+                  Loading log events…
+                </Text>
               ) : (
                 <EmptyState
                   icon={<SearchIcon size={22} aria-hidden="true" />}
@@ -392,12 +396,25 @@ export function LogsPage() {
                   }
                 />
               )}
+              {liveLogs.error ? (
+                <Text role="alert" tone="danger">
+                  Recent log events could not be loaded.
+                </Text>
+              ) : null}
               {historyError() ? (
                 <Text role="alert" tone="danger">
                   {historyError()}
                 </Text>
               ) : null}
-              {nextCursor() ? (
+              {liveLogs.loading && liveLogs.data === null ? (
+                <Text role="status" tone="muted">
+                  Loading log history…
+                </Text>
+              ) : liveLogs.error && liveLogs.data === null ? (
+                <Text role="status" tone="muted">
+                  Log history is unavailable.
+                </Text>
+              ) : nextCursor() ? (
                 <Button
                   type="button"
                   variant="outline"
