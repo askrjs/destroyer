@@ -185,7 +185,9 @@ export function WorkspaceSettings() {
               Save workspace
             </Button>
             <Button
-              ref={(node) => (workspaceNavigationTrigger.current = node as HTMLElement | null)}
+              ref={(node) => {
+                workspaceNavigationTrigger.current = node;
+              }}
               type="button"
               variant="outline"
               onPress={() => (dirty() ? navigationDialogOpen.set(true) : navigate("/logs"))}
@@ -239,7 +241,9 @@ export function WorkspaceSettings() {
             </Field>
             <DropdownMenu>
               <DropdownMenuTrigger
-                ref={(node) => (inviteActionsTrigger.current = node as HTMLElement | null)}
+                ref={(node) => {
+                  inviteActionsTrigger.current = node as HTMLElement | null;
+                }}
                 aria-label="Open invite actions"
                 variant="ghost"
                 size="icon"

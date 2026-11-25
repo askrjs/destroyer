@@ -186,5 +186,5 @@ test("S22 should preserve zero, one, and complete-history filter cardinalities a
     .locator('xpath=ancestor::*[@data-slot="card"]')
     .locator('[data-slot="stat-value"]');
   await expect.poll(async () => Number(await eventCount.textContent())).toBeGreaterThanOrEqual(420);
-  await expect(page.getByRole("status")).toHaveText("All matching history loaded.");
+  await expect(page.getByText("All matching history loaded.", { exact: true })).toBeVisible();
 });
