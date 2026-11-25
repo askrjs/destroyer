@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { createScenarioController, ScenarioFailure } from "../src/server/scenario-controller";
 
 describe("scenario controller", () => {
