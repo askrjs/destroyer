@@ -1,6 +1,6 @@
 import { jsx } from "@askrjs/askr";
 import { renderToStringSync } from "@askrjs/askr/ssr";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 
 describe("Core SSR contracts", () => {
   test("CC03 serializes supported render data while preserving script escaping", () => {
